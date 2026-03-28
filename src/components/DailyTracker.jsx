@@ -1,9 +1,5 @@
-import React, { useState, useEffect } from 'react';
-
-// Module-level cache — survives tab switches (component unmount/remount)
-// but resets on full page reload. Keyed by date so midnight auto-invalidates.
-const _dailyCache = { date: null, data: null };
-const _todayKey = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+import React, { useState, useEffect, useRef } from 'react';
+import { getTodayLog, setTodayLog, getEffectiveDate, clearAllCache } from '../cache';
 
 // Returns parsed JSON only when the response is actually JSON.
 // Guards against Vite's HTML 404 fallback in local dev (no netlify dev running).
@@ -142,6 +138,217 @@ const getSuggestions = (log) => {
   return results.slice(0, 4);
 };
 
+// Info content for each task in TASK_SCHEDULE — used by the suggestion panel's ℹ buttons
+const TASK_INFO_MAP = {
+  shilajit_taken: {
+    title: '🧪 Shilajit & Creatine',
+    desc: 'Take both supplements in warm water immediately after waking — before food or coffee.',
+    steps: [
+      'Pour 500 ml of warm (not boiling) water into a glass.',
+      'Dissolve a pea-sized piece of Shilajit resin by stirring for 30 seconds.',
+      'Add 3–5 g (1 level teaspoon) of Creatine Monohydrate and stir until dissolved.',
+      'Drink the full glass within 5 minutes of preparing it.',
+      'Why: Creatine absorption improves with warm water; Shilajit works best on an empty stomach.',
+    ],
+  },
+  morning_meditation_completed: {
+    title: '🧘 Morning Meditation',
+    desc: 'This 20-minute window also lets the Shilajit & Creatine absorb before you eat.',
+    steps: [
+      'Find a quiet, comfortable sitting position — chair or floor, spine upright.',
+      'Set a timer for 20 minutes. Place your phone face-down.',
+      'Close your eyes. Breathe in slowly through your nose for 4 counts.',
+      'Hold for 2 counts, then exhale through your mouth for 6 counts.',
+      'When thoughts arise, acknowledge them and gently return to your breath. No judgment.',
+      'When the timer ends, take one deep breath before opening your eyes.',
+    ],
+  },
+  isabgul_taken: {
+    title: '🌾 Isabgul (Psyllium Husk)',
+    desc: 'A soluble fibre that slows glucose absorption and keeps you full through the morning.',
+    steps: [
+      'Measure 1 heaped teaspoon (about 5 g) of Isabgul husk.',
+      'Add to a full glass (250 ml) of room-temperature water.',
+      'Stir for 5 seconds, then drink it IMMEDIATELY — it turns into a thick gel within 60 seconds.',
+      'Follow with another half-glass of plain water.',
+      'Why: Do not let it sit — a thick gel is harder to swallow and less effective.',
+    ],
+  },
+  breakfast_logged: {
+    title: '🍳 Breakfast — Boiled Eggs & Fruit',
+    desc: 'High-protein, low-effort breakfast. Takes about 12 minutes to make fresh.',
+    steps: [
+      'Fill a small pot with enough cold water to fully cover 3 eggs.',
+      'Bring to a rolling boil on high heat.',
+      'Gently lower 3 whole eggs into the boiling water using a spoon.',
+      'Set a timer for exactly 9 minutes for firm, fully set yolks.',
+      'Transfer eggs immediately to cold tap water for 2 minutes (stops overcooking and makes peeling easier).',
+      'Peel and eat with a pinch of salt.',
+      'Eat alongside 1 apple (sliced) or 1 banana.',
+    ],
+  },
+  rule_50_10_followed: {
+    title: '🪑 50/10 Rule & Posture',
+    desc: 'Sitting for 50+ minutes raises cortisol and compresses the spine. This breaks the damage.',
+    steps: [
+      'Set a repeating timer on your phone for every 50 minutes.',
+      'When it goes off: stand up, walk out of the room, pace for 10 full minutes.',
+      'Each time you stand up: step into a doorway, place your hands on the frame at shoulder height, and lean forward gently until you feel your chest open. Hold for 30 seconds.',
+      'While sitting: feet flat on the floor, screen at eye level, lower back supported.',
+      'Keep your 1-litre water bottle on the desk — refill it every time you return from a break.',
+    ],
+  },
+  kegels_completed: {
+    title: '🔄 Pelvic Floor Exercises (Kegels)',
+    desc: 'Invisible exercise you can do sitting at your desk. 3 sets, anytime between 9 AM and 4 PM.',
+    steps: [
+      'Sit normally in your chair. No one will know you are doing this.',
+      'Identify the muscles: imagine you are stopping yourself from urinating mid-stream. Those are your pelvic floor muscles.',
+      'Contract those muscles firmly. Hold for 5 seconds. Relax for 5 seconds. That is 1 rep.',
+      'Do 10–15 reps. Rest 60 seconds. Repeat for 3 sets.',
+      'Benefit: improves urinary control, core stability, and testosterone output over time.',
+    ],
+  },
+  acv_taken: {
+    title: '🥤 Apple Cider Vinegar (ACV) Drink',
+    desc: 'Taken 15 minutes before lunch, ACV blunts the blood sugar spike from rice.',
+    steps: [
+      'Pour 250 ml of water into a glass.',
+      'Add exactly 1 tablespoon (15 ml) of Apple Cider Vinegar — use one with "the mother" (cloudy appearance).',
+      'Stir briefly. Drink through a straw to protect tooth enamel from the acid.',
+      'Do not drink undiluted ACV — it will damage your oesophagus and teeth.',
+      'Drink this 10–15 minutes before your meal for maximum effect on blood sugar.',
+    ],
+  },
+  lunch_logged: {
+    title: '🍱 Daily Lunch Preparation',
+    desc: 'Prepare fresh each morning before work. Total active time: ~30 minutes.',
+    steps: [
+      'Rice: Rinse 100 g (1 small katori) of white rice under cold water until clear. Add 150 ml water, bring to a boil, reduce to lowest heat, cover, and simmer for 12–15 minutes until all water is absorbed.',
+      'Masoor Dal: Rinse ½ cup of red lentils (masoor dal) until water runs clear. Boil with 1 cup water, ½ tsp turmeric, and salt to taste for 15–18 minutes until a very thick paste forms. Tadka: heat 1 tsp mustard oil in a small pan, add 1 dried red chilli and 3 crushed garlic cloves for 15 seconds, then pour over the dal and mix.',
+      'Protein: Pat 150 g chicken breast or 2 fish pieces dry with a paper towel. Rub with salt, ¼ tsp turmeric, and a squeeze of lemon. Sear in a hot pan with 1 tsp oil — chicken: 6–7 min each side; fish: 4–5 min each side — until golden and cooked through.',
+      'Side: Slice 1 cucumber.',
+      'Pack rice, dal, protein, and cucumber into separate airtight lunch containers. Refrigerate until you leave for work.',
+    ],
+  },
+  multivitamin_taken: {
+    title: '💊 Multivitamin & Omega-3',
+    desc: 'Take with the last bites of your meal — fat from food improves Omega-3 absorption.',
+    steps: [
+      'Take 1 Multivitamin tablet. Swallow with a full glass of water.',
+      'Take 1 Omega-3 Fish Oil capsule (1000 mg). Swallow with water.',
+      'Do not take on an empty stomach — the fat-soluble vitamins (A, D, E, K) in the multi need dietary fat to be absorbed.',
+      'Why Omega-3: reduces inflammation, supports joint recovery, and improves insulin sensitivity.',
+    ],
+  },
+  afternoon_snack_logged: {
+    title: '☕ 4:00 PM Energy Snack',
+    desc: 'A clean pre-evening energy boost. Keep it minimal — this is not a meal.',
+    steps: [
+      'Option A: Brew 1 cup of black coffee (no sugar, no milk). Drink within 20 minutes of brewing.',
+      'Option B: Squeeze half a lemon into 250 ml cold water with a pinch of salt (Lebur Jol). Sugar-free and refreshing.',
+      'Eat exactly 5–6 whole almonds or 4–5 walnuts alongside.',
+      'Do not eat more than this — the goal is to bridge the gap to dinner, not to have a full snack.',
+      'Avoid caffeine after 5:00 PM — it will compromise your sleep quality.',
+    ],
+  },
+  whey_protein_taken: {
+    title: '🥛 Post-Workout Whey Protein',
+    desc: 'The anabolic window: consume within 45 minutes of finishing your workout.',
+    steps: [
+      'Measure 1 level scoop of Whey Protein Concentrate or Isolate.',
+      'Add 250–300 ml of cold water to a shaker bottle.',
+      'Add the protein powder, seal, and shake vigorously for 10 seconds.',
+      'Drink immediately. Do not let it sit — it becomes lumpy.',
+      'Use water, not milk. Milk slows absorption; water is faster post-workout.',
+      'Skip on Sunday (rest day) unless you genuinely feel you need it.',
+    ],
+  },
+  dinner_logged: {
+    title: '🍽️ High-Protein Dinner Preparation',
+    desc: 'Zero starchy carbs. High protein, high fibre from vegetables. Cook fresh nightly — takes 15 minutes.',
+    steps: [
+      'Take 150 g chicken breast or 2 fish pieces from the fridge. Pat completely dry with a paper towel (moisture prevents browning).',
+      'Season both sides generously: salt, a pinch of black pepper, ¼ tsp turmeric, and a squeeze of lemon.',
+      'Heat a non-stick or cast-iron pan on HIGH heat for 90 seconds. Add 1 tsp oil — it should shimmer immediately.',
+      'Chicken: sear 6–7 minutes per side without moving it, until the top surface looks opaque. Fish: 4–5 minutes per side.',
+      'While protein cooks, steam vegetables: add broccoli florets, green beans, or spinach to a covered pot with 3 tbsp water. Steam on medium heat for 3–4 minutes until tender-crisp.',
+      'Plate and eat immediately. No rice, no bread, no roti.',
+    ],
+  },
+  post_dinner_walk_completed: {
+    title: '🚶 Post-Dinner Walk',
+    desc: 'Walking after a high-protein meal dramatically improves glucose clearance and digestion.',
+    steps: [
+      'Head outside within 15 minutes of finishing dinner.',
+      'Walk at a brisk pace — arms should be swinging, breathing slightly elevated.',
+      'Target 30 minutes continuous walking (roughly 3,000 steps).',
+      'No phone scrolling while walking. Focus on your breath or the environment.',
+      'On bad weather days: march in place at home for 30 minutes or do 15 minutes of slow pacing indoors.',
+    ],
+  },
+  hydration_cutoff_followed: {
+    title: '💧 Hydration Cut-off',
+    desc: 'Stopping fluid intake 1 hour before sleep prevents you from waking up to urinate.',
+    steps: [
+      'Finish your last glass of water by 11:30 PM.',
+      'Make sure your water goal (4 litres) is complete before this point.',
+      'A small sip to take supplements or pills is fine — not a full glass.',
+      'If you wake up in the night feeling thirsty, you are not drinking enough during the day.',
+    ],
+  },
+  screen_curfew_followed: {
+    title: '📴 Screen Curfew & Night Meditation',
+    desc: 'Blue light suppresses melatonin for up to 2 hours. Screens off by midnight for 12:30 AM sleep.',
+    steps: [
+      'At 12:00 AM exactly: lock your phone, turn off your monitors.',
+      'Set your phone alarm for 7:30 AM and place it across the room (forces you out of bed).',
+      'Sit in a comfortable position in dim or no light.',
+      'Close your eyes. Do a body scan: mentally relax each part from feet upward — feet, calves, thighs, abdomen, chest, shoulders, neck, face.',
+      'Continue slow breathing for 15–20 minutes until you feel genuinely drowsy.',
+      'Lie down and sleep by 12:30 AM for a full 7-hour sleep cycle ending at 7:30 AM.',
+    ],
+  },
+};
+
+// Returns info for a suggestion-panel ℹ button. scheduled_workout_completed is dynamic.
+const getInfoForField = (field, todayWorkout) => {
+  if (field === 'scheduled_workout_completed') {
+    return {
+      title: `🏋️ ${todayWorkout.day}: ${todayWorkout.focus}`,
+      desc: todayWorkout.day === 'Sunday'
+        ? 'Today is your rest day. No training needed.'
+        : `Today is ${todayWorkout.day}. Follow the steps below in order.`,
+      steps: todayWorkout.steps,
+    };
+  }
+  return TASK_INFO_MAP[field];
+};
+
+// Fuzzy filter: matches books that contain all query chars in order
+const fuzzyFilter = (books, query) => {
+  if (!query.trim()) return books;
+  const q = query.toLowerCase();
+  return books
+    .filter(book => {
+      const b = book.toLowerCase();
+      if (b.includes(q)) return true;
+      let qi = 0;
+      for (let i = 0; i < b.length && qi < q.length; i++) {
+        if (b[i] === q[qi]) qi++;
+      }
+      return qi === q.length;
+    })
+    .sort((a, b) => {
+      const al = a.toLowerCase(), bl = b.toLowerCase();
+      if (al.startsWith(q) && !bl.startsWith(q)) return -1;
+      if (!al.startsWith(q) && bl.startsWith(q)) return 1;
+      if (al.includes(q) && !bl.includes(q)) return -1;
+      if (!al.includes(q) && bl.includes(q)) return 1;
+      return 0;
+    });
+};
+
 const TaskRow = ({ id, label, checked, onChange, onInfoClick, isInfoActive }) => (
   <div className="task-row">
     <div className="task-header">
@@ -163,7 +370,7 @@ const TaskRow = ({ id, label, checked, onChange, onInfoClick, isInfoActive }) =>
 export default function DailyTracker() {
   const todayWorkout = getTodayWorkout();
 
-  const [log, setLog] = useState({
+  const BLANK_LOG = {
     water_liters: 0, shilajit_taken: false, creatine_taken: false, isabgul_taken: false,
     breakfast_logged: false, rule_50_10_followed: false, lunch_logged: false,
     afternoon_snack_logged: false, dinner_logged: false,
@@ -171,31 +378,55 @@ export default function DailyTracker() {
     omega3_taken: false, whey_protein_taken: false, post_dinner_walk_completed: false,
     kegels_completed: false, scheduled_workout_completed: false,
     hydration_cutoff_followed: false, screen_curfew_followed: false,
-  });
+    book_name: '', book_finished: false,
+  };
 
+  const [log, setLog] = useState(BLANK_LOG);
   const [activeDetail, setActiveDetail] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
-  // Re-render every minute so suggestion panel recomputes based on current time
+  const [syncing, setSyncing] = useState(false);
+  // Book autocomplete state
+  const [bookSuggestions, setBookSuggestions] = useState([]);
+  const [filteredBooks, setFilteredBooks] = useState([]);
+  const [showBookDropdown, setShowBookDropdown] = useState(false);
+  const [readingOpen, setReadingOpen] = useState(false);
+  // Re-render every minute so suggestion panel and clock recompute
   const [, setTick] = useState(0);
+  // Bump to re-trigger the fetch effect (e.g. at 5 AM day boundary)
+  const [fetchKey, setFetchKey] = useState(0);
+  const waterSyncTimer = useRef(null);
+  const loadedForDate = useRef(null);
   useEffect(() => {
-    const t = setInterval(() => setTick(n => n + 1), 60_000);
+    const t = setInterval(() => {
+      setTick(n => n + 1);
+      // Auto-reset when the effective date advances past 5 AM
+      if (loadedForDate.current && loadedForDate.current !== getEffectiveDate()) {
+        loadedForDate.current = null;
+        setFetchKey(k => k + 1);
+      }
+    }, 60_000);
     return () => clearInterval(t);
   }, []);
 
   useEffect(() => {
-    const key = _todayKey();
-    if (_dailyCache.date === key && _dailyCache.data) {
-      setLog(_dailyCache.data);
+    const effectiveDate = getEffectiveDate();
+    const cached = getTodayLog();
+    if (cached) {
+      loadedForDate.current = effectiveDate;
+      setLog(cached);
       return;
     }
 
+    // New day — reset to blank defaults immediately so stale data doesn't linger
+    setLog(BLANK_LOG);
+
     const controller = new AbortController();
-    fetch('/.netlify/functions/daily-log', { signal: controller.signal })
+    fetch(`/.netlify/functions/daily-log?date=${effectiveDate}`, { signal: controller.signal })
       .then(safeJson)
       .then(data => {
+        loadedForDate.current = effectiveDate;
         if (data && Object.keys(data).length > 0) {
-          _dailyCache.date = key;
-          _dailyCache.data = data;
+          setTodayLog(data);
           setLog(data);
         }
       })
@@ -204,18 +435,17 @@ export default function DailyTracker() {
       });
 
     return () => controller.abort();
-  }, []);
+  }, [fetchKey]);
 
   const handleToggle = async (field) => {
     const updatedLog = { ...log, [field]: !log[field] };
     setLog(updatedLog);
-    _dailyCache.date = _todayKey();
-    _dailyCache.data = updatedLog;
+    setTodayLog(updatedLog);
     try {
       const res = await fetch('/.netlify/functions/daily-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedLog),
+        body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),
       });
       if (!res.ok) console.warn('Sync skipped — function not available');
     } catch (err) {
@@ -223,30 +453,102 @@ export default function DailyTracker() {
     }
   };
 
-  const addWater = async () => {
+  // Debounce water saves — only flush to DB 1 s after the last tap
+  const flushWater = (latestLog) => {
+    clearTimeout(waterSyncTimer.current);
+    waterSyncTimer.current = setTimeout(() => {
+      fetch('/.netlify/functions/daily-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
+      }).catch(() => {});
+    }, 1000);
+  };
+
+  const addWater = () => {
     const newVal = Math.min(parseFloat(((log.water_liters || 0) * 10 + 10) / 10).toFixed(1), 4.0);
     const updatedLog = { ...log, water_liters: newVal };
     setLog(updatedLog);
-    _dailyCache.date = _todayKey();
-    _dailyCache.data = updatedLog;
-    fetch('/.netlify/functions/daily-log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedLog),
-    }).catch(() => {}); // fire-and-forget; local dev may not have functions running
+    setTodayLog(updatedLog);
+    flushWater(updatedLog);
   };
 
-  const removeWater = async () => {
+  const removeWater = () => {
     const newVal = Math.max(parseFloat(((log.water_liters || 0) * 10 - 10) / 10).toFixed(1), 0);
     const updatedLog = { ...log, water_liters: newVal };
     setLog(updatedLog);
-    _dailyCache.date = _todayKey();
-    _dailyCache.data = updatedLog;
+    setTodayLog(updatedLog);
+    flushWater(updatedLog);
+  };
+
+  // ── Book suggestions fetch ────────────────────────────────────────────────
+  useEffect(() => {
+    fetch('/.netlify/functions/daily-log?books=true')
+      .then(safeJson)
+      .then(data => { if (Array.isArray(data)) setBookSuggestions(data); })
+      .catch(() => {});
+  }, []);
+
+  // ── Book handlers ─────────────────────────────────────────────────────────
+  const saveBook = (latestLog) => {
     fetch('/.netlify/functions/daily-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedLog),
+      body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
     }).catch(() => {});
+  };
+
+  const handleBookChange = (value) => {
+    const updatedLog = { ...log, book_name: value };
+    setLog(updatedLog);
+    setTodayLog(updatedLog);
+    // No DB save on every keystroke — only on explicit save (Enter / button / dropdown select)
+    if (value.trim()) {
+      setFilteredBooks(fuzzyFilter(bookSuggestions, value));
+      setShowBookDropdown(true);
+    } else {
+      setFilteredBooks(bookSuggestions);
+      setShowBookDropdown(bookSuggestions.length > 0);
+    }
+  };
+
+  const handleBookSave = () => {
+    const updatedLog = { ...log };
+    setTodayLog(updatedLog);
+    saveBook(updatedLog);
+    setShowBookDropdown(false);
+  };
+
+  const handleBookSelect = (name) => {
+    const updatedLog = { ...log, book_name: name };
+    setLog(updatedLog);
+    setTodayLog(updatedLog);
+    saveBook(updatedLog);
+    setShowBookDropdown(false);
+  };
+
+  const handleBookFinished = () => {
+    const updatedLog = { ...log, book_finished: !log.book_finished };
+    setLog(updatedLog);
+    setTodayLog(updatedLog);
+    fetch('/.netlify/functions/daily-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),
+    }).catch(() => {});
+  };
+
+  // ── Sync handler ──────────────────────────────────────────────────────────
+  const handleSync = () => {
+    clearAllCache();
+    setSyncing(true);
+    setFetchKey(k => k + 1);
+    // Re-fetch book suggestions too
+    fetch('/.netlify/functions/daily-log?books=true')
+      .then(safeJson)
+      .then(data => { if (Array.isArray(data)) setBookSuggestions(data); })
+      .catch(() => {})
+      .finally(() => setSyncing(false));
   };
 
   // steps is an optional array — renders as a numbered list in the modal
@@ -255,10 +557,31 @@ export default function DailyTracker() {
     else setActiveDetail({ id, title, desc, steps });
   };
 
+  // Derived display values — recomputed each minute via tick state
+  const _now = new Date();
+  const _isLateNight = _now.getHours() < 5;
+  const dtWeekday = _now.toLocaleDateString('en-US', { weekday: 'long' });
+  const dtDate    = _now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const dtTime    = _now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
   return (
     <div className="section-container">
-      <h2>Daily Tracker</h2>
-      <p className="subtitle">Check off each item as you complete it. Tap ℹ for exact step-by-step instructions.</p>
+
+      {/* ── Date / Time Header ──────────────────────────── */}
+      <div className="dt-header">
+        <div className="dt-left">
+          <span className="dt-weekday">{dtWeekday}</span>
+          <span className="dt-date">{dtDate}</span>
+        </div>
+        <div className="dt-right">
+          <span className="dt-time">{dtTime}</span>
+          {_isLateNight && <span className="dt-late-tag">Logging for yesterday</span>}
+          <button className="sync-btn" onClick={handleSync} title="Sync with database" disabled={syncing}>
+            <span className={syncing ? 'sync-spinning' : ''}>↻</span>
+            {syncing ? 'Syncing…' : 'Sync'}
+          </button>
+        </div>
+      </div>
 
       {/* ── Water Card ──────────────────────────────────── */}
       <div className={`card water-card${log.water_liters >= 4 ? ' water-card-full' : ''}`}>
@@ -330,6 +653,52 @@ export default function DailyTracker() {
         </div>
       </div>
 
+      {/* ── Reading Today Card ──────────────────────────── */}
+      <div className="card reading-card">
+        <div className="reading-header" onClick={() => setReadingOpen(o => !o)} style={{ cursor: 'pointer' }}>
+          <span>📚</span>
+          <h3>Reading Today?</h3>
+          <span className="reading-toggle">{readingOpen ? '▲' : '▼'}</span>
+        </div>
+        {readingOpen && (
+          <>
+            <div className="reading-input-wrap">
+              <input
+                type="text"
+                className="reading-input"
+                placeholder="Enter book title…"
+                value={log.book_name || ''}
+                autoComplete="off"
+                onChange={e => handleBookChange(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleBookSave(); } }}
+                onFocus={() => {
+                  const val = (log.book_name || '').trim();
+                  setFilteredBooks(val ? fuzzyFilter(bookSuggestions, val) : bookSuggestions);
+                  setShowBookDropdown(bookSuggestions.length > 0);
+                }}
+                onBlur={() => setTimeout(() => setShowBookDropdown(false), 150)}
+              />
+              <button className="book-save-btn" onMouseDown={handleBookSave} title="Save book">✓</button>
+              {showBookDropdown && filteredBooks.length > 0 && (
+                <ul className="book-dropdown">
+                  {filteredBooks.map((b, i) => (
+                    <li key={i} onMouseDown={() => handleBookSelect(b)}>{b}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <label className="reading-finished">
+              <input
+                type="checkbox"
+                checked={!!log.book_finished}
+                onChange={handleBookFinished}
+              />
+              <span>Finished this book today</span>
+            </label>
+          </>
+        )}
+      </div>
+
       {/* ── Smart Suggestions Panel ─────────────────────── */}
       {(() => {
         const suggestions = getSuggestions(log);
@@ -361,6 +730,17 @@ export default function DailyTracker() {
                     <span className="suggestion-missed-tag">Missed</span>
                   )}
                 </div>
+                <button
+                  className={`info-btn suggestion-info-btn${activeDetail?.id === s.field ? ' active-info' : ''}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const info = getInfoForField(s.field, todayWorkout);
+                    if (info) showInfo(s.field, info.title, info.desc, info.steps);
+                  }}
+                  title="Show steps"
+                >
+                  {activeDetail?.id === s.field ? '✕' : 'ℹ'}
+                </button>
                 <label className="suggestion-check" title="Mark complete">
                   <input
                     type="checkbox"

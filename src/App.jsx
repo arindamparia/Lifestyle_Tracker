@@ -4,6 +4,7 @@ import MasterSchedule from './components/MasterSchedule';
 import WorkoutPlan from './components/WorkoutPlan';
 import NutritionPrep from './components/NutritionPrep';
 import HistoryLog from './components/HistoryLog';
+import AmbientSoundWidget from './components/AmbientSoundWidget';
 
 function App() {
   const [activeTab, setActiveTab] = useState('tracker');
@@ -32,6 +33,7 @@ function App() {
   }, []);
 
   return (
+    <>
     <div className="app-container">
       <nav className="tab-navigation">
         <button className={activeTab === 'tracker' ? 'active' : ''} onClick={() => setActiveTab('tracker')}>
@@ -59,6 +61,8 @@ function App() {
         {activeTab === 'history' && <HistoryLog />}
       </main>
     </div>
+    <AmbientSoundWidget />
+    </>
   );
 }
 

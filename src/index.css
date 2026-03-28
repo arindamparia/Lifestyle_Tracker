@@ -1190,6 +1190,416 @@ button:active {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* === DATE / TIME HEADER === */
+
+.dt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 14px 20px;
+  margin-bottom: 18px;
+  gap: 12px;
+}
+
+.dt-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dt-weekday {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.dt-date {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.dt-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.dt-time {
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
+  letter-spacing: 0.02em;
+}
+
+.dt-late-tag {
+  font-size: 0.72rem;
+  color: #ffa01e;
+  background: rgba(255, 160, 30, 0.12);
+  border: 1px solid rgba(255, 160, 30, 0.3);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+/* === AMBIENT SOUND WIDGET === */
+
+/* Container must NOT intercept pointer events when closed — children opt back in */
+#ambient-widget {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  pointer-events: none;
+}
+
+/* Toggle button — 44px circle, expands on hover to show label */
+#ambient-toggle {
+  pointer-events: auto;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  height: 44px !important;
+  width: 44px;
+  padding: 0 !important;           /* override global button padding: 14px 28px !important */
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.18), rgba(46, 213, 115, 0.10)) !important;
+  border: 1px solid rgba(108, 92, 231, 0.35) !important;
+  border-radius: 22px !important;
+  color: var(--text-primary) !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  letter-spacing: normal !important;
+  cursor: pointer !important;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 12px rgba(108, 92, 231, 0.15) !important;
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s, box-shadow 0.2s !important;
+}
+#ambient-toggle:hover {
+  width: 148px !important;
+  border-color: rgba(108, 92, 231, 0.55) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(108, 92, 231, 0.25) !important;
+}
+#ambient-toggle.active-glow {
+  border-color: var(--primary) !important;
+  background: rgba(108, 92, 231, 0.2) !important;
+  box-shadow: 0 0 15px rgba(108, 92, 231, 0.4) !important;
+}
+.ambient-toggle-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.1rem;
+}
+.ambient-toggle-text {
+  font-size: 0.83rem;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+#ambient-toggle:hover .ambient-toggle-text {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.05s;
+}
+
+/* Panel — opacity/transform based open/close; invisible when closed but pointer-events off */
+#ambient-panel {
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: rgba(14, 15, 20, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  min-width: 268px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+  transform-origin: bottom left;
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#ambient-panel.open {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* 3-column track grid — square buttons */
+.ambient-tracks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.ambient-btn {
+  pointer-events: auto;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  aspect-ratio: 1 / 1;
+  padding: 0 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  font-size: 1.4rem !important;
+  cursor: pointer !important;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s !important;
+  position: relative;
+  overflow: hidden;
+}
+.ambient-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Playing state — green pulse matching the spec */
+.ambient-btn.playing {
+  background: rgba(46, 213, 115, 0.15) !important;
+  border-color: var(--accent-green) !important;
+  color: var(--accent-green) !important;
+  animation: ambient-pulse 2s infinite ease-in-out !important;
+}
+@keyframes ambient-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(46, 213, 115, 0.4); }
+  70%  { box-shadow: 0 0 0 8px rgba(46, 213, 115, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(46, 213, 115, 0);   }
+}
+
+/* Loading state — spinning border */
+.ambient-btn.loading {
+  pointer-events: none !important;
+  opacity: 0.6 !important;
+}
+.ambient-btn.loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  border-top-color: var(--primary);
+  animation: ambient-spin 0.7s linear infinite;
+}
+@keyframes ambient-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ambient-volume {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ambient-mute-btn {
+  font-size: 1.05rem;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  pointer-events: auto;
+}
+#ambient-vol {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  height: 24px;
+  cursor: pointer;
+  outline: none;
+}
+#ambient-vol::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+#ambient-vol::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  margin-top: -6px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  transition: transform 0.1s;
+}
+#ambient-vol::-webkit-slider-thumb:hover { transform: scale(1.2); }
+#ambient-vol.boosted::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, rgba(108,92,231,0.5) 100%);
+}
+#ambient-vol.boosted::-webkit-slider-thumb {
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(108, 92, 231, 0.5);
+}
+.ambient-vol-label {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  min-width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ambient-vol-label.boosted { color: var(--primary); }
+
+/* ── Sync button ──────────────────────────────────────────────────────────── */
+.sync-btn {
+  padding: 6px 12px !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  min-height: unset !important;
+  height: 30px !important;
+  border-radius: 8px !important;
+  opacity: 0.75;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+.sync-btn:hover { opacity: 1; }
+.sync-btn:disabled { opacity: 0.4; cursor: not-allowed !important; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sync-spinning { display: inline-block; animation: spin 0.8s linear infinite; }
+
+/* ── Reading Today card ───────────────────────────────────────────────────── */
+.reading-card { padding: 20px 24px; }
+.reading-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+  user-select: none;
+}
+.reading-header h3 { margin: 0; font-size: 1rem; font-weight: 700; flex: 1; }
+.reading-toggle { font-size: 0.75rem; color: var(--text-secondary); }
+.reading-input-wrap { position: relative; margin-top: 14px; margin-bottom: 14px; display: flex; gap: 8px; align-items: flex-start; }
+.book-save-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+}
+.book-save-btn:hover { opacity: 0.85; }
+.reading-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+.reading-input:focus { border-color: var(--primary); }
+.reading-input::placeholder { color: var(--text-muted); }
+.book-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: #1a1c27;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  list-style: none;
+  margin: 0; padding: 4px 0;
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.book-dropdown li {
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.book-dropdown li:hover { background: rgba(108,92,231,0.2); }
+.reading-finished {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+.reading-finished input[type="checkbox"] { margin-right: 12px; }
+
+/* ── History book row ─────────────────────────────────────────────────────── */
+.history-book {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.book-finished-badge {
+  background: rgba(46,213,115,0.15);
+  color: var(--accent-green);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ── Books summary section ────────────────────────────────────────────────── */
+.books-summary {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+}
+.books-summary h3 { margin: 0 0 14px; font-size: 1rem; }
+.books-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.books-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+.book-item-name { font-size: 0.92rem; color: var(--text-primary); font-weight: 500; }
+.book-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 /* === MOBILE RESPONSIVE === */
 
 @media (max-width: 640px) {
@@ -1276,15 +1686,25 @@ button:active {
     align-self: center;
   }
 
-  /* Info button — 44×44 tap target */
+  /* Info button — 44px wide, stretches to full row height so icon is always centred */
   .info-btn {
     width: 44px !important;
-    height: 44px !important;
+    height: auto !important;        /* let align-self: stretch control height */
+    min-height: 44px !important;
     min-width: 44px !important;
     font-size: 0.8rem !important;
     flex-shrink: 0;
     align-self: stretch !important;
     border-radius: 0 12px 12px 0 !important;
+  }
+
+  /* Suggestion-panel info btn is inline — keep it circular */
+  .suggestion-info-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    border-radius: 50% !important;
+    align-self: center !important;
   }
 
   /* ── Cards ─────────────────────────────────────────────── */
@@ -1367,4 +1787,23 @@ button:active {
   /* ── Workout expand ─────────────────────────────────────── */
   .workout-step-list li { font-size: 0.85rem; }
   .workout-focus { font-size: 0.95rem; }
+
+  /* ── Date/time header ──────────────────────────────────── */
+  .dt-header { padding: 12px 14px; margin-bottom: 14px; }
+  .dt-weekday { font-size: 1rem; }
+  .dt-time { font-size: 1.1rem; }
+
+  /* ── Ambient sound widget ───────────────────────────────── */
+  /* Ambient widget — mobile: toggle stays icon-only (no hover), panel fills width */
+  #ambient-toggle { width: 44px !important; }
+  #ambient-toggle:hover { width: 44px !important; }
+  #ambient-toggle .ambient-toggle-text { display: none !important; }
+  #ambient-widget { bottom: 16px; left: 16px; }
+  #ambient-panel { width: calc(100vw - 32px); max-width: 320px; }
+
+  /* ── Reading card / book dropdown ──────────────────────── */
+  .reading-card { padding: 16px; }
+  .book-dropdown { max-height: 160px; }
+  .books-summary { padding: 16px; }
+  .books-list-item { flex-direction: column; align-items: flex-start; gap: 6px; }
 }
