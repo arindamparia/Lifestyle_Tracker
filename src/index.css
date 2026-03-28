@@ -1,0 +1,537 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
+
+:root {
+  --primary: #6C5CE7;
+  --primary-glow: rgba(108, 92, 231, 0.4);
+  --bg-color: #0b0c10;
+  --surface-color: rgba(22, 24, 33, 0.7);
+  --surface-hover: rgba(30, 33, 45, 0.9);
+  --text-primary: #f8f8fc;
+  --text-secondary: #a1a7b3;
+  --text-muted: #6b7280;
+  --border-radius: 16px;
+  --border-color: rgba(255, 255, 255, 0.06);
+  --accent-red: #ff4757;
+  --accent-green: #2ed573;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 0;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+  background-attachment: fixed;
+  transition: background-color 3s ease-in-out;
+}
+
+/* === DYNAMIC TIME THEMES (AESTHETIC COLOR THEORY) === */
+
+body.theme-morning {
+  background-color: #120e15; /* Soft ultra-dark warm violet */
+  background-image: 
+    radial-gradient(circle at top left, rgba(255, 121, 121, 0.15), transparent 700px),
+    radial-gradient(circle at bottom right, rgba(255, 187, 85, 0.10), transparent 600px);
+}
+
+body.theme-day {
+  background-color: #0a0f16; /* Deep energetic slate blue */
+  background-image: 
+    radial-gradient(circle at top center, rgba(0, 168, 255, 0.15), transparent 800px),
+    radial-gradient(circle at bottom right, rgba(136, 216, 176, 0.05), transparent 600px);
+}
+
+body.theme-evening {
+  background-color: #140a16; /* Deep dusk mulberry */
+  background-image: 
+    radial-gradient(circle at top right, rgba(189, 44, 255, 0.15), transparent 700px),
+    radial-gradient(circle at bottom left, rgba(255, 71, 87, 0.10), transparent 600px);
+}
+
+body.theme-night {
+  background-color: #07080a; /* Near pitch black for sleep and minimal eye strain */
+  background-image: 
+    radial-gradient(circle at top center, rgba(108, 92, 231, 0.12), transparent 700px),
+    radial-gradient(circle at bottom left, rgba(46, 213, 115, 0.05), transparent 600px);
+}
+
+.app-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #fff, #a1a7b3);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h3 {
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 1.3rem;
+  margin: 30px 0 15px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+h4 {
+  font-size: 1.1rem;
+  color: #fff;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+/* === NAVIGATION TABS === */
+.tab-navigation {
+  display: flex;
+  gap: 10px;
+  background: rgba(10, 11, 15, 0.8);
+  padding: 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(12px);
+  margin-bottom: 40px;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+}
+.tab-navigation::-webkit-scrollbar { display: none; }
+
+.tab-navigation button {
+  flex: 1;
+  white-space: nowrap;
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  box-shadow: none !important;
+  border-radius: 14px !important;
+  font-weight: 600 !important;
+  padding: 12px 20px !important;
+  font-size: 0.95rem;
+  transition: all 0.3s ease !important;
+}
+
+.tab-navigation button:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.tab-navigation button.active {
+  background: var(--surface-color) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* === DAILY TRACKER === */
+.grid-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* === TASK ROWS === */
+.task-row {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-color);
+  border-radius: var(--border-radius);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.task-row:hover {
+  background: var(--surface-hover);
+  transform: translateY(-2px);
+  border-color: rgba(108, 92, 231, 0.4);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* removed .task-row.expanded */
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.task-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.info-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-secondary) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  font-family: inherit !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+  flex-shrink: 0;
+}
+
+.info-btn:hover {
+  background: rgba(108, 92, 231, 0.2) !important;
+  color: var(--text-primary) !important;
+  transform: scale(1.1) !important;
+}
+
+.active-info {
+  background: var(--primary) !important;
+  color: white !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 0 10px var(--primary-glow) !important;
+}
+
+/* === DETAILED INFO MODAL === */
+.detailed-info-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.detailed-info-box {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 30px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  transform: translateY(0);
+  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.detailed-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 15px;
+}
+
+.detailed-info-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.close-btn {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  box-shadow: none !important;
+  padding: 5px 10px !important;
+  font-size: 1.2rem !important;
+}
+
+.close-btn:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.detailed-info-box h4 {
+  color: var(--text-primary);
+  margin-top: 0;
+}
+
+.detailed-info-box p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-size: 1.05rem;
+  margin-bottom: 0;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+input[type="checkbox"] {
+  appearance: none;
+  background-color: rgba(255, 255, 255, 0.05);
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  margin-right: 18px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: grid;
+  place-items: center;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+input[type="checkbox"]:checked::after {
+  content: '✓';
+  color: white;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* Base Cards */
+.card, .workout-card, .meal-step-card, .grocery-category {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  backdrop-filter: blur(10px);
+}
+
+.water-card {
+  text-align: center;
+  margin-bottom: 30px;
+  background: linear-gradient(180deg, rgba(22, 24, 33, 0.8), rgba(108, 92, 231, 0.1));
+}
+
+.water-card h3 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #fff;
+}
+
+/* === BUTTONS === */
+button {
+  background: var(--primary) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 14px 28px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 4px 15px var(--primary-glow) !important;
+}
+
+button:hover {
+  background: #7a6bed !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px var(--primary-glow) !important;
+}
+
+button:active {
+  transform: translateY(1px) !important;
+}
+
+/* === TIMELINE (Master Schedule) === */
+.timeline {
+  position: relative;
+  border-left: 2px solid rgba(108, 92, 231, 0.3);
+  margin-left: 20px;
+  padding-left: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.timeline-item {
+  position: relative;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -37px;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 4px solid var(--bg-color);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.timeline-time {
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+
+.timeline-content p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* === WORKOUT PLAN === */
+.workout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.workout-day {
+  display: inline-block;
+  background: rgba(108, 92, 231, 0.2);
+  color: #a29bfe;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.workout-details {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.rest-card {
+  background: rgba(46, 213, 115, 0.05);
+  border-color: rgba(46, 213, 115, 0.2);
+}
+.rest-card .workout-day {
+  background: rgba(46, 213, 115, 0.15);
+  color: var(--accent-green);
+}
+
+/* === NUTRITION & PREP === */
+.grocery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.grocery-category ul, .meal-step-card ul {
+  padding-left: 20px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+.grocery-category li::marker {
+  color: var(--primary);
+}
+
+.steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Scrollbar tuning */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-color); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* === HISTORY & CALENDAR LOG === */
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.history-card {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.water-badge {
+  background: rgba(66, 179, 255, 0.15);
+  color: #88c0ff;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.progress-container {
+  width: 100%;
+  margin: 10px 0;
+}
+
+.progress-bg {
+  background: rgba(255, 255, 255, 0.05);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.history-stats {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  color: #fff;
+}
+
+.history-stats .fraction {
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-left: 8px;
+}
+
+.window-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
