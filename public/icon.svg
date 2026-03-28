@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- App background -->
+  <rect width="512" height="512" rx="108" fill="#0d0e14"/>
+
+  <defs>
+    <linearGradient id="drop-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b7df8"/>
+      <stop offset="100%" stop-color="#6C5CE7"/>
+    </linearGradient>
+    <linearGradient id="wave-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0)" />
+      <stop offset="30%" stop-color="rgba(255,255,255,0.55)" />
+      <stop offset="70%" stop-color="rgba(255,255,255,0.55)" />
+      <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+    </linearGradient>
+  </defs>
+
+  <!-- Water drop body -->
+  <path d="M256 88
+           C 230 140 148 230 148 302
+           C 148 370 196 418 256 418
+           C 316 418 364 370 364 302
+           C 364 230 282 140 256 88 Z"
+        fill="url(#drop-grad)"/>
+
+  <!-- Wave highlight inside drop -->
+  <path d="M190 308 Q223 288 256 304 Q289 320 322 300"
+        stroke="url(#wave-grad)"
+        stroke-width="16"
+        fill="none"
+        stroke-linecap="round"/>
+
+  <!-- Tiny shine dot at top of drop -->
+  <ellipse cx="232" cy="200" rx="14" ry="22"
+           fill="rgba(255,255,255,0.18)"
+           transform="rotate(-20 232 200)"/>
+</svg>

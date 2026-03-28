@@ -37,8 +37,8 @@ export default function MasterSchedule() {
 
   return (
     <div className="section-container">
-      <h2>Step-by-Step Execution</h2>
-      <p className="subtitle">Follow this exact chronological order. The timing is designed to maximize absorption and fat loss.</p>
+      <h2>Master Schedule</h2>
+      <p className="subtitle">Follow this exact chronological order. Timing is designed to maximise supplement absorption and fat loss.</p>
 
       {scheduleData.map((block, idx) => (
         <div key={idx} className="schedule-block">

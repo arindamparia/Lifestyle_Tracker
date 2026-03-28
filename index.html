@@ -2,10 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!-- ── Viewport ──────────────────────────────────────────────────────── -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Body Recomposition Tracker</title>
-    <!-- Prevent black flash: set background BEFORE React hydrates -->
+
+    <!-- ── Identity ─────────────────────────────────────────────────────── -->
+    <title>LifeStyle Tracker</title>
+    <meta name="description" content="Daily habit, workout, nutrition and hydration tracker" />
+
+    <!-- ── Favicon ──────────────────────────────────────────────────────── -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+
+    <!-- ── PWA: theme & status bar ──────────────────────────────────────── -->
+    <!-- Android Chrome: tab / address bar colour -->
+    <meta name="theme-color" content="#0a0b0f" />
+
+    <!-- iOS Safari: add-to-home-screen behaviour -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Tracker" />
+
+    <!-- iOS home-screen icon (SVG is supported on iOS 14.7+) -->
+    <link rel="apple-touch-icon" href="/icon.svg" />
+
+    <!-- ── PWA: manifest (vite-plugin-pwa also injects this at build) ───── -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- ── Prevent black flash ──────────────────────────────────────────── -->
+    <!-- Sets the background BEFORE React hydrates so there is no white/black flicker -->
     <style>
       html, body { margin: 0; background-color: #07080a; }
     </style>
@@ -17,7 +41,6 @@
           h >= 9 && h < 16 ? '#0a0f16' :
           h >= 16 && h < 19 ? '#140a16' :
           '#07080a';
-        // Set on <html> immediately — body inherits it while transparent
         document.documentElement.style.backgroundColor = bg;
       })();
     </script>
