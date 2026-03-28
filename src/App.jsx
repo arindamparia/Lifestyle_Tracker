@@ -12,13 +12,17 @@ function App() {
     // Determine time of day and set the body theme efficiently
     const updateTheme = () => {
       const hour = new Date().getHours();
-      let theme = 'theme-night'; // default to night (19 to 4)
-      
-      if (hour >= 5 && hour < 9) theme = 'theme-morning';
-      else if (hour >= 9 && hour < 16) theme = 'theme-day';
-      else if (hour >= 16 && hour < 19) theme = 'theme-evening';
-      
+      let theme = 'theme-night';
+      let bg = '#07080a';
+
+      if (hour >= 5 && hour < 9)   { theme = 'theme-morning'; bg = '#120e15'; }
+      else if (hour >= 9 && hour < 16)  { theme = 'theme-day';     bg = '#0a0f16'; }
+      else if (hour >= 16 && hour < 19) { theme = 'theme-evening'; bg = '#140a16'; }
+
       document.body.className = theme;
+      // Keep <html> background in sync so the area exposed when the
+      // Android Chrome URL-bar collapses is always the correct colour.
+      document.documentElement.style.backgroundColor = bg;
     };
 
     updateTheme();

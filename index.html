@@ -3,8 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Body Recomposition Tracker</title>
+    <!-- Prevent black flash: set background BEFORE React hydrates -->
+    <style>
+      html, body { margin: 0; background-color: #07080a; }
+    </style>
+    <script>
+      (function () {
+        var h = new Date().getHours();
+        var bg =
+          h >= 5 && h < 9  ? '#120e15' :
+          h >= 9 && h < 16 ? '#0a0f16' :
+          h >= 16 && h < 19 ? '#140a16' :
+          '#07080a';
+        // Set on <html> immediately — body inherits it while transparent
+        document.documentElement.style.backgroundColor = bg;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

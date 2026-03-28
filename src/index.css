@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
 
+/* html fills the gap revealed when Android Chrome URL bar hides */
+html {
+  min-height: 100%;
+  background-color: #07080a; /* kept in sync by App.jsx inline style */
+  transition: background-color 3s ease-in-out;
+}
+
 :root {
   --primary: #6C5CE7;
   --primary-glow: rgba(108, 92, 231, 0.4);
@@ -21,11 +28,15 @@ body {
   justify-content: center;
   align-items: flex-start;
   min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport height: tracks URL-bar show/hide smoothly */
   padding: 0;
   font-family: 'Outfit', sans-serif;
   color: var(--text-primary);
-  background-attachment: fixed;
+  /* background-attachment: fixed removed — causes repaint jank on mobile scroll */
+  background-color: #07080a; /* fallback before theme class applies */
   transition: background-color 3s ease-in-out;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* === DYNAMIC TIME THEMES (AESTHETIC COLOR THEORY) === */
@@ -534,4 +545,126 @@ button:active {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* === MOBILE RESPONSIVE === */
+
+@media (max-width: 640px) {
+  .app-container {
+    padding: 16px 12px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  h2 {
+    font-size: 1.6rem;
+    letter-spacing: -0.5px;
+  }
+
+  h3 {
+    font-size: 1.05rem;
+    margin: 20px 0 10px 0;
+  }
+
+  h4 {
+    font-size: 1rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  /* Tab navigation: shrink padding so all 5 tabs fit */
+  .tab-navigation {
+    gap: 4px;
+    padding: 5px;
+    margin-bottom: 24px;
+    border-radius: 16px;
+  }
+
+  .tab-navigation button {
+    padding: 10px 6px !important;
+    font-size: 0.72rem !important;
+    border-radius: 10px !important;
+    letter-spacing: 0;
+  }
+
+  /* Task rows */
+  .task-header {
+    padding: 12px 14px;
+  }
+
+  .task-label {
+    font-size: 0.9rem;
+  }
+
+  input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+  }
+
+  /* Modals */
+  .detailed-info-box {
+    padding: 20px 16px;
+    width: 94%;
+    border-radius: 14px;
+  }
+
+  .detailed-info-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .detailed-info-box p {
+    font-size: 0.95rem;
+  }
+
+  /* Water card */
+  .water-card h3 {
+    font-size: 1.4rem;
+  }
+
+  /* Cards */
+  .card, .workout-card, .meal-step-card, .grocery-category {
+    padding: 16px;
+  }
+
+  /* Timeline */
+  .timeline {
+    margin-left: 8px;
+    padding-left: 18px;
+    gap: 20px;
+  }
+
+  .timeline-item::before {
+    left: -26px;
+    width: 10px;
+    height: 10px;
+  }
+
+  .timeline-content p {
+    font-size: 0.9rem;
+  }
+
+  /* Grids → single column on mobile */
+  .workout-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .grocery-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .history-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Info button */
+  .info-btn {
+    width: 28px !important;
+    height: 28px !important;
+  }
 }
