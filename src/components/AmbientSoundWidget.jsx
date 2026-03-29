@@ -19,19 +19,19 @@ const AUDIO_URLS = {
 
 const TRACKS = [
   // ── New tracks first (highest priority) ───────────────────────────────────
-  { key: 'healing',      emoji: '✨', label: 'Healing Sounds' },
-  { key: 'windMandir',   emoji: '🛕', label: 'Winds of the Mandir' },
-  { key: 'shivaDeep',    emoji: '🔱', label: 'Shiva — Deep Mystical' },
-  { key: 'meditation',   emoji: '🪘', label: 'Indian Meditation' },
+  { key: 'healing', emoji: '✨', label: 'Healing Sounds' },
+  { key: 'windMandir', emoji: '🛕', label: 'Winds of the Mandir' },
+  { key: 'shivaDeep', emoji: '🔱', label: 'Shiva — Deep Mystical' },
+  { key: 'meditation', emoji: '🪘', label: 'Indian Meditation' },
   { key: 'krishnaFlute', emoji: '🪈', label: 'Krishna Flute of Peace' },
   // ── Original tracks ────────────────────────────────────────────────────────
-  { key: 'rain',    emoji: '🌧️', label: 'Calming Rain' },
-  { key: 'rain2',   emoji: '🌦️', label: 'Light Rain' },
-  { key: 'ocean',   emoji: '🌊', label: 'Ocean Waves' },
-  { key: 'forest',  emoji: '🌲', label: 'Forest Ambience' },
+  { key: 'rain', emoji: '🌧️', label: 'Calming Rain' },
+  { key: 'rain2', emoji: '🌦️', label: 'Light Rain' },
+  { key: 'ocean', emoji: '🌊', label: 'Ocean Waves' },
+  { key: 'forest', emoji: '🌲', label: 'Forest Ambience' },
   { key: 'forest2', emoji: '🍃', label: 'Wind & Crickets' },
   { key: 'forest3', emoji: '🐦', label: 'Nature Birds' },
-  { key: 'river',   emoji: '🛶', label: 'River & Birds' },
+  { key: 'river', emoji: '🛶', label: 'River & Birds' },
 ];
 
 const CROSSFADE_SEC = 4.0;
@@ -58,34 +58,37 @@ function LiveBars() {
 
 export default function AmbientSoundWidget() {
   // ── UI state ──────────────────────────────────────────────────────────────
-  const [panelOpen,    setPanelOpen]    = useState(false);
-  const [isPlaying,    setIsPlaying]    = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(null);
   const [loadingTrack, setLoadingTrack] = useState(null);
-  const [isMuted,      setIsMuted]      = useState(false);
-  const [volSlider,    setVolSlider]    = useState(getSavedSlider);
+  const [isMuted, setIsMuted] = useState(false);
+  const [volSlider, setVolSlider] = useState(getSavedSlider);
 
   // ── Audio refs (no re-render needed) ─────────────────────────────────────
-  const audioA     = useRef(null);
-  const audioB     = useRef(null);
-  const audioCtx   = useRef(null);
-  const gainA      = useRef(null);
-  const gainB      = useRef(null);
+  const audioA = useRef(null);
+  const audioB = useRef(null);
+  const audioCtx = useRef(null);
+  const gainA = useRef(null);
+  const gainB = useRef(null);
   const activeDeck = useRef('A');
-  const isFading   = useRef(false);
-  const fadeRaf    = useRef(null);
+  const isFading = useRef(false);
+  const fadeRaf = useRef(null);
+
+  // Ref to hold the toggleTrack function to avoid circular dependencies
+  const toggleTrackRef = useRef(null);
 
   // DOM ref for the volume input — used to update --fill CSS var (Guide §3)
   const volInputRef = useRef(null);
 
   // Mirror state into refs so event-listener closures always read current values
-  const isPlayingRef    = useRef(false);
+  const isPlayingRef = useRef(false);
   const currentTrackRef = useRef(null);
-  const volSliderRef    = useRef(volSlider);
+  const volSliderRef = useRef(volSlider);
 
-  useEffect(() => { isPlayingRef.current    = isPlaying;    }, [isPlaying]);
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
   useEffect(() => { currentTrackRef.current = currentTrack; }, [currentTrack]);
-  useEffect(() => { volSliderRef.current    = volSlider;    }, [volSlider]);
+  useEffect(() => { volSliderRef.current = volSlider; }, [volSlider]);
 
   // ── Init --fill on mount so the track is filled from the saved position ───
   useEffect(() => {
@@ -105,7 +108,7 @@ export default function AmbientSoundWidget() {
   useEffect(() => {
     const resume = () => {
       if (audioCtx.current && audioCtx.current.state === 'suspended') {
-        audioCtx.current.resume().catch(() => {});
+        audioCtx.current.resume().catch(() => { });
       }
     };
     document.addEventListener('visibilitychange', resume);
@@ -123,13 +126,13 @@ export default function AmbientSoundWidget() {
       if (audioA.current) { audioA.current.pause(); audioA.current.src = ''; }
       if (audioB.current) { audioB.current.pause(); audioB.current.src = ''; }
       if (audioCtx.current && audioCtx.current.state !== 'closed') {
-        audioCtx.current.close().catch(() => {});
+        audioCtx.current.close().catch(() => { });
       }
       // Clear media session
       if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'none';
-        ['play','pause','nexttrack','previoustrack','seekforward','seekbackward','seekto']
-          .forEach(a => { try { navigator.mediaSession.setActionHandler(a, null); } catch {} });
+        ['play', 'pause', 'nexttrack', 'previoustrack', 'seekforward', 'seekbackward', 'seekto']
+          .forEach(a => { try { navigator.mediaSession.setActionHandler(a, null); } catch { } });
       }
     };
   }, []);
@@ -144,15 +147,17 @@ export default function AmbientSoundWidget() {
     if (!('mediaSession' in navigator)) return;
     const track = TRACKS.find(t => t.key === trackKey);
     navigator.mediaSession.metadata = new MediaMetadata({
-      title:  track?.label || 'Ambient Sound',
+      title: track?.label || 'Ambient Sound',
       artist: 'LifeStyle Tracker',
-      album:  'Calm Background Sounds',
+      album: 'Calm Background Sounds',
     });
     navigator.mediaSession.playbackState = 'playing';
+
     // Disable seek controls — ambient loops have no meaningful position
     ['seekforward', 'seekbackward', 'seekto'].forEach(a => {
-      try { navigator.mediaSession.setActionHandler(a, null); } catch {}
+      try { navigator.mediaSession.setActionHandler(a, null); } catch { }
     });
+
     // Play / Pause
     navigator.mediaSession.setActionHandler('pause', () => {
       audioA.current?.pause();
@@ -161,6 +166,7 @@ export default function AmbientSoundWidget() {
       setIsPlaying(false);
       navigator.mediaSession.playbackState = 'paused';
     });
+
     navigator.mediaSession.setActionHandler('play', () => {
       const key = currentTrackRef.current;
       if (key) {
@@ -168,48 +174,53 @@ export default function AmbientSoundWidget() {
         deck?.play().then(() => {
           setIsPlaying(true);
           navigator.mediaSession.playbackState = 'playing';
-        }).catch(() => {});
+        }).catch(() => { });
       }
     });
-    // Next / Previous cycles through ambient tracks
+
+    // Next / Previous cycles through ambient tracks using the ref
     const idx = TRACKS.findIndex(t => t.key === trackKey);
-    navigator.mediaSession.setActionHandler('nexttrack', () =>
-      toggleTrack(TRACKS[(idx + 1) % TRACKS.length].key)
-    );
-    navigator.mediaSession.setActionHandler('previoustrack', () =>
-      toggleTrack(TRACKS[(idx - 1 + TRACKS.length) % TRACKS.length].key)
-    );
-  }, [toggleTrack]);
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      if (toggleTrackRef.current) {
+        toggleTrackRef.current(TRACKS[(idx + 1) % TRACKS.length].key);
+      }
+    });
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      if (toggleTrackRef.current) {
+        toggleTrackRef.current(TRACKS[(idx - 1 + TRACKS.length) % TRACKS.length].key);
+      }
+    });
+  }, []); // Removed toggleTrack from dependencies to prevent circular initialization
 
   const doCrossfade = useCallback((fadeOutAudio, fadeInAudio) => {
     isFading.current = true;
     fadeInAudio.currentTime = 0;
 
     const fadeOutGain = gainFor(fadeOutAudio);
-    const fadeInGain  = gainFor(fadeInAudio);
+    const fadeInGain = gainFor(fadeInAudio);
     fadeInGain.gain.value = 0;
 
-    fadeInAudio.play().catch(() => {});
+    fadeInAudio.play().catch(() => { });
 
-    const duration  = CROSSFADE_SEC * 1000;
+    const duration = CROSSFADE_SEC * 1000;
     const fadeStart = performance.now();
     cancelAnimationFrame(fadeRaf.current);
 
     const tick = (now) => {
-      const ratio     = Math.min((now - fadeStart) / duration, 1);
+      const ratio = Math.min((now - fadeStart) / duration, 1);
       const targetVol = sliderToVol(volSliderRef.current);
       fadeOutGain.gain.value = Math.max(0, targetVol * (1 - ratio));
-      fadeInGain.gain.value  = targetVol * ratio;
+      fadeInGain.gain.value = targetVol * ratio;
 
       if (ratio < 1) {
         fadeRaf.current = requestAnimationFrame(tick);
       } else {
         fadeOutAudio.pause();
         fadeOutAudio.currentTime = 0;
-        fadeOutGain.gain.value   = 0;
-        fadeInGain.gain.value    = targetVol;
+        fadeOutGain.gain.value = 0;
+        fadeInGain.gain.value = targetVol;
         activeDeck.current = activeDeck.current === 'A' ? 'B' : 'A';
-        isFading.current   = false;
+        isFading.current = false;
       }
     };
     fadeRaf.current = requestAnimationFrame(tick);
@@ -222,10 +233,10 @@ export default function AmbientSoundWidget() {
 
     const makeAudio = () => {
       const a = new Audio();
-      a.preload     = 'none';
-      a.loop        = false;
+      a.preload = 'none';
+      a.loop = false;
       a.crossOrigin = 'anonymous';
-      a.volume      = 1; // GainNode controls actual level
+      a.volume = 1; // GainNode controls actual level
       return a;
     };
 
@@ -288,7 +299,7 @@ export default function AmbientSoundWidget() {
     if (audioCtx.current?.state === 'suspended') audioCtx.current.resume();
 
     cancelAnimationFrame(fadeRaf.current);
-    isFading.current   = false;
+    isFading.current = false;
     activeDeck.current = 'A';
 
     // Load new src only when track changes
@@ -318,10 +329,15 @@ export default function AmbientSoundWidget() {
       });
   }, [lazyInitDecks, attachMediaSession]);
 
+  // Update the ref whenever toggleTrack changes
+  useEffect(() => {
+    toggleTrackRef.current = toggleTrack;
+  }, [toggleTrack]);
+
   // ── Volume (Guide §3 — also updates --fill on the DOM input) ─────────────
   const handleVolChange = useCallback((e) => {
     let slider = parseFloat(e.target.value);
-    let vol    = sliderToVol(slider);
+    let vol = sliderToVol(slider);
 
     // Magnetic snap to round step
     for (const s of SNAPS) {
@@ -351,7 +367,7 @@ export default function AmbientSoundWidget() {
   }, []);
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const vol       = sliderToVol(volSlider);
+  const vol = sliderToVol(volSlider);
   const isBoosted = vol > 1;
 
   return (
@@ -370,7 +386,7 @@ export default function AmbientSoundWidget() {
                   className={[
                     'ambient-btn',
                     playing ? 'playing' : '',
-                    loading  ? 'loading'  : '',
+                    loading ? 'loading' : '',
                   ].filter(Boolean).join(' ')}
                   title={t.label}
                   onClick={() => toggleTrack(t.key)}
