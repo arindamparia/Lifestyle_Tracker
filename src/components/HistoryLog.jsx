@@ -2,26 +2,29 @@ import React, { useState, useEffect } from 'react';
 import {
   getHistoryAsArray,
   mergeHistoryRows,
-  getLatestHistoryDate,
   hasHistoryCache,
 } from '../cache';
+import { getAuthHeader, handleUnauthorized } from '../auth';
 
-export default function HistoryLog() {
+export default function HistoryLog({ syncKey = 0 }) {
   const [history, setHistory] = useState(() => getHistoryAsArray());
-  const [loading, setLoading] = useState(!hasHistoryCache());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If we have cached past days, show them immediately and fetch only newer rows.
-    // If cache is empty, fetch everything.
-    const since = hasHistoryCache() ? getLatestHistoryDate() : null;
-    const url = since
-      ? `/.netlify/functions/daily-log?history=true&since=${since}`
-      : '/.netlify/functions/daily-log?history=true';
+    // Cache is warm — read directly, no network call needed
+    if (hasHistoryCache()) {
+      setHistory(getHistoryAsArray());
+      setLoading(false);
+      return;
+    }
 
+    // Cache is stale or empty (first load / new day / after sync) — fetch all from DB
+    setLoading(true);
     const controller = new AbortController();
 
-    fetch(url, { signal: controller.signal })
+    fetch('/.netlify/functions/daily-log?history=true', { signal: controller.signal, headers: getAuthHeader() })
       .then(res => {
+        if (res.status === 401) { handleUnauthorized(); return null; }
         if (!res.ok) return null;
         const ct = res.headers.get('content-type') || '';
         if (!ct.includes('application/json')) return null;
@@ -40,12 +43,11 @@ export default function HistoryLog() {
       });
 
     return () => controller.abort();
-  }, []);
+  }, [syncKey]);
 
   const getCompletionData = (day) => {
     let completed = 0;
     let total = 0;
-    // Exclude non-task booleans: book_finished
     const excluded = new Set(['book_finished']);
     for (const key in day) {
       if (typeof day[key] === 'boolean' && !excluded.has(key)) {
@@ -60,7 +62,6 @@ export default function HistoryLog() {
     };
   };
 
-  // Books summary — all days where a book was logged
   const booksRead = history.filter(d => d.book_name);
 
   return (
@@ -105,7 +106,7 @@ export default function HistoryLog() {
                   <div key={idx} className="card history-card">
                     <div className="history-header">
                       <h3>{dateStr}</h3>
-                      <div className="water-badge">💧 {parseFloat(day.water_liters)}L</div>
+                      <div className="water-badge">💧 {Math.round(parseFloat(day.water_liters || 0))}L</div>
                     </div>
 
                     {day.book_name && (

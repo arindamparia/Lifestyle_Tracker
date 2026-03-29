@@ -276,17 +276,19 @@ export default function AmbientSoundWidget() {
           <span className="ambient-mute-btn" onClick={toggleMute} title={isMuted ? 'Unmute' : 'Mute'}>
             {isMuted ? '🔇' : '🔉'}
           </span>
-          <input
-            type="range"
-            id="ambient-vol"
-            min="0" max="1" step="0.002"
-            value={volSlider}
-            className={isBoosted ? 'boosted' : ''}
-            onChange={handleVolChange}
-          />
-          <span className={`ambient-vol-label${isBoosted ? ' boosted' : ''}`}>
-            {fmtVol(vol)}
-          </span>
+          <div className="ambient-vol-wrap">
+            <input
+              type="range"
+              id="ambient-vol"
+              min="0" max="1" step="0.002"
+              value={volSlider}
+              className={isBoosted ? 'boosted' : ''}
+              onChange={handleVolChange}
+            />
+            <span className={`ambient-vol-label${isBoosted ? ' boosted' : ''}`}>
+              {fmtVol(vol)}
+            </span>
+          </div>
         </div>
 
       </div>

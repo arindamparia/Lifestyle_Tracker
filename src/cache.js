@@ -1,5 +1,5 @@
 // Centralized module-level cache — survives tab switches (component unmount/remount)
-// but resets on full page reload. Both DailyTracker and HistoryLog share this module.
+// and page reloads (persisted to localStorage). Both DailyTracker and HistoryLog share this.
 
 // "Effective date" treats before-5-AM as still belonging to the previous calendar day.
 // Formatted in LOCAL time (not UTC) to match the user's clock.
@@ -14,8 +14,15 @@ export function getEffectiveDate() {
 
 const _todayKey = getEffectiveDate; // alias for internal use
 
+// localStorage keys
+const LS_HISTORY    = 'lt_history';
+const LS_DAILY      = 'lt_daily';
+const LS_CACHE_DATE = 'lt_cache_date';
+
+const DAILY_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 // Today's log — set by DailyTracker on every save
-const _daily = { date: null, data: null };
+const _daily = { date: null, data: null, ts: null };
 
 // History rows keyed by YYYY-MM-DD (excludes today — that always comes from _daily)
 const _historyDays = {};
@@ -24,18 +31,44 @@ const _historyDays = {};
 // When the effective date advances past 5 AM, _historyDays is stale and must be purged.
 let _cacheDate = null;
 
+// ── Hydrate from localStorage on module init ───────────────────────────────
+try {
+  const cd = localStorage.getItem(LS_CACHE_DATE);
+  if (cd) _cacheDate = cd;
+  const h = localStorage.getItem(LS_HISTORY);
+  if (h) Object.assign(_historyDays, JSON.parse(h));
+  const d = localStorage.getItem(LS_DAILY);
+  if (d) Object.assign(_daily, JSON.parse(d));
+} catch { /* ignore parse / quota errors */ }
+
+// ── Persist helpers ────────────────────────────────────────────────────────
+function _persistHistory() {
+  try { localStorage.setItem(LS_HISTORY, JSON.stringify(_historyDays)); } catch {}
+}
+function _persistDaily() {
+  try { localStorage.setItem(LS_DAILY, JSON.stringify(_daily)); } catch {}
+}
+function _persistCacheDate() {
+  try { localStorage.setItem(LS_CACHE_DATE, _cacheDate || ''); } catch {}
+}
+
 // ── Daily (today) ─────────────────────────────────────────────────────────────
 
 export function setTodayLog(data) {
   const key = _todayKey();
   _daily.date = key;
   _daily.data = data;
+  _daily.ts = Date.now();
   // Mirror into history map so HistoryLog sees today's live data immediately
   _historyDays[key] = { ...data, log_date: key };
+  _persistDaily();
+  _persistHistory();
 }
 
 export function getTodayLog() {
-  return _daily.date === _todayKey() ? _daily.data : null;
+  if (_daily.date !== _todayKey()) return null;
+  if (!_daily.ts || Date.now() - _daily.ts > DAILY_TTL_MS) return null;
+  return _daily.data;
 }
 
 // ── History (past + today mirror) ─────────────────────────────────────────────
@@ -47,6 +80,7 @@ export function mergeHistoryRows(rows) {
     // Effective date has advanced — purge all stale entries before merging fresh data
     for (const k of Object.keys(_historyDays)) delete _historyDays[k];
     _cacheDate = today;
+    _persistCacheDate();
   }
   for (const row of rows) {
     // Neon returns DATE columns as UTC ISO strings offset by the DB session timezone.
@@ -57,6 +91,7 @@ export function mergeHistoryRows(rows) {
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     _historyDays[key] = { ...row, log_date: key };
   }
+  _persistHistory();
 }
 
 /**
@@ -80,7 +115,6 @@ export function getHistoryAsArray() {
 /**
  * Returns the latest date we have cached that is NOT today,
  * or null if we have no history yet.
- * Used as the `since` param — the backend returns rows AFTER this date.
  */
 export function getLatestHistoryDate() {
   const today = _todayKey();
@@ -95,10 +129,15 @@ export function hasHistoryCache() {
   return Object.keys(_historyDays).some(k => k !== today);
 }
 
-/** Wipe all in-memory cache — forces a full DB re-fetch on next component mount. */
+/** Wipe all in-memory cache and localStorage — forces a full DB re-fetch on next component mount. */
 export function clearAllCache() {
   _daily.date = null;
   _daily.data = null;
   _cacheDate = null;
   for (const k of Object.keys(_historyDays)) delete _historyDays[k];
+  try {
+    localStorage.removeItem(LS_HISTORY);
+    localStorage.removeItem(LS_DAILY);
+    localStorage.removeItem(LS_CACHE_DATE);
+  } catch {}
 }

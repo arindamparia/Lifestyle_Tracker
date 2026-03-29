@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getTodayLog, setTodayLog, getEffectiveDate, clearAllCache } from '../cache';
+import { getTodayLog, setTodayLog, getEffectiveDate } from '../cache';
+import { getAuthHeader, handleUnauthorized } from '../auth';
 
 // Returns parsed JSON only when the response is actually JSON.
 // Guards against Vite's HTML 404 fallback in local dev (no netlify dev running).
 const safeJson = (res) => {
+  if (res.status === 401) { handleUnauthorized(); return null; }
   if (!res.ok) return null;
   const ct = res.headers.get('content-type') || '';
   if (!ct.includes('application/json')) return null;
@@ -106,7 +108,7 @@ const TASK_SCHEDULE = [
   { time: 1440, field: 'screen_curfew_followed',       emoji: '📴', label: '12:00 AM — Screen Curfew' },
 ];
 
-// Returns up to 4 suggestions:
+// Returns up to 3 suggestions:
 //   • any task whose scheduled time falls within ±30 min of now (done or not)
 //   • any task that was scheduled 30–240 min ago and is still NOT done (overdue)
 // Returns [] when nothing qualifies (panel is hidden entirely).
@@ -135,7 +137,7 @@ const getSuggestions = (log) => {
     return Math.abs(a.diff) - Math.abs(b.diff);
   });
 
-  return results.slice(0, 4);
+  return results.slice(0, 3);
 };
 
 // Info content for each task in TASK_SCHEDULE — used by the suggestion panel's ℹ buttons
@@ -367,7 +369,7 @@ const TaskRow = ({ id, label, checked, onChange, onInfoClick, isInfoActive }) =>
   </div>
 );
 
-export default function DailyTracker() {
+export default function DailyTracker({ onSync }) {
   const todayWorkout = getTodayWorkout();
 
   const BLANK_LOG = {
@@ -390,6 +392,7 @@ export default function DailyTracker() {
   const [filteredBooks, setFilteredBooks] = useState([]);
   const [showBookDropdown, setShowBookDropdown] = useState(false);
   const [readingOpen, setReadingOpen] = useState(false);
+  const [bookSaved, setBookSaved] = useState(false);
   // Re-render every minute so suggestion panel and clock recompute
   const [, setTick] = useState(0);
   // Bump to re-trigger the fetch effect (e.g. at 5 AM day boundary)
@@ -421,7 +424,7 @@ export default function DailyTracker() {
     setLog(BLANK_LOG);
 
     const controller = new AbortController();
-    fetch(`/.netlify/functions/daily-log?date=${effectiveDate}`, { signal: controller.signal })
+    fetch(`/.netlify/functions/daily-log?date=${effectiveDate}`, { signal: controller.signal, headers: getAuthHeader() })
       .then(safeJson)
       .then(data => {
         loadedForDate.current = effectiveDate;
@@ -444,7 +447,7 @@ export default function DailyTracker() {
     try {
       const res = await fetch('/.netlify/functions/daily-log', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
         body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),
       });
       if (!res.ok) console.warn('Sync skipped — function not available');
@@ -459,7 +462,7 @@ export default function DailyTracker() {
     waterSyncTimer.current = setTimeout(() => {
       fetch('/.netlify/functions/daily-log', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
         body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
       }).catch(() => {});
     }, 1000);
@@ -483,9 +486,26 @@ export default function DailyTracker() {
 
   // ── Book suggestions fetch ────────────────────────────────────────────────
   useEffect(() => {
-    fetch('/.netlify/functions/daily-log?books=true')
+    // Load from localStorage if cached within the last hour
+    try {
+      const raw = localStorage.getItem('lt_books');
+      if (raw) {
+        const { data, ts } = JSON.parse(raw);
+        if (Array.isArray(data) && Date.now() - ts < 5 * 60 * 1000) {
+          setBookSuggestions(data);
+          return;
+        }
+      }
+    } catch {}
+    // Cache miss or expired — fetch from DB
+    fetch('/.netlify/functions/daily-log?books=true', { headers: getAuthHeader() })
       .then(safeJson)
-      .then(data => { if (Array.isArray(data)) setBookSuggestions(data); })
+      .then(data => {
+        if (Array.isArray(data)) {
+          setBookSuggestions(data);
+          try { localStorage.setItem('lt_books', JSON.stringify({ data, ts: Date.now() })); } catch {}
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -493,9 +513,24 @@ export default function DailyTracker() {
   const saveBook = (latestLog) => {
     fetch('/.netlify/functions/daily-log', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
       body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
-    }).catch(() => {});
+    })
+      .then(() => {
+        // Refresh book suggestions so new title appears in dropdown immediately
+        if (latestLog.book_name && latestLog.book_name.trim()) {
+          fetch('/.netlify/functions/daily-log?books=true', { headers: getAuthHeader() })
+            .then(safeJson)
+            .then(data => {
+              if (Array.isArray(data)) {
+                setBookSuggestions(data);
+                try { localStorage.setItem('lt_books', JSON.stringify({ data, ts: Date.now() })); } catch {}
+              }
+            })
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
   };
 
   const handleBookChange = (value) => {
@@ -517,6 +552,8 @@ export default function DailyTracker() {
     setTodayLog(updatedLog);
     saveBook(updatedLog);
     setShowBookDropdown(false);
+    setBookSaved(true);
+    setTimeout(() => setBookSaved(false), 2500);
   };
 
   const handleBookSelect = (name) => {
@@ -533,22 +570,28 @@ export default function DailyTracker() {
     setTodayLog(updatedLog);
     fetch('/.netlify/functions/daily-log', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
       body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),
     }).catch(() => {});
   };
 
   // ── Sync handler ──────────────────────────────────────────────────────────
   const handleSync = () => {
-    clearAllCache();
     setSyncing(true);
     setFetchKey(k => k + 1);
-    // Re-fetch book suggestions too
-    fetch('/.netlify/functions/daily-log?books=true')
+    // Re-fetch book suggestions from books table
+    fetch('/.netlify/functions/daily-log?books=true', { headers: getAuthHeader() })
       .then(safeJson)
-      .then(data => { if (Array.isArray(data)) setBookSuggestions(data); })
+      .then(data => {
+        if (Array.isArray(data)) {
+          setBookSuggestions(data);
+          try { localStorage.setItem('lt_books', JSON.stringify({ data, ts: Date.now() })); } catch {}
+        }
+      })
       .catch(() => {})
       .finally(() => setSyncing(false));
+    // Notify App to clear cache + bump syncKey so HistoryLog also re-fetches all
+    if (onSync) onSync();
   };
 
   // steps is an optional array — renders as a numbered list in the modal
@@ -621,7 +664,7 @@ export default function DailyTracker() {
           <div className="water-right-panel">
             <div className="water-stat-block">
               <div className="water-liters-num">
-                {log.water_liters}
+                {Math.round(parseFloat(log.water_liters || 0))}
                 <span className="water-of-goal"> / 4L</span>
                 {log.water_liters >= 4 && (
                   <span className="water-goal-badge">✓ Goal Complete</span>
@@ -652,6 +695,9 @@ export default function DailyTracker() {
 
         </div>
       </div>
+
+      {/* ── Book saved toast ────────────────────────────── */}
+      {bookSaved && <div className="book-toast">📚 Book saved!</div>}
 
       {/* ── Reading Today Card ──────────────────────────── */}
       <div className="card reading-card">

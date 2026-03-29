@@ -5,9 +5,19 @@ import WorkoutPlan from './components/WorkoutPlan';
 import NutritionPrep from './components/NutritionPrep';
 import HistoryLog from './components/HistoryLog';
 import AmbientSoundWidget from './components/AmbientSoundWidget';
+import PasswordGate from './components/PasswordGate';
+import { getToken } from './auth';
+import { clearAllCache } from './cache';
 
 function App() {
+  const [authed, setAuthed] = useState(!!getToken());
   const [activeTab, setActiveTab] = useState('tracker');
+  const [syncKey, setSyncKey] = useState(0);
+
+  const handleGlobalSync = () => {
+    clearAllCache();
+    setSyncKey(k => k + 1);
+  };
 
   useEffect(() => {
     // Determine time of day and set the body theme efficiently
@@ -32,6 +42,8 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  if (!authed) return <PasswordGate onAuth={() => setAuthed(true)} />;
+
   return (
     <>
     <div className="app-container">
@@ -54,11 +66,11 @@ function App() {
       </nav>
 
       <main className="tab-content window-fade-in">
-        {activeTab === 'tracker' && <DailyTracker />}
+        {activeTab === 'tracker' && <DailyTracker onSync={handleGlobalSync} syncKey={syncKey} />}
         {activeTab === 'schedule' && <MasterSchedule />}
         {activeTab === 'workout' && <WorkoutPlan />}
         {activeTab === 'nutrition' && <NutritionPrep />}
-        {activeTab === 'history' && <HistoryLog />}
+        {activeTab === 'history' && <HistoryLog syncKey={syncKey} />}
       </main>
     </div>
     <AmbientSoundWidget />

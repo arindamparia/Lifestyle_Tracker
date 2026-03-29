@@ -1,10 +1,27 @@
 import { neon } from '@neondatabase/serverless';
+import crypto from 'crypto';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Content-Type': 'application/json',
+  'Cache-Control': 'no-store',
 };
+
+function verifyToken(token) {
+  if (!token) return false;
+  const parts = token.split('.');
+  if (parts.length !== 2) return false;
+  const [payload, sig] = parts;
+  const secret = process.env.APP_SECRET;
+  if (!secret) return false;
+  const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+  try {
+    if (!crypto.timingSafeEqual(Buffer.from(sig, 'base64url'), Buffer.from(expected, 'base64url'))) return false;
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
+    return data.exp > Date.now();
+  } catch { return false; }
+}
 
 export const handler = async (event) => {
   // Handle CORS preflight
@@ -12,53 +29,63 @@ export const handler = async (event) => {
     return { statusCode: 204, headers: CORS_HEADERS, body: '' };
   }
 
+  // Verify auth token
+  const auth = event.headers['authorization'] || event.headers['Authorization'] || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!verifyToken(token)) {
+    return { statusCode: 401, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Unauthorized' }) };
+  }
+
   const sql = neon(process.env.DATABASE_URL);
 
-  // Auto-create table on first use (idempotent)
-  await sql`
-    CREATE TABLE IF NOT EXISTS daily_recomposition_log (
-      id                        SERIAL PRIMARY KEY,
-      log_date                  DATE UNIQUE NOT NULL DEFAULT CURRENT_DATE,
-      water_liters              DECIMAL(3,1) DEFAULT 0,
-      shilajit_taken            BOOLEAN DEFAULT FALSE,
-      creatine_taken            BOOLEAN DEFAULT FALSE,
-      isabgul_taken             BOOLEAN DEFAULT FALSE,
-      acv_taken                 BOOLEAN DEFAULT FALSE,
-      multivitamin_taken        BOOLEAN DEFAULT FALSE,
-      omega3_taken              BOOLEAN DEFAULT FALSE,
-      whey_protein_taken        BOOLEAN DEFAULT FALSE,
-      breakfast_logged          BOOLEAN DEFAULT FALSE,
-      lunch_logged              BOOLEAN DEFAULT FALSE,
-      afternoon_snack_logged    BOOLEAN DEFAULT FALSE,
-      dinner_logged             BOOLEAN DEFAULT FALSE,
-      scheduled_workout_completed   BOOLEAN DEFAULT FALSE,
-      post_dinner_walk_completed    BOOLEAN DEFAULT FALSE,
-      kegels_completed              BOOLEAN DEFAULT FALSE,
-      glute_bridges_completed       BOOLEAN DEFAULT FALSE,
-      morning_meditation_completed  BOOLEAN DEFAULT FALSE,
-      night_meditation_completed    BOOLEAN DEFAULT FALSE,
-      doorway_stretches_done        BOOLEAN DEFAULT FALSE,
-      rule_50_10_followed           BOOLEAN DEFAULT FALSE,
-      hydration_cutoff_followed     BOOLEAN DEFAULT FALSE,
-      screen_curfew_followed        BOOLEAN DEFAULT FALSE,
-      sleep_logged                  BOOLEAN DEFAULT FALSE
-    )
-  `;
-
-  // Add book columns if they don't exist yet (safe to run every request)
-  await sql`ALTER TABLE daily_recomposition_log ADD COLUMN IF NOT EXISTS book_name TEXT DEFAULT NULL`;
-  await sql`ALTER TABLE daily_recomposition_log ADD COLUMN IF NOT EXISTS book_finished BOOLEAN DEFAULT FALSE`;
-
-  // Books table — one row per unique book title
-  await sql`
-    CREATE TABLE IF NOT EXISTS books (
-      id            SERIAL PRIMARY KEY,
-      title         TEXT UNIQUE NOT NULL,
-      started_date  DATE NOT NULL,
-      finished_date DATE DEFAULT NULL,
-      created_at    TIMESTAMPTZ DEFAULT NOW()
-    )
-  `;
+  // Auto-create tables (wrapped in try-catch to survive concurrent cold-start race conditions —
+  // PostgreSQL can throw a unique violation on pg_class even with IF NOT EXISTS when two
+  // requests execute the same DDL simultaneously; tables will already exist in that case).
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS daily_recomposition_log (
+        id                        SERIAL PRIMARY KEY,
+        log_date                  DATE UNIQUE NOT NULL DEFAULT CURRENT_DATE,
+        water_liters              DECIMAL(3,1) DEFAULT 0,
+        shilajit_taken            BOOLEAN DEFAULT FALSE,
+        creatine_taken            BOOLEAN DEFAULT FALSE,
+        isabgul_taken             BOOLEAN DEFAULT FALSE,
+        acv_taken                 BOOLEAN DEFAULT FALSE,
+        multivitamin_taken        BOOLEAN DEFAULT FALSE,
+        omega3_taken              BOOLEAN DEFAULT FALSE,
+        whey_protein_taken        BOOLEAN DEFAULT FALSE,
+        breakfast_logged          BOOLEAN DEFAULT FALSE,
+        lunch_logged              BOOLEAN DEFAULT FALSE,
+        afternoon_snack_logged    BOOLEAN DEFAULT FALSE,
+        dinner_logged             BOOLEAN DEFAULT FALSE,
+        scheduled_workout_completed   BOOLEAN DEFAULT FALSE,
+        post_dinner_walk_completed    BOOLEAN DEFAULT FALSE,
+        kegels_completed              BOOLEAN DEFAULT FALSE,
+        glute_bridges_completed       BOOLEAN DEFAULT FALSE,
+        morning_meditation_completed  BOOLEAN DEFAULT FALSE,
+        night_meditation_completed    BOOLEAN DEFAULT FALSE,
+        doorway_stretches_done        BOOLEAN DEFAULT FALSE,
+        rule_50_10_followed           BOOLEAN DEFAULT FALSE,
+        hydration_cutoff_followed     BOOLEAN DEFAULT FALSE,
+        screen_curfew_followed        BOOLEAN DEFAULT FALSE,
+        sleep_logged                  BOOLEAN DEFAULT FALSE
+      )
+    `;
+    await sql`ALTER TABLE daily_recomposition_log ADD COLUMN IF NOT EXISTS book_name TEXT DEFAULT NULL`;
+    await sql`ALTER TABLE daily_recomposition_log ADD COLUMN IF NOT EXISTS book_finished BOOLEAN DEFAULT FALSE`;
+    await sql`
+      CREATE TABLE IF NOT EXISTS books (
+        id            SERIAL PRIMARY KEY,
+        title         TEXT UNIQUE NOT NULL,
+        started_date  DATE NOT NULL,
+        finished_date DATE DEFAULT NULL,
+        created_at    TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
+  } catch (e) {
+    // Ignore race-condition duplicates; re-throw anything unexpected
+    if (!e.message?.includes('already exists') && !e.message?.includes('duplicate key')) throw e;
+  }
 
   if (event.httpMethod === 'GET') {
     try {

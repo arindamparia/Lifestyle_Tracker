@@ -13,6 +13,11 @@
     <!-- ── Favicon ──────────────────────────────────────────────────────── -->
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
 
+    <!-- ── Fonts (Syne + JetBrains Mono — used by PWA banner) ──────────── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
     <!-- ── PWA: theme & status bar ──────────────────────────────────────── -->
     <!-- Android Chrome: tab / address bar colour -->
     <meta name="theme-color" content="#0a0b0f" />
@@ -27,6 +32,16 @@
 
     <!-- ── PWA: manifest (vite-plugin-pwa also injects this at build) ───── -->
     <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- ── SW: reload page when a new service worker takes control ─────── -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        var _swReloading = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (!_swReloading) { _swReloading = true; window.location.reload(); }
+        });
+      }
+    </script>
 
     <!-- ── Prevent black flash ──────────────────────────────────────────── -->
     <!-- Sets the background BEFORE React hydrates so there is no white/black flicker -->

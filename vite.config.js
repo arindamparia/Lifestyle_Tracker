@@ -83,7 +83,7 @@ export default defineConfig({
 
       // Enable SW in dev mode so you can test offline behaviour locally
       devOptions: {
-        enabled: false  // flip to true when you want to test SW locally
+        enabled: true
       }
     })
   ]

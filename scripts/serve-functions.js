@@ -34,6 +34,7 @@ if (existsSync(envFile)) {
 // ── Function registry: add more functions here if needed ─────────────────────
 const FUNCTIONS = {
   'daily-log': resolve(ROOT, 'netlify/functions/daily-log.js'),
+  'auth':      resolve(ROOT, 'netlify/functions/auth.js'),
 };
 
 // ── HTTP server ──────────────────────────────────────────────────────────────
@@ -42,7 +43,7 @@ const server = http.createServer(async (req, res) => {
 
   // CORS — allow Vite dev server to call us
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Content-Type', 'application/json');
 
   if (req.method === 'OPTIONS') {

@@ -1321,12 +1321,12 @@ button:active {
   pointer-events: none;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   background: rgba(14, 15, 20, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  padding: 16px;
-  min-width: 268px;
+  padding: 12px;
+  width: 196px;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
@@ -1340,26 +1340,30 @@ button:active {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
+#ambient-panel.open .ambient-btn,
+#ambient-panel.open .ambient-mute-btn {
+  pointer-events: auto;
+}
 
-/* 3-column track grid — square buttons */
+/* 3-column track grid — compact square buttons (52px each) */
 .ambient-tracks {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, 52px);
+  gap: 6px;
 }
 
 .ambient-btn {
-  pointer-events: auto;
+  pointer-events: none;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 100% !important;
-  aspect-ratio: 1 / 1;
+  width: 52px !important;
+  height: 52px !important;
   padding: 0 !important;
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 12px !important;
-  font-size: 1.4rem !important;
+  border-radius: 10px !important;
+  font-size: 1.15rem !important;
   cursor: pointer !important;
   transition: background 0.2s, border-color 0.2s, transform 0.15s !important;
   position: relative;
@@ -1370,17 +1374,32 @@ button:active {
   transform: translateY(-2px) !important;
 }
 
-/* Playing state — green pulse matching the spec */
+/* Playing state — sound-wave rings */
 .ambient-btn.playing {
-  background: rgba(46, 213, 115, 0.15) !important;
+  background: rgba(46, 213, 115, 0.12) !important;
   border-color: var(--accent-green) !important;
   color: var(--accent-green) !important;
-  animation: ambient-pulse 2s infinite ease-in-out !important;
 }
-@keyframes ambient-pulse {
-  0%   { box-shadow: 0 0 0 0   rgba(46, 213, 115, 0.4); }
-  70%  { box-shadow: 0 0 0 8px rgba(46, 213, 115, 0);   }
-  100% { box-shadow: 0 0 0 0   rgba(46, 213, 115, 0);   }
+.ambient-btn.playing::before,
+.ambient-btn.playing::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(46, 213, 115, 0.7);
+  transform: translate(-50%, -50%);
+  animation: sound-ring 1.6s ease-out infinite;
+  pointer-events: none;
+}
+.ambient-btn.playing::after {
+  animation-delay: 0.8s;
+}
+@keyframes sound-ring {
+  0%   { width: 16px;  height: 16px;  opacity: 0.8; }
+  100% { width: 52px;  height: 52px;  opacity: 0;   }
 }
 
 /* Loading state — spinning border */
@@ -1404,17 +1423,24 @@ button:active {
 .ambient-volume {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+}
+.ambient-vol-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 .ambient-mute-btn {
   font-size: 1.05rem;
   cursor: pointer;
   user-select: none;
   flex-shrink: 0;
-  pointer-events: auto;
+  pointer-events: none;
 }
 #ambient-vol {
-  flex: 1;
+  width: 100%;
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
@@ -1449,8 +1475,7 @@ button:active {
 .ambient-vol-label {
   font-size: 0.72rem;
   color: var(--text-secondary);
-  min-width: 28px;
-  text-align: right;
+  text-align: center;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
@@ -1598,6 +1623,78 @@ button:active {
   gap: 8px;
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+
+/* === PASSWORD GATE === */
+.password-gate {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #07080a;
+  z-index: 9999;
+}
+.password-gate-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+.password-gate-icon { font-size: 2.4rem; margin-bottom: 12px; }
+.password-gate-title { font-size: 1.3rem; font-weight: 700; margin: 0 0 24px; }
+.password-gate-form { display: flex; flex-direction: column; gap: 12px; }
+.password-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  text-align: center;
+  letter-spacing: 0.15em;
+}
+.password-input:focus { outline: none; border-color: var(--primary); }
+.password-error { color: #f87171; font-size: 0.85rem; margin: 0; }
+.password-btn {
+  padding: 12px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.password-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.password-btn:not(:disabled):hover { opacity: 0.85; }
+
+/* === BOOK SAVED TOAST === */
+.book-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  z-index: 1000;
+  pointer-events: none;
+  animation: toast-in 0.2s ease;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* === MOBILE RESPONSIVE === */
@@ -1799,7 +1896,7 @@ button:active {
   #ambient-toggle:hover { width: 44px !important; }
   #ambient-toggle .ambient-toggle-text { display: none !important; }
   #ambient-widget { bottom: 16px; left: 16px; }
-  #ambient-panel { width: calc(100vw - 32px); max-width: 320px; }
+  #ambient-panel { width: 196px; }
 
   /* ── Reading card / book dropdown ──────────────────────── */
   .reading-card { padding: 16px; }
@@ -1807,3 +1904,142 @@ button:active {
   .books-summary { padding: 16px; }
   .books-list-item { flex-direction: column; align-items: flex-start; gap: 6px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PWA Install Banner  (design system: Syne + JetBrains Mono)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.pwa-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  /* surface-blur from design system */
+  background: rgba(10, 10, 15, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  /* glow border — accent at 30% opacity */
+  border-top: 1px solid rgba(124, 106, 247, 0.30);
+  box-shadow:
+    0 -2px 0 0 rgba(124, 106, 247, 0.18),
+    0 -8px 40px rgba(0, 0, 0, 0.65);
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pwa-banner--in  { transform: translateY(0); transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.pwa-banner--out { transform: translateY(110%); transition: transform 0.28s ease-in; }
+
+/* App icon */
+.pwa-banner__icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(124, 106, 247, 0.25);
+  box-shadow: 0 0 12px rgba(124, 106, 247, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pwa-banner__icon svg { display: block; }
+
+/* Text body */
+.pwa-banner__body {
+  flex: 1;
+  min-width: 0;
+}
+.pwa-banner__title {
+  /* Syne — display heading */
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #e8e8f0;
+  margin-bottom: 3px;
+  /* subtle gradient text */
+  background: linear-gradient(135deg, #e8e8f0 60%, #9180ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.pwa-banner__sub {
+  /* JetBrains Mono — metadata / instruction */
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #9898b0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.pwa-banner__sub b {
+  color: #e8e8f0;
+  font-weight: 600;
+}
+
+/* iOS share icon */
+.pwa-share-icon {
+  width: 13px;
+  height: 13px;
+  vertical-align: middle;
+  color: #7c6af7;
+  flex-shrink: 0;
+}
+
+/* Action buttons column */
+.pwa-banner__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+/* Install — primary CTA (btn-add from spec) */
+.pwa-banner__install {
+  padding: 8px 18px;
+  background: #7c6af7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.pwa-banner__install:hover  { background: #9180ff; transform: translateY(-1px); }
+.pwa-banner__install:active { transform: scale(0.97); }
+
+/* Dismiss — secondary (btn-secondary from spec) */
+.pwa-banner__dismiss {
+  padding: 6px 12px;
+  background: transparent;
+  color: #6b6b85;
+  border: 1px solid #2a2a38;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s, transform 0.2s;
+}
+.pwa-banner__dismiss:hover {
+  color: #9898b0;
+  border-color: #363648;
+  transform: translateY(-1px);
+}
+.pwa-banner__dismiss:active { transform: scale(0.97); }
