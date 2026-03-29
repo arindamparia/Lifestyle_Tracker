@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getTodayLog, setTodayLog, getEffectiveDate } from '../cache';
 import { getAuthHeader, handleUnauthorized } from '../auth';
-import { scheduleNotifications, requestNotificationPermission, clearNotificationTimers } from '../notifications';
+import { scheduleNotifications, clearNotificationTimers } from '../notifications';
 
 // Returns parsed JSON only when the response is actually JSON.
 // Guards against Vite's HTML 404 fallback in local dev (no netlify dev running).
@@ -91,7 +91,7 @@ const getTodayWorkout = () => {
 // Each task with its scheduled minute-of-day (0 = midnight, 450 = 7:30 AM…)
 // Used to compute the ±30-min window and the 4-hour overdue check.
 const TASK_SCHEDULE = [
-  { time: 450,  field: 'shilajit_taken',              emoji: '🧪', label: '7:30 AM — Shilajit & Creatine' },
+  { time: 450,  field: 'shilajit_taken',              emoji: '🧪', label: '7:30 AM — Shilajit (empty stomach)' },
   { time: 465,  field: 'morning_meditation_completed', emoji: '🧘', label: '7:45 AM — Meditation (20 min)' },
   { time: 495,  field: 'isabgul_taken',                emoji: '🌾', label: '8:15 AM — Isabgul Husk' },
   { time: 510,  field: 'breakfast_logged',             emoji: '🍳', label: '8:30 AM — Breakfast' },
@@ -102,7 +102,7 @@ const TASK_SCHEDULE = [
   { time: 825,  field: 'multivitamin_taken',           emoji: '💊', label: '1:45 PM — Supplements' },
   { time: 960,  field: 'afternoon_snack_logged',       emoji: '☕', label: '4:00 PM — Energy Snack' },
   { time: 1140, field: 'scheduled_workout_completed',  emoji: '🏋️', label: '7:00 PM — Workout' },
-  { time: 1200, field: 'whey_protein_taken',           emoji: '🥛', label: '8:00 PM — Whey Protein' },
+  { time: 1200, field: 'whey_protein_taken',           emoji: '🥛', label: '8:00 PM — Whey + Creatine (post-workout)' },
   { time: 1230, field: 'dinner_logged',                emoji: '🍽️', label: '8:30 PM — Dinner' },
   { time: 1235, field: 'ashwagandha_taken',            emoji: '🌿', label: '8:35 PM — Ashwagandha' },
   { time: 1275, field: 'post_dinner_walk_completed',   emoji: '🚶', label: '9:15 PM — Post-Dinner Walk' },
@@ -145,14 +145,15 @@ const getSuggestions = (log) => {
 // Info content for each task in TASK_SCHEDULE — used by the suggestion panel's ℹ buttons
 const TASK_INFO_MAP = {
   shilajit_taken: {
-    title: '🧪 Shilajit & Creatine',
-    desc: 'Take both supplements separately — do NOT mix them in the same glass. Shilajit\'s fulvic acid can react with creatine and reduce its stability.',
+    title: '🧪 Shilajit',
+    desc: 'Take on a completely empty stomach in the morning. Empty stomach maximises fulvic acid absorption into the bloodstream.',
     steps: [
-      'Glass 1 — Shilajit: Pour 250 ml of warm (not boiling, not hot) water. Dissolve a pea-sized piece of Shilajit resin by stirring for 30 seconds. Drink this first, on a completely empty stomach.',
-      'Glass 2 — Creatine: Pour a fresh 250 ml of cool or room-temperature water. Add exactly 5 g (1 level teaspoon) of Creatine Monohydrate and stir until fully dissolved. Drink this immediately after the Shilajit glass.',
-      'Why separate: Shilajit contains fulvic acid and humic compounds that can bind to creatine in solution and reduce its effectiveness. Two separate glasses fixes this.',
-      'Why warm water for Shilajit: it dissolves the resin fully and improves bioavailability. Creatine does not need warm water.',
-      'Both supplements work best on an empty stomach — do not eat for at least 20 minutes after taking them.',
+      'Pour 250 ml of warm (not boiling) water into a glass.',
+      'Dissolve a pea-sized piece of Shilajit resin by stirring for 30 seconds.',
+      'Drink immediately — on a completely empty stomach, before food or coffee.',
+      'Wait at least 20 minutes before eating breakfast.',
+      'Why warm water: it dissolves the resin fully and improves bioavailability compared to cold water.',
+      'Why morning: Shilajit boosts mitochondrial energy production and sets a positive metabolic tone for the day.',
     ],
   },
   morning_meditation_completed: {
@@ -258,15 +259,16 @@ const TASK_INFO_MAP = {
     ],
   },
   whey_protein_taken: {
-    title: '🥛 Post-Workout Whey Protein',
-    desc: 'The anabolic window: consume within 45 minutes of finishing your workout.',
+    title: '🥛 Post-Workout Whey + Creatine',
+    desc: 'Take both within 45 minutes of finishing your workout. Post-workout is the scientifically optimal window for creatine uptake — muscles are primed to absorb nutrients.',
     steps: [
       'Measure 1 level scoop of Whey Protein Concentrate or Isolate.',
       'Add 250–300 ml of cold water to a shaker bottle.',
-      'Add the protein powder, seal, and shake vigorously for 10 seconds.',
-      'Drink immediately. Do not let it sit — it becomes lumpy.',
-      'Use water, not milk. Milk slows absorption; water is faster post-workout.',
-      'On Sunday (rest day): do NOT skip your shake. Muscle protein synthesis peaks 24–48 hours after training — Sunday is exactly when your muscles are repairing from Saturday\'s burnout session. Rest day protein is equally important.',
+      'Add the protein powder AND exactly 5 g (1 level teaspoon) of Creatine Monohydrate.',
+      'Seal the shaker and shake vigorously for 10–15 seconds until fully dissolved.',
+      'Drink immediately. Do not let it sit — protein becomes lumpy and creatine loses potency.',
+      'Why post-workout creatine: insulin sensitivity is elevated post-exercise, driving creatine into muscle cells more efficiently than at any other time of day.',
+      'On Sunday (rest day): still take both — muscle protein synthesis peaks 24–48 hours after Saturday\'s burnout. Rest day protein and creatine are equally important.',
     ],
   },
   dinner_logged: {
@@ -409,12 +411,10 @@ export default function DailyTracker({ onSync }) {
   const [showBookDropdown, setShowBookDropdown] = useState(false);
   const [readingOpen, setReadingOpen] = useState(false);
   const [bookSaved, setBookSaved] = useState(false);
-  // Weight card
-  const [weightOpen, setWeightOpen] = useState(false);
-  // Notifications permission banner
-  const [notifDismissed, setNotifDismissed] = useState(
-    () => localStorage.getItem('lt_notif_dismissed') === '1'
-  );
+  // Weight card — controlled input with explicit submit
+  const [weightInput, setWeightInput] = useState('');
+  const [weightSaved, setWeightSaved] = useState(false);
+  const savedWeightRef = useRef(null); // last value confirmed in DB
   // Re-render every minute so suggestion panel and clock recompute
   const [, setTick] = useState(0);
   // Bump to re-trigger the fetch effect (e.g. at 5 AM day boundary)
@@ -470,6 +470,14 @@ export default function DailyTracker({ onSync }) {
     return () => controller.abort();
   }, [fetchKey]);
 
+  // Sync weightInput when log loads/reloads from DB (only if different from what we have)
+  useEffect(() => {
+    if (log.weight_kg != null && log.weight_kg !== savedWeightRef.current) {
+      savedWeightRef.current = log.weight_kg;
+      setWeightInput(String(log.weight_kg));
+    }
+  }, [log.weight_kg]);
+
   // Show a "Sync failed" toast for 5 seconds
   const showSyncFail = () => {
     setSyncFailed(true);
@@ -505,32 +513,30 @@ export default function DailyTracker({ onSync }) {
     }, 1000);
   };
 
-  // Debounce weight saves
-  const flushWeight = (latestLog) => {
-    clearTimeout(weightSyncTimer.current);
-    weightSyncTimer.current = setTimeout(() => {
-      fetch('/.netlify/functions/daily-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-        body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
-      }).catch(() => showSyncFail());
-    }, 1000);
-  };
+  // Explicit weight save — only calls DB if value actually changed
+  const handleWeightSave = async () => {
+    const parsed = parseFloat(weightInput);
+    if (isNaN(parsed) || parsed <= 0) return;          // invalid — skip
+    if (parsed === savedWeightRef.current) return;      // unchanged — skip DB call
 
-  const handleWeightChange = (value) => {
-    const parsed = value === '' ? null : parseFloat(value);
-    const updatedLog = { ...log, weight_kg: (isNaN(parsed) ? null : parsed) };
+    savedWeightRef.current = parsed;
+    const updatedLog = { ...log, weight_kg: parsed };
     setLog(updatedLog);
     setTodayLog(updatedLog);
-    flushWeight(updatedLog);
-  };
 
-  const handleEnableNotifications = async () => {
-    const result = await requestNotificationPermission();
-    if (result === 'granted') scheduleNotifications(log);
-    else {
-      localStorage.setItem('lt_notif_dismissed', '1');
-      setNotifDismissed(true);
+    // Flash saved indicator
+    setWeightSaved(true);
+    setTimeout(() => setWeightSaved(false), 2000);
+
+    try {
+      const res = await fetch('/.netlify/functions/daily-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),
+      });
+      if (!res.ok) showSyncFail();
+    } catch {
+      showSyncFail();
     }
   };
 
@@ -770,45 +776,30 @@ export default function DailyTracker({ onSync }) {
       {/* ── Book saved toast ────────────────────────────── */}
       {bookSaved && <div className="book-toast">📚 Book saved!</div>}
 
-      {/* ── Notification permission banner ──────────────── */}
-      {typeof Notification !== 'undefined' &&
-        Notification.permission === 'default' &&
-        !notifDismissed && (
-        <div className="notif-permission-bar">
-          <span>🔔 Get reminders for scheduled tasks</span>
-          <button className="notif-enable-btn" onClick={handleEnableNotifications}>Enable</button>
-          <button className="notif-close-btn" onClick={() => {
-            localStorage.setItem('lt_notif_dismissed', '1');
-            setNotifDismissed(true);
-          }}>✕</button>
-        </div>
-      )}
-
       {/* ── Weight Card ─────────────────────────────────── */}
-      <div className="card weight-card">
-        <div className="weight-header" onClick={() => setWeightOpen(o => !o)}>
-          <span>⚖️</span>
-          <h3>Body Weight</h3>
-          {log.weight_kg != null && (
-            <span className="weight-current-badge">{log.weight_kg} kg</span>
-          )}
-          <span className="weight-toggle">{weightOpen ? '▲' : '▼'}</span>
-        </div>
-        {weightOpen && (
-          <div className="weight-input-row">
-            <input
-              type="number"
-              className="weight-input"
-              placeholder="e.g. 75.5"
-              step="0.1"
-              min="30"
-              max="300"
-              value={log.weight_kg ?? ''}
-              onChange={e => handleWeightChange(e.target.value)}
-            />
-            <span className="weight-unit">kg</span>
-          </div>
-        )}
+      <div className="card weight-card-inline">
+        <span className="weight-card-icon">⚖️</span>
+        <span className="weight-card-label">Body Weight</span>
+        {weightSaved && <span className="weight-saved-badge">✓ Saved</span>}
+        <input
+          type="number"
+          className="weight-input"
+          placeholder="-- kg"
+          step="0.1"
+          min="30"
+          max="300"
+          value={weightInput}
+          onChange={e => setWeightInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleWeightSave(); } }}
+        />
+        <span className="weight-unit">kg</span>
+        <button
+          className={`weight-submit-btn${weightSaved ? ' weight-submit-btn--saved' : ''}`}
+          onClick={handleWeightSave}
+          title="Save weight"
+        >
+          ✓
+        </button>
       </div>
 
       {/* ── Reading Today Card ──────────────────────────── */}
@@ -918,16 +909,17 @@ export default function DailyTracker({ onSync }) {
         <h3>🌅 Morning Launch (7:30 AM – 9:00 AM)</h3>
 
         <TaskRow
-          id="shilajit_taken" label="🧪 7:30 AM — Shilajit & Creatine"
+          id="shilajit_taken" label="🧪 7:30 AM — Shilajit (empty stomach)"
           checked={log.shilajit_taken} onChange={handleToggle}
-          onInfoClick={() => showInfo('shilajit_taken', '🧪 Shilajit & Creatine',
-            'Take both supplements in warm water immediately after waking — before food or coffee.',
+          onInfoClick={() => showInfo('shilajit_taken', '🧪 Shilajit',
+            'Take on a completely empty stomach in the morning before food or coffee.',
             [
-              'Pour 500 ml of warm (not boiling) water into a glass.',
+              'Pour 250 ml of warm (not boiling) water into a glass.',
               'Dissolve a pea-sized piece of Shilajit resin by stirring for 30 seconds.',
-              'Add 3–5 g (1 level teaspoon) of Creatine Monohydrate and stir until dissolved.',
-              'Drink the full glass within 5 minutes of preparing it.',
-              'Why: Creatine absorption improves with warm water; Shilajit works best on an empty stomach.',
+              'Drink immediately — before food or coffee. Wait 20 minutes before eating.',
+              'Why warm water: it dissolves the resin fully and improves bioavailability.',
+              'Why morning: Shilajit boosts mitochondrial energy and sets a positive metabolic tone for the day.',
+              'Note: Creatine is now taken post-workout at 8 PM (with Whey Protein) for better muscle uptake.',
             ])}
           isInfoActive={activeDetail?.id === 'shilajit_taken'}
         />
@@ -936,7 +928,7 @@ export default function DailyTracker({ onSync }) {
           id="morning_meditation_completed" label="🧘 7:45 AM — Morning Meditation (20 min)"
           checked={log.morning_meditation_completed} onChange={handleToggle}
           onInfoClick={() => showInfo('morning_meditation_completed', '🧘 Morning Meditation',
-            'This 20-minute window also lets the Shilajit & Creatine absorb before you eat.',
+            'This 20-minute window lets the Shilajit absorb before you eat.',
             [
               'Find a quiet, comfortable sitting position — chair or floor, spine upright.',
               'Set a timer for 20 minutes. Place your phone face-down.',

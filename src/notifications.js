@@ -5,7 +5,7 @@
  */
 
 const TASKS = [
-  { minuteOfDay: 450,  field: 'shilajit_taken',              title: '🧪 Shilajit & Creatine',       body: 'Time for your morning supplements' },
+  { minuteOfDay: 450,  field: 'shilajit_taken',              title: '🧪 Shilajit',                  body: 'Morning Shilajit — empty stomach, warm water' },
   { minuteOfDay: 465,  field: 'morning_meditation_completed', title: '🧘 Morning Meditation',         body: '20-minute meditation session' },
   { minuteOfDay: 495,  field: 'isabgul_taken',                title: '🌾 Isabgul Husk',               body: 'Take your psyllium husk now' },
   { minuteOfDay: 510,  field: 'breakfast_logged',             title: '🍳 Breakfast',                  body: 'Boiled eggs & fruit — fuel up' },
@@ -14,7 +14,7 @@ const TASKS = [
   { minuteOfDay: 795,  field: 'lunch_logged',                 title: '🍱 Lunch Time',                 body: 'Rice, dal & protein' },
   { minuteOfDay: 960,  field: 'afternoon_snack_logged',       title: '☕ Afternoon Snack',            body: 'Black coffee/tea & almonds' },
   { minuteOfDay: 1140, field: 'scheduled_workout_completed',  title: '🏋️ Workout Time',              body: "Time to train — let's go" },
-  { minuteOfDay: 1200, field: 'whey_protein_taken',           title: '🥛 Post-Workout Protein',       body: 'Shake within 45 min of finishing' },
+  { minuteOfDay: 1200, field: 'whey_protein_taken',           title: '🥛 Whey + Creatine',           body: 'Post-workout shake + 5g creatine now' },
   { minuteOfDay: 1230, field: 'dinner_logged',                title: '🍽️ Dinner Time',               body: 'High-protein, zero starchy carbs' },
   { minuteOfDay: 1275, field: 'post_dinner_walk_completed',   title: '🚶 Post-Dinner Walk',           body: '30-minute walk for digestion' },
   { minuteOfDay: 1410, field: 'hydration_cutoff_followed',    title: '💧 Hydration Cut-off',          body: 'Last glass of water by 11:30 PM' },

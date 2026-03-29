@@ -84,6 +84,14 @@ export const handler = async (event) => {
         created_at    TIMESTAMPTZ DEFAULT NOW()
       )
     `;
+    // Weekly grocery list — one row per Saturday-anchored week
+    await sql`
+      CREATE TABLE IF NOT EXISTS weekly_grocery (
+        week_start     DATE PRIMARY KEY,   -- always a Saturday
+        checked_items  TEXT[] NOT NULL DEFAULT '{}',
+        updated_at     TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
   } catch (e) {
     // Ignore race-condition duplicates; re-throw anything unexpected
     if (!e.message?.includes('already exists') && !e.message?.includes('duplicate key')) throw e;
@@ -92,6 +100,15 @@ export const handler = async (event) => {
   if (event.httpMethod === 'GET') {
     try {
       const params = event.queryStringParameters || {};
+
+      // ?grocery=YYYY-MM-DD — return checked items for that Saturday-anchored week
+      if (params.grocery) {
+        const result = await sql`
+          SELECT checked_items FROM weekly_grocery WHERE week_start = ${params.grocery}::date
+        `;
+        const items = result.length ? result[0].checked_items : [];
+        return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify(items) };
+      }
 
       // ?books=true — return all book titles ordered by start date (for autocomplete)
       if (params.books === 'true') {
@@ -127,6 +144,19 @@ export const handler = async (event) => {
   if (event.httpMethod === 'POST') {
     try {
       const d = JSON.parse(event.body);
+
+      // ── Grocery upsert (separate from daily log) ──────────────────────────
+      if (d.grocery_week && Array.isArray(d.grocery_checked)) {
+        await sql`
+          INSERT INTO weekly_grocery (week_start, checked_items, updated_at)
+          VALUES (${d.grocery_week}::date, ${d.grocery_checked}, NOW())
+          ON CONFLICT (week_start) DO UPDATE
+          SET checked_items = EXCLUDED.checked_items,
+              updated_at    = NOW()
+        `;
+        return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true }) };
+      }
+
       const result = await sql`
         INSERT INTO daily_recomposition_log (
           log_date, water_liters, shilajit_taken, creatine_taken, isabgul_taken, acv_taken,

@@ -80,7 +80,18 @@ export default function HistoryLog({ syncKey = 0 }) {
       </div>
 
       {loading ? (
-        <p style={{ textAlign: 'center', opacity: 0.5 }}>Loading history...</p>
+        <div className="history-grid">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="card history-card skeleton-card">
+              <div className="history-header">
+                <div className="skel-line" style={{ width: '55%', height: '16px' }} />
+                <div className="skel-line" style={{ width: '32px', height: '22px' }} />
+              </div>
+              <div className="skel-line" style={{ width: '100%', height: '8px', marginTop: '14px' }} />
+              <div className="skel-line" style={{ width: '40%', height: '12px', marginTop: '8px' }} />
+            </div>
+          ))}
+        </div>
       ) : (
         <>
           {/* ── Books Summary ──────────────────────────────── */}

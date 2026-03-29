@@ -8,15 +8,44 @@ import AmbientSoundWidget from './components/AmbientSoundWidget';
 import PasswordGate from './components/PasswordGate';
 import { getToken } from './auth';
 import { clearAllCache } from './cache';
+import { requestNotificationPermission } from './notifications';
+
+const NOTIF_LS = 'lt_notif_snoozed';
+const NOTIF_DAYS = { default: 3, denied: 7 };
+
+function shouldShowNotifBanner() {
+  if (typeof Notification === 'undefined') return false;
+  if (Notification.permission !== 'default') return false;
+  const ts = localStorage.getItem(NOTIF_LS);
+  if (!ts) return true;
+  return (Date.now() - parseInt(ts, 10)) / 864e5 >= NOTIF_DAYS.default;
+}
 
 function App() {
   const [authed, setAuthed] = useState(!!getToken());
   const [activeTab, setActiveTab] = useState('tracker');
   const [syncKey, setSyncKey] = useState(0);
+  const [notifBanner, setNotifBanner] = useState(shouldShowNotifBanner);
 
   const handleGlobalSync = () => {
     clearAllCache();
     setSyncKey(k => k + 1);
+  };
+
+  const handleEnableNotifications = async () => {
+    const result = await requestNotificationPermission();
+    const snoozeDays = result === 'denied' ? NOTIF_DAYS.denied : NOTIF_DAYS.default;
+    // For granted: timestamp is irrelevant since permission !== 'default' suppresses future shows
+    localStorage.setItem(NOTIF_LS, (Date.now() - (snoozeDays - 0.01) * 864e5).toString());
+    if (result !== 'granted') {
+      localStorage.setItem(NOTIF_LS, Date.now().toString());
+    }
+    setNotifBanner(false);
+  };
+
+  const handleSnoozeNotif = () => {
+    localStorage.setItem(NOTIF_LS, Date.now().toString());
+    setNotifBanner(false);
   };
 
   useEffect(() => {
@@ -67,6 +96,14 @@ function App() {
         </div>
       </nav>
       <div className="tab-spacer" />
+
+      {notifBanner && (
+        <div className="notif-permission-bar">
+          <span className="notif-permission-bar__text">🔔 Enable notifications to get task reminders</span>
+          <button className="notif-enable-btn" onClick={handleEnableNotifications}>Enable</button>
+          <button className="notif-close-btn" onClick={handleSnoozeNotif}>Not now</button>
+        </div>
+      )}
 
       <main className="tab-content window-fade-in">
         {activeTab === 'tracker' && <DailyTracker onSync={handleGlobalSync} syncKey={syncKey} />}

@@ -1654,7 +1654,334 @@ button:active {
 }
 .ambient-vol-label.boosted { color: var(--primary); }
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Skeleton Loading
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes skel-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skel-line {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 1200px 100%;
+  animation: skel-shimmer 1.6s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.skeleton-card {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Workout Hero Card — Today's session
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.workout-hero-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.18), rgba(124, 106, 247, 0.08));
+  border: 1px solid rgba(108, 92, 231, 0.35);
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 32px rgba(108, 92, 231, 0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+/* Glow blob in the corner */
+.workout-hero-card::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(108, 92, 231, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+.workout-hero-rest {
+  background: linear-gradient(135deg, rgba(46, 213, 115, 0.10), rgba(46, 213, 115, 0.04));
+  border-color: rgba(46, 213, 115, 0.25);
+  box-shadow: 0 4px 24px rgba(46, 213, 115, 0.08);
+}
+.workout-hero-rest::before {
+  background: radial-gradient(circle, rgba(46, 213, 115, 0.15), transparent 70%);
+}
+
+.workout-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.workout-hero-badge {
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(108, 92, 231, 0.4);
+}
+
+.workout-hero-emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.workout-hero-meta {
+  margin-bottom: 14px;
+}
+
+.workout-hero-day {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+
+.workout-hero-focus {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.workout-hero-steps {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.workout-hero-steps li {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.workout-day-emoji {
+  margin-right: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Master Schedule — Live Time Indicator
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* "Now:" pill at the top */
+.schedule-now-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(108, 92, 231, 0.12);
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  color: #c4b5fd;
+  margin-bottom: 20px;
+}
+.schedule-now-pill strong { color: #e0d7ff; }
+
+.schedule-now-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(108, 92, 231, 0.8);
+  animation: pulse-now 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse-now {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.75); }
+}
+
+/* Active timeline item */
+.timeline-item--active {
+  position: relative;
+  background: rgba(108, 92, 231, 0.08) !important;
+  border-radius: 10px;
+  padding: 10px 10px 10px 14px !important;
+  margin-left: -10px;
+  margin-right: -10px;
+  border-left: 3px solid var(--primary) !important;
+}
+/* Pulse ring on the left side */
+.timeline-active-pulse {
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 12px rgba(108, 92, 231, 0.8);
+  animation: pulse-now 2s ease-in-out infinite;
+}
+
+/* Live dot inline in the title */
+.timeline-live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 6px rgba(108, 92, 231, 0.7);
+  margin-right: 7px;
+  vertical-align: middle;
+  animation: pulse-now 2s ease-in-out infinite;
+}
+
+.timeline-item--active h4 {
+  color: #ddd6fe !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Grocery Checklist — Interactive Shopping List
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.grocery-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.grocery-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.grocery-progress-pill {
+  background: rgba(108, 92, 231, 0.15);
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #c4b5fd;
+  font-variant-numeric: tabular-nums;
+}
+
+.grocery-sync-badge {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.grocery-sync-badge--loading { color: #f59e0b; }
+
+.grocery-reset-btn {
+
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.grocery-reset-btn:hover { color: var(--text-secondary); border-color: rgba(255,255,255,0.2); }
+
+.grocery-progress-bar-wrap {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 2px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.grocery-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #9180ff);
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.grocery-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grocery-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: 1px solid transparent;
+  user-select: none;
+}
+.grocery-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.grocery-item--checked {
+  background: rgba(46, 213, 115, 0.06) !important;
+  border-color: rgba(46, 213, 115, 0.15);
+}
+
+.grocery-checkbox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #2ed573;
+  transition: background 0.15s, border-color 0.15s;
+  margin-top: 1px;
+}
+.grocery-item--checked .grocery-checkbox {
+  background: rgba(46, 213, 115, 0.2);
+  border-color: #2ed573;
+}
+
+.grocery-item-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  transition: color 0.2s, text-decoration 0.2s;
+}
+.grocery-item--checked .grocery-item-label {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(46, 213, 115, 0.4);
+}
+
 /* ── Sync button ──────────────────────────────────────────────────────────── */
+
 .sync-btn {
   padding: 6px 12px !important;
   font-size: 0.78rem !important;
@@ -2198,31 +2525,33 @@ button:active {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Notification Permission Banner
+   Notification Permission Banner  (full-width strip, sits below navbar)
    ═══════════════════════════════════════════════════════════════════════════ */
 .notif-permission-bar {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(108, 92, 231, 0.08);
-  border: 1px solid rgba(108, 92, 231, 0.2);
-  border-radius: 12px;
-  padding: 10px 14px;
-  margin-bottom: 12px;
-  font-size: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(108, 92, 231, 0.07);
+  border-bottom: 1px solid rgba(108, 92, 231, 0.14);
+  padding: 9px 20px;
+  font-size: 0.82rem;
   color: var(--text-secondary);
+  animation: toast-in 0.2s ease;
 }
-.notif-permission-bar span { flex: 1; }
+.notif-permission-bar__text { flex: 1; }
 .notif-enable-btn {
-  padding: 5px 14px;
+  padding: 5px 16px;
   background: #6C5CE7;
   color: #fff;
   border: none;
   border-radius: 8px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .notif-enable-btn:hover { background: #7d6ef5; }
 .notif-close-btn {
@@ -2230,59 +2559,100 @@ button:active {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 0.9rem;
-  padding: 2px 4px;
-  opacity: 0.6;
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  opacity: 0.5;
+  flex-shrink: 0;
 }
 .notif-close-btn:hover { opacity: 1; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Weight Card
    ═══════════════════════════════════════════════════════════════════════════ */
-.weight-card { padding: 0; overflow: hidden; }
-
-.weight-header {
+/* Single-line weight card */
+.weight-card-inline {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 16px 20px;
-  cursor: pointer;
-  user-select: none;
+  padding: 12px 16px;
+  flex-wrap: nowrap;
 }
-.weight-header h3 { flex: 1; margin: 0; font-size: 1rem; }
-.weight-current-badge {
-  font-size: 0.82rem;
+
+.weight-card-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+.weight-card-label {
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #9180ff;
-  background: rgba(108, 92, 231, 0.12);
-  border: 1px solid rgba(108, 92, 231, 0.22);
-  border-radius: 20px;
-  padding: 2px 10px;
+  color: var(--text-primary);
+  flex: 1;           /* pushes input group to the right */
+  white-space: nowrap;
 }
-.weight-toggle { font-size: 0.65rem; color: var(--text-secondary); margin-left: 4px; }
 
-.weight-input-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 20px 18px;
+.weight-saved-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #2ed573;
+  background: rgba(46, 213, 115, 0.12);
+  border: 1px solid rgba(46, 213, 115, 0.3);
+  border-radius: 20px;
+  padding: 2px 8px;
+  animation: fadeIn 0.2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
+
 .weight-input {
-  width: 120px;
-  padding: 10px 14px;
+  width: 80px;
+  padding: 7px 10px;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--text-primary);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 600;
   outline: none;
+  text-align: center;
+  flex-shrink: 0;
   -moz-appearance: textfield;
 }
 .weight-input::-webkit-outer-spin-button,
 .weight-input::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; }
 .weight-input:focus { border-color: rgba(108, 92, 231, 0.5); }
-.weight-unit { font-size: 0.9rem; color: var(--text-secondary); }
+
+.weight-unit {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* Tick submit button */
+.weight-submit-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+}
+.weight-submit-btn:hover {
+  background: rgba(46, 213, 115, 0.12);
+  border-color: rgba(46, 213, 115, 0.4);
+  color: #2ed573;
+}
+.weight-submit-btn--saved {
+  background: rgba(46, 213, 115, 0.18) !important;
+  border-color: #2ed573 !important;
+  color: #2ed573 !important;
+}
+.weight-submit-btn:active { transform: scale(0.93); }
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Weight Trend Chart (HistoryLog)
