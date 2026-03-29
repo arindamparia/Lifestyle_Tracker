@@ -125,11 +125,61 @@ export default function AmbientSoundWidget() {
       if (audioCtx.current && audioCtx.current.state !== 'closed') {
         audioCtx.current.close().catch(() => {});
       }
+      // Clear media session
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'none';
+        ['play','pause','nexttrack','previoustrack','seekforward','seekbackward','seekto']
+          .forEach(a => { try { navigator.mediaSession.setActionHandler(a, null); } catch {} });
+      }
     };
   }, []);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const gainFor = (audio) => audio === audioA.current ? gainA.current : gainB.current;
+
+  // ── Media Session — takes over OS notification controls ───────────────────
+  // Called whenever a track starts. Disables seek (not meaningful for loops)
+  // and wires next/prev to cycle ambient tracks instead.
+  const attachMediaSession = useCallback((trackKey) => {
+    if (!('mediaSession' in navigator)) return;
+    const track = TRACKS.find(t => t.key === trackKey);
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title:  track?.label || 'Ambient Sound',
+      artist: 'LifeStyle Tracker',
+      album:  'Calm Background Sounds',
+    });
+    navigator.mediaSession.playbackState = 'playing';
+    // Disable seek controls — ambient loops have no meaningful position
+    ['seekforward', 'seekbackward', 'seekto'].forEach(a => {
+      try { navigator.mediaSession.setActionHandler(a, null); } catch {}
+    });
+    // Play / Pause
+    navigator.mediaSession.setActionHandler('pause', () => {
+      audioA.current?.pause();
+      audioB.current?.pause();
+      cancelAnimationFrame(fadeRaf.current);
+      setIsPlaying(false);
+      navigator.mediaSession.playbackState = 'paused';
+    });
+    navigator.mediaSession.setActionHandler('play', () => {
+      const key = currentTrackRef.current;
+      if (key) {
+        const deck = activeDeck.current === 'A' ? audioA.current : audioB.current;
+        deck?.play().then(() => {
+          setIsPlaying(true);
+          navigator.mediaSession.playbackState = 'playing';
+        }).catch(() => {});
+      }
+    });
+    // Next / Previous cycles through ambient tracks
+    const idx = TRACKS.findIndex(t => t.key === trackKey);
+    navigator.mediaSession.setActionHandler('nexttrack', () =>
+      toggleTrack(TRACKS[(idx + 1) % TRACKS.length].key)
+    );
+    navigator.mediaSession.setActionHandler('previoustrack', () =>
+      toggleTrack(TRACKS[(idx - 1 + TRACKS.length) % TRACKS.length].key)
+    );
+  }, [toggleTrack]);
 
   const doCrossfade = useCallback((fadeOutAudio, fadeInAudio) => {
     isFading.current = true;
@@ -228,6 +278,7 @@ export default function AmbientSoundWidget() {
       audioA.current?.pause();
       audioB.current?.pause();
       setIsPlaying(false);
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
       return;
     }
 
@@ -257,12 +308,15 @@ export default function AmbientSoundWidget() {
     gainB.current.gain.value = 0;
 
     audioA.current.play()
-      .then(() => setIsPlaying(true))
+      .then(() => {
+        setIsPlaying(true);
+        attachMediaSession(track);
+      })
       .catch((err) => {
         setLoadingTrack(null);
         console.warn('Ambient play blocked:', err);
       });
-  }, [lazyInitDecks]);
+  }, [lazyInitDecks, attachMediaSession]);
 
   // ── Volume (Guide §3 — also updates --fill on the DOM input) ─────────────
   const handleVolChange = useCallback((e) => {
