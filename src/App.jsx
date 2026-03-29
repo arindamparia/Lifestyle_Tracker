@@ -48,22 +48,25 @@ function App() {
     <>
     <div className="app-container">
       <nav className="tab-navigation">
-        <button className={activeTab === 'tracker' ? 'active' : ''} onClick={() => setActiveTab('tracker')}>
-          Daily Tracker
-        </button>
-        <button className={activeTab === 'schedule' ? 'active' : ''} onClick={() => setActiveTab('schedule')}>
-          Master Schedule
-        </button>
-        <button className={activeTab === 'workout' ? 'active' : ''} onClick={() => setActiveTab('workout')}>
-          Workouts
-        </button>
-        <button className={activeTab === 'nutrition' ? 'active' : ''} onClick={() => setActiveTab('nutrition')}>
-          Preparation
-        </button>
-        <button className={activeTab === 'history' ? 'active' : ''} onClick={() => setActiveTab('history')}>
-          History
-        </button>
+        <div className="tab-inner">
+          <button className={`main-tab${activeTab === 'tracker' ? ' active' : ''}`} onClick={() => setActiveTab('tracker')}>
+            Daily Tracker
+          </button>
+          <button className={activeTab === 'schedule' ? 'active' : ''} onClick={() => setActiveTab('schedule')}>
+            Master Schedule
+          </button>
+          <button className={activeTab === 'workout' ? 'active' : ''} onClick={() => setActiveTab('workout')}>
+            Workouts
+          </button>
+          <button className={activeTab === 'nutrition' ? 'active' : ''} onClick={() => setActiveTab('nutrition')}>
+            Preparation
+          </button>
+          <button className={activeTab === 'history' ? 'active' : ''} onClick={() => setActiveTab('history')}>
+            History
+          </button>
+        </div>
       </nav>
+      <div className="tab-spacer" />
 
       <main className="tab-content window-fade-in">
         {activeTab === 'tracker' && <DailyTracker onSync={handleGlobalSync} syncKey={syncKey} />}

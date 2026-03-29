@@ -83,11 +83,13 @@ body.theme-night {
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
-  padding: 30px 20px;
+  padding: 0 20px 30px;
   box-sizing: border-box;
-  /* Isolate layout so inner content never bleeds outside */
   min-width: 0;
-  overflow: hidden;
+  /* overflow: hidden breaks position: sticky — use clip instead.
+     overflow-x: clip prevents horizontal bleed without creating a scroll
+     container, so the sticky nav can properly pin to the viewport top. */
+  overflow-x: clip;
 }
 
 /* Every tab's content wrapper: lock width, prevent horizontal bleed */
@@ -133,47 +135,111 @@ h4 {
 }
 
 /* === NAVIGATION TABS === */
+
+/* Outer bar — full viewport width, handles background + fixed position only */
 .tab-navigation {
-  display: flex;
-  gap: 10px;
-  background: rgba(10, 11, 15, 0.8);
-  padding: 8px;
-  border-radius: 20px;
-  border: 1px solid var(--border-color);
-  backdrop-filter: blur(12px);
-  margin-bottom: 40px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: rgba(10, 10, 14, 0.88);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+    0 4px 24px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
 }
 .tab-navigation::-webkit-scrollbar { display: none; }
 
+/* Inner container — matches content column width, buttons fill equally */
+.tab-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Spacer */
+.tab-spacer {
+  height: 64px;
+  flex-shrink: 0;
+}
+
+/* All tab buttons — flex: 1 so they share space equally */
 .tab-navigation button {
   flex: 1;
+  position: relative;
   white-space: nowrap;
   background: transparent !important;
-  color: var(--text-secondary) !important;
+  color: rgba(161, 167, 179, 0.8) !important;
   box-shadow: none !important;
-  border-radius: 14px !important;
-  font-weight: 600 !important;
-  padding: 12px 20px !important;
-  font-size: 0.95rem;
-  transition: all 0.3s ease !important;
-  /* Ensure tap target is always full text — never clipped */
-  min-width: max-content;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  padding: 8px 12px !important;
+  font-size: 0.88rem;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease, background 0.2s ease !important;
+  min-height: 36px !important;
+  text-align: center !important;
 }
 
 .tab-navigation button:hover {
-  color: #fff !important;
+  color: rgba(248, 248, 252, 0.9) !important;
   background: rgba(255, 255, 255, 0.05) !important;
 }
 
+/* Active — subtle bg + underline dot */
 .tab-navigation button.active {
-  background: var(--surface-color) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #f8f8fc !important;
+  font-weight: 600 !important;
+}
+.tab-navigation button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(108, 92, 231, 0.6);
+}
+
+/* ★ Daily Tracker — solid purple pill */
+.tab-navigation button.main-tab {
+  background: linear-gradient(135deg, #6c5ce7, #7c6af7) !important;
   color: #fff !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  box-shadow:
+    0 0 0 1px rgba(108, 92, 231, 0.4),
+    0 4px 16px rgba(108, 92, 231, 0.3) !important;
+}
+.tab-navigation button.main-tab::after { display: none; }
+.tab-navigation button.main-tab:hover {
+  background: linear-gradient(135deg, #7c6af7, #9180ff) !important;
+  box-shadow:
+    0 0 0 1px rgba(108, 92, 231, 0.6),
+    0 6px 20px rgba(108, 92, 231, 0.4) !important;
+  transform: translateY(-1px) !important;
+}
+.tab-navigation button.main-tab.active {
+  background: linear-gradient(135deg, #6c5ce7, #8b7cf8) !important;
+  box-shadow:
+    0 0 0 1px rgba(108, 92, 231, 0.7),
+    0 4px 20px rgba(108, 92, 231, 0.45),
+    0 0 32px rgba(108, 92, 231, 0.2) !important;
+  color: #fff !important;
 }
 
 /* === DAILY TRACKER === */
@@ -1366,57 +1432,106 @@ button:active {
   gap: 6px;
 }
 
+/* ── Guide §1: Track Button (ambient-btn = .abt equivalent) ─────────────── */
 .ambient-btn {
   pointer-events: none;
   display: flex !important;
+  flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
   width: 100% !important;
   height: 60px !important;
   padding: 0 !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 10px !important;
-  font-size: 1.3rem !important;
+  background: #18181f !important;
+  border: 1px solid #2a2a38 !important;
+  border-radius: 12px !important;
   cursor: pointer !important;
-  transition: background 0.2s, border-color 0.2s, transform 0.15s !important;
-  position: relative;
-  overflow: hidden;
+  color: #9898b0 !important;
+  position: relative !important;
+  overflow: visible !important;         /* allow pulse-ring to bleed outside */
+  transition: background 0.2s ease, border-color 0.2s ease,
+              box-shadow 0.2s ease, color 0.2s ease !important;
 }
 .ambient-btn:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: #1e1e28 !important;
   transform: translateY(-2px) !important;
+  color: #e8e8f0 !important;
 }
 
-/* Playing state — sound-wave rings */
-.ambient-btn.playing {
-  background: rgba(46, 213, 115, 0.12) !important;
-  border-color: var(--accent-green) !important;
-  color: var(--accent-green) !important;
-}
-.ambient-btn.playing::before,
-.ambient-btn.playing::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(46, 213, 115, 0.7);
-  transform: translate(-50%, -50%);
-  animation: sound-ring 1.6s ease-out infinite;
+/* Icon — GPU-composited nudge only, NO font-size transition (avoids reflow) */
+.abt__icon {
+  display: block;
+  font-size: 1.3rem;
+  line-height: 1;
+  transition: transform 0.25s ease;
   pointer-events: none;
 }
-.ambient-btn.playing::after {
-  animation-delay: 0.8s;
-}
-@keyframes sound-ring {
-  0%   { width: 16px;  height: 16px;  opacity: 0.8; }
-  100% { width: 52px;  height: 52px;  opacity: 0;   }
+/* Nudge icon up when playing so bars have room */
+.ambient-btn.playing .abt__icon {
+  transform: translateY(-6px);
 }
 
-/* Loading state — spinning border */
+/* ── Guide §1: Equalizer bars ────────────────────────────────────────────── */
+.abt__bars {
+  position: absolute;          /* never affects layout flow — no reflow */
+  bottom: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.ambient-btn.playing .abt__bars { opacity: 1; }
+
+.abt__bars span {
+  display: block;
+  width: 3px;
+  border-radius: 2px 2px 1px 1px;
+  background: linear-gradient(to top, #06d6a0, rgba(6, 214, 160, 0.45));
+  height: 4px;
+  will-change: height;
+}
+
+/* Each bar: different speed + delay = organic feel (from guide) */
+.ambient-btn.playing .abt__bars span:nth-child(1) { animation: eq-b1 0.58s ease-in-out infinite alternate; }
+.ambient-btn.playing .abt__bars span:nth-child(2) { animation: eq-b2 0.73s ease-in-out infinite alternate 0.08s; }
+.ambient-btn.playing .abt__bars span:nth-child(3) { animation: eq-b3 0.62s ease-in-out infinite alternate 0.16s; }
+.ambient-btn.playing .abt__bars span:nth-child(4) { animation: eq-b4 0.79s ease-in-out infinite alternate 0.04s; }
+
+@keyframes eq-b1 { from { height: 3px;  } to { height: 13px; } }
+@keyframes eq-b2 { from { height: 10px; } to { height: 4px;  } }
+@keyframes eq-b3 { from { height: 13px; } to { height: 5px;  } }
+@keyframes eq-b4 { from { height: 5px;  } to { height: 11px; } }
+
+/* ── Guide §1: Playing state — green glow + pulse ring ──────────────────── */
+.ambient-btn.playing {
+  background: rgba(6, 214, 160, 0.12) !important;
+  border-color: #06d6a0 !important;
+  color: #06d6a0 !important;
+  box-shadow: 0 0 16px rgba(6, 214, 160, 0.25),
+              inset 0 0 10px rgba(6, 214, 160, 0.06) !important;
+}
+/* Outer pulse ring */
+.ambient-btn.playing::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 16px;
+  border: 2px solid rgba(6, 214, 160, 0.45);
+  animation: pulse-ring 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes pulse-ring {
+  0%   { opacity: 0.6; transform: scale(1);    }
+  70%  { opacity: 0;   transform: scale(1.25); }
+  100% { opacity: 0;   transform: scale(1.25); }
+}
+
+/* Loading state — spinning border (uses ::after so ::before stays as pulse-ring) */
 .ambient-btn.loading {
   pointer-events: none !important;
   opacity: 0.6 !important;
@@ -1430,10 +1545,35 @@ button:active {
   border-top-color: var(--primary);
   animation: ambient-spin 0.7s linear infinite;
 }
-@keyframes ambient-spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes ambient-spin { to { transform: rotate(360deg); } }
 
+/* ── Guide §2: Live bars inside the toggle button ────────────────────────── */
+.live-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 20px;
+  padding-bottom: 1px;
+}
+.live-bars span {
+  display: block;
+  width: 3px;
+  border-radius: 2px 2px 1px 1px;
+  background: var(--primary);
+  height: 4px;
+  will-change: height;
+}
+.live-bars span:nth-child(1) { animation: lb1 0.58s ease-in-out infinite alternate; }
+.live-bars span:nth-child(2) { animation: lb2 0.73s ease-in-out infinite alternate 0.08s; }
+.live-bars span:nth-child(3) { animation: lb3 0.62s ease-in-out infinite alternate 0.16s; }
+.live-bars span:nth-child(4) { animation: lb4 0.79s ease-in-out infinite alternate 0.04s; }
+
+@keyframes lb1 { from { height: 4px;  } to { height: 20px; } }
+@keyframes lb2 { from { height: 14px; } to { height: 6px;  } }
+@keyframes lb3 { from { height: 18px; } to { height: 6px;  } }
+@keyframes lb4 { from { height: 7px;  } to { height: 16px; } }
+
+/* ── Volume row layout ───────────────────────────────────────────────────── */
 .ambient-volume {
   display: flex;
   align-items: center;
@@ -1453,38 +1593,57 @@ button:active {
   flex-shrink: 0;
   pointer-events: none;
 }
-#ambient-vol {
+
+/* ── Guide §3: Premium filled-track volume slider ────────────────────────── */
+.vol-slider {
+  --fill: 50%;
+  flex: 1;
   width: 100%;
-  -webkit-appearance: none;
   appearance: none;
+  -webkit-appearance: none;
   background: transparent;
   height: 24px;
   cursor: pointer;
   outline: none;
 }
-#ambient-vol::-webkit-slider-runnable-track {
-  height: 4px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
+.vol-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    var(--primary) 0%,
+    var(--primary) var(--fill),
+    rgba(255, 255, 255, 0.08) var(--fill),
+    rgba(255, 255, 255, 0.08) 100%
+  );
 }
-#ambient-vol::-webkit-slider-thumb {
+.vol-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: var(--text-primary);
+  background: #fff;
+  border: 2px solid var(--primary);
   margin-top: -6px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  transition: transform 0.1s;
+  box-shadow: 0 0 10px rgba(108, 92, 231, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: transform 0.1s, box-shadow 0.15s;
 }
-#ambient-vol::-webkit-slider-thumb:hover { transform: scale(1.2); }
-#ambient-vol.boosted::-webkit-slider-runnable-track {
-  background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, rgba(108,92,231,0.5) 100%);
+.vol-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.18);
+  box-shadow: 0 0 16px rgba(108, 92, 231, 0.65), 0 2px 8px rgba(0, 0, 0, 0.4);
 }
-#ambient-vol.boosted::-webkit-slider-thumb {
-  background: var(--primary);
-  box-shadow: 0 0 8px rgba(108, 92, 231, 0.5);
+/* Firefox */
+.vol-slider::-moz-range-progress { height: 6px; background: var(--primary); border-radius: 3px; }
+.vol-slider::-moz-range-track    { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; }
+.vol-slider::-moz-range-thumb    {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--primary);
+  box-shadow: 0 0 10px rgba(108, 92, 231, 0.5);
+}
+/* Boosted state — stronger glow */
+.vol-slider.boosted::-webkit-slider-thumb {
+  box-shadow: 0 0 16px rgba(108, 92, 231, 0.7), 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 .ambient-vol-label {
   font-size: 0.72rem;
@@ -1748,26 +1907,28 @@ button:active {
     line-height: 1.55;
   }
 
-  /* ── Tab Navigation ────────────────────────────────────────────────────
-     Each button keeps its natural text width (flex: 0 0 auto).
-     Container scrolls internally — right-fade mask shows it's scrollable. */
-  .tab-navigation {
-    gap: 5px;
-    padding: 5px;
-    margin-bottom: 20px;
-    border-radius: 14px;
-    -webkit-mask-image: linear-gradient(to right, black 88%, transparent 100%);
-    mask-image: linear-gradient(to right, black 88%, transparent 100%);
+  /* ── Tab Navigation (mobile) ─────────────────────────────────────────── */
+  .tab-spacer { height: 54px; }
+
+  .tab-inner {
+    padding: 7px 14px;
+    gap: 4px;
+    overflow-x: auto;          /* horizontal scroll on mobile */
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
+  .tab-inner::-webkit-scrollbar { display: none; }
 
   .tab-navigation button {
-    flex: 0 0 auto !important;
+    flex: 0 0 auto !important; /* natural width — allow row to scroll */
     min-width: max-content !important;
-    padding: 10px 13px !important;
+    padding: 6px 11px !important;
     font-size: 0.78rem !important;
-    border-radius: 10px !important;
+    border-radius: 7px !important;
     letter-spacing: 0 !important;
-    min-height: 40px !important;
+    min-height: 32px !important;
+    text-align: center !important;
   }
 
   /* ── Task Rows ─────────────────────────────────────────── */
