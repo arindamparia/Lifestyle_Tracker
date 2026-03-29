@@ -7,7 +7,8 @@ const AUDIO_URLS = {
   forest:  'https://res.cloudinary.com/dnju7wfma/video/upload/v1774378667/forest_l804pd.mp3',
   forest2: 'https://res.cloudinary.com/dnju7wfma/video/upload/v1774382236/forest2_xg9jbw.mp3',
   forest3: 'https://res.cloudinary.com/dnju7wfma/video/upload/v1774378667/forest3_xlypzq.mp3',
-  river:   'https://res.cloudinary.com/dnju7wfma/video/upload/v1774382577/river_ffhhlr.mp3',
+  river:      'https://res.cloudinary.com/dnju7wfma/video/upload/v1774382577/river_ffhhlr.mp3',
+  meditation: 'https://res.cloudinary.com/dnju7wfma/video/upload/v1774774806/Temple_Rhythms_Tabla__Flute___Sitar_Tranquility___1_Hour_Indian_Meditation_Music_MP3_160K_aspm1l.mp3',
 };
 
 const TRACKS = [
@@ -17,7 +18,8 @@ const TRACKS = [
   { key: 'forest',  emoji: '🌲', label: 'Forest Ambience' },
   { key: 'forest2', emoji: '🍃', label: 'Wind & Crickets' },
   { key: 'forest3', emoji: '🐦', label: 'Nature Birds' },
-  { key: 'river',   emoji: '🛶', label: 'River & Birds' },
+  { key: 'river',      emoji: '🛶', label: 'River & Birds' },
+  { key: 'meditation', emoji: '🪘', label: 'Indian Meditation' },
 ];
 
 const CROSSFADE_SEC = 4.0;
@@ -68,6 +70,23 @@ export default function AmbientSoundWidget() {
     };
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
+  }, []);
+
+  // ── Resume AudioContext when tab regains visibility/focus ─────────────────
+  // Browsers suspend AudioContext after several minutes of background activity.
+  // Listening to both visibilitychange and focus covers all browsers/platforms.
+  useEffect(() => {
+    const resume = () => {
+      if (audioCtx.current && audioCtx.current.state === 'suspended') {
+        audioCtx.current.resume().catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', resume);
+    window.addEventListener('focus', resume);
+    return () => {
+      document.removeEventListener('visibilitychange', resume);
+      window.removeEventListener('focus', resume);
+    };
   }, []);
 
   // ── Cleanup on unmount ───────────────────────────────────────────────────
@@ -297,10 +316,10 @@ export default function AmbientSoundWidget() {
         id="ambient-toggle"
         className={isPlaying ? 'active-glow' : ''}
         onClick={(e) => { e.stopPropagation(); setPanelOpen((v) => !v); }}
-        title="Focus Audio"
+        title="Calm Sound"
       >
         <span className="ambient-toggle-icon">🎵</span>
-        <span className="ambient-toggle-text">Focus Audio</span>
+        <span className="ambient-toggle-text">Calm Sound</span>
       </button>
     </div>
   );

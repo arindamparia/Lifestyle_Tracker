@@ -6,8 +6,8 @@ export default function NutritionPrep() {
       category: "🥩 Proteins",
       items: [
         "2–3 trays of Eggs (20–30 eggs)",
-        "1.5–2 kg boneless, skinless Chicken Breast",
-        "1 kg Rui or Katla fish (standard cut pieces)",
+        "1.5–2 kg boneless, skinless Chicken Breast (150 g lunch + 200 g dinner = 350 g/day × 5 cooking days)",
+        "1 kg Rui or Katla fish (standard cut pieces — 2 pieces lunch or 3 pieces dinner)",
       ],
     },
     {
@@ -37,13 +37,13 @@ export default function NutritionPrep() {
       meal: "Breakfast — 8:30 AM",
       time: "~12 minutes",
       steps: [
-        "Fill a small pot with enough cold water to fully cover 3 eggs.",
-        "Bring to a rolling boil on high heat.",
+        "Fill a small pot with enough cold water to fully cover 3 eggs. Bring to a rolling boil on high heat.",
         "Gently lower 3 whole eggs into the boiling water using a spoon.",
-        "Set a timer for 9 minutes for firm, fully set yolks.",
-        "When the timer goes off, transfer eggs to cold tap water for 2 minutes — this stops overcooking and makes peeling much easier.",
-        "Peel and eat with a pinch of salt alongside 1 apple (sliced) or 1 banana.",
-        "Prep tip: slice the fruit the night before to save time.",
+        "HARD BOILED (firm yolk) — timer: 9 minutes. Transfer immediately to cold tap water for 2 minutes. Peel and eat with a pinch of salt.",
+        "SOFT BOILED (jammy, creamy yolk) — timer: 6 minutes exactly. Transfer immediately to cold water for 1 minute only. Peel gently under running water — the white is fully set but the yolk stays soft and golden inside.",
+        "Eat alongside 1 apple (sliced) or 1 banana.",
+        "Protein note: 3 eggs = ~18 g protein. To reach 25–28 g, add 2 extra egg whites to the pot (cook alongside, done in 4–5 min) or have a small katori of low-fat dahi (curd).",
+        "Prep tip: slice the fruit the night before to save morning time.",
       ],
     },
     {
@@ -51,10 +51,10 @@ export default function NutritionPrep() {
       meal: "Lunch — Prepare Before Work",
       time: "~30 minutes",
       steps: [
-        "Rice: Rinse 100 g (1 small katori) of white rice under cold water until the water runs clear. Add 150 ml fresh water, bring to a boil, reduce to lowest heat, cover with a tight lid, and simmer for 12–15 minutes until all water is absorbed. Remove from heat and let it steam for 5 minutes before opening.",
+        "Rice: Rinse 150 g (1.5 katori) of white rice under cold water until the water runs clear. Add 225 ml fresh water, bring to a boil, reduce to lowest heat, cover with a tight lid, and simmer for 12–15 minutes until all water is absorbed. Remove from heat and let it steam for 5 minutes before opening. (150 g gives you enough carbs to fuel your 7 PM workout.)",
         "Masoor Dal: Rinse ½ cup of red lentils until water runs clear. Boil in a pot with 1 cup water, ½ tsp turmeric, and salt to taste. Stir occasionally and cook for 15–18 minutes until a very thick, paste-like consistency forms. Tadka: heat 1 tsp mustard oil in a small pan, add 1 dried red chilli and 3 crushed garlic cloves, fry for 15 seconds until fragrant, then pour immediately over the dal and mix.",
-        "Protein — Chicken: Pat 150 g chicken breast completely dry with a paper towel. Season both sides with salt, ¼ tsp turmeric, and a squeeze of lemon. Heat a pan on high for 90 seconds, add 1 tsp oil. Sear chicken 6–7 minutes per side without moving it, until golden and cooked through.",
-        "Protein — Fish (alternative): Use 2 pieces of Rui or Katla. Same seasoning. Sear in hot mustard oil for 4–5 minutes per side until golden.",
+        "Protein — Chicken: Pat 150 g chicken breast (palm-sized) completely dry with a paper towel. Season both sides with salt, ¼ tsp turmeric, and a squeeze of lemon. Heat a pan on high for 90 seconds, add 1 tsp oil. Sear chicken 6–7 minutes per side without moving it, until golden and cooked through.",
+        "Protein — Fish (alternative): Use 2 medium pieces of Rui or Katla. Same seasoning. Sear in hot mustard oil for 4–5 minutes per side until golden.",
         "Side: Slice 1 cucumber into rounds.",
         "Pack rice, dal, protein, and cucumber into separate airtight containers. Refrigerate until you leave for work.",
       ],
@@ -64,7 +64,7 @@ export default function NutritionPrep() {
       meal: "Dinner — 8:30 PM",
       time: "~15 minutes",
       steps: [
-        "Take 150 g chicken breast or 2 fish pieces from the fridge. Pat completely dry with a paper towel — moisture on the surface prevents browning and creates steam instead of a sear.",
+        "Take 200 g chicken breast (full-hand sized, thicker than your palm) or 3 medium pieces of Rui/Katla from the fridge. Dinner is your post-workout recovery meal, so the protein portion is larger than lunch. Pat completely dry with a paper towel — moisture prevents browning and creates steam instead of a sear.",
         "Season generously on both sides: salt, a pinch of black pepper, ¼ tsp turmeric, and a good squeeze of lemon.",
         "Heat a non-stick or cast-iron pan on HIGH heat for 90 seconds. Add 1 tsp oil — it should shimmer immediately. The pan must be very hot before the protein goes in.",
         "Chicken: sear 6–7 minutes per side without touching or moving it, until the visible sides turn fully opaque before flipping.",

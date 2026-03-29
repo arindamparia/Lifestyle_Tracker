@@ -43,7 +43,7 @@ const WORKOUT_ROTATION = {
     ],
   },
   Thursday: {
-    focus: "Legs, Chest & Vitality",
+    focus: "Legs, Back & Vitality",
     steps: [
       "Decline Push-ups — 3 sets to failure: Place feet on a chair, hands on the floor. Lower chest to the floor. This targets the lower chest and front delts.",
       "Wide-Grip Push-ups — 3 sets to failure: Spread hands 1.5× shoulder-width. Elbows flare slightly outward. Go slow on the descent (2 counts down, 1 count up).",
@@ -144,13 +144,13 @@ const getSuggestions = (log) => {
 const TASK_INFO_MAP = {
   shilajit_taken: {
     title: '🧪 Shilajit & Creatine',
-    desc: 'Take both supplements in warm water immediately after waking — before food or coffee.',
+    desc: 'Take both supplements separately — do NOT mix them in the same glass. Shilajit\'s fulvic acid can react with creatine and reduce its stability.',
     steps: [
-      'Pour 500 ml of warm (not boiling) water into a glass.',
-      'Dissolve a pea-sized piece of Shilajit resin by stirring for 30 seconds.',
-      'Add 3–5 g (1 level teaspoon) of Creatine Monohydrate and stir until dissolved.',
-      'Drink the full glass within 5 minutes of preparing it.',
-      'Why: Creatine absorption improves with warm water; Shilajit works best on an empty stomach.',
+      'Glass 1 — Shilajit: Pour 250 ml of warm (not boiling, not hot) water. Dissolve a pea-sized piece of Shilajit resin by stirring for 30 seconds. Drink this first, on a completely empty stomach.',
+      'Glass 2 — Creatine: Pour a fresh 250 ml of cool or room-temperature water. Add exactly 5 g (1 level teaspoon) of Creatine Monohydrate and stir until fully dissolved. Drink this immediately after the Shilajit glass.',
+      'Why separate: Shilajit contains fulvic acid and humic compounds that can bind to creatine in solution and reduce its effectiveness. Two separate glasses fixes this.',
+      'Why warm water for Shilajit: it dissolves the resin fully and improves bioavailability. Creatine does not need warm water.',
+      'Both supplements work best on an empty stomach — do not eat for at least 20 minutes after taking them.',
     ],
   },
   morning_meditation_completed: {
@@ -178,15 +178,14 @@ const TASK_INFO_MAP = {
   },
   breakfast_logged: {
     title: '🍳 Breakfast — Boiled Eggs & Fruit',
-    desc: 'High-protein, low-effort breakfast. Takes about 12 minutes to make fresh.',
+    desc: 'High-protein, low-effort breakfast. Takes about 12 minutes to make fresh. Choose hard or soft boiled based on your preference.',
     steps: [
-      'Fill a small pot with enough cold water to fully cover 3 eggs.',
-      'Bring to a rolling boil on high heat.',
+      'Fill a small pot with enough cold water to fully cover 3 eggs. Bring to a rolling boil on high heat.',
       'Gently lower 3 whole eggs into the boiling water using a spoon.',
-      'Set a timer for exactly 9 minutes for firm, fully set yolks.',
-      'Transfer eggs immediately to cold tap water for 2 minutes (stops overcooking and makes peeling easier).',
-      'Peel and eat with a pinch of salt.',
-      'Eat alongside 1 apple (sliced) or 1 banana.',
+      'HARD BOILED (firm yolk): Set a timer for 9 minutes. Transfer eggs immediately to cold tap water for 2 minutes — this stops overcooking and makes peeling easier. Peel carefully and eat with a pinch of salt.',
+      'SOFT BOILED (jammy, creamy yolk): Set a timer for exactly 6 minutes. Transfer eggs immediately to cold water for 1 minute only — just enough to stop cooking. Peel very gently under running water; the white is fully set but the yolk is soft, golden, and runny in the centre.',
+      'Eat alongside 1 apple (sliced) or 1 banana for natural carbs and micronutrients.',
+      'Protein note: 3 eggs give ~18 g of protein. If you want to hit 25–28 g, add 2 extra egg whites to the pot (they cook in 4–5 minutes) or eat a small katori of low-fat dahi (curd) alongside.',
     ],
   },
   rule_50_10_followed: {
@@ -208,7 +207,7 @@ const TASK_INFO_MAP = {
       'Identify the muscles: imagine you are stopping yourself from urinating mid-stream. Those are your pelvic floor muscles.',
       'Contract those muscles firmly. Hold for 5 seconds. Relax for 5 seconds. That is 1 rep.',
       'Do 10–15 reps. Rest 60 seconds. Repeat for 3 sets.',
-      'Benefit: improves urinary control, core stability, and testosterone output over time.',
+      'Benefit: improves urinary control, pelvic floor strength, core stability, and erectile function over time. Note: Kegels do not directly raise testosterone — their benefit is pelvic floor health and blood flow to the pelvic region.',
     ],
   },
   acv_taken: {
@@ -220,15 +219,16 @@ const TASK_INFO_MAP = {
       'Stir briefly. Drink through a straw to protect tooth enamel from the acid.',
       'Do not drink undiluted ACV — it will damage your oesophagus and teeth.',
       'Drink this 10–15 minutes before your meal for maximum effect on blood sugar.',
+      'Immediately after finishing: rinse your mouth with a full glass of plain water to wash away acid residue from your teeth and gums.',
     ],
   },
   lunch_logged: {
     title: '🍱 Daily Lunch Preparation',
     desc: 'Prepare fresh each morning before work. Total active time: ~30 minutes.',
     steps: [
-      'Rice: Rinse 100 g (1 small katori) of white rice under cold water until clear. Add 150 ml water, bring to a boil, reduce to lowest heat, cover, and simmer for 12–15 minutes until all water is absorbed.',
+      'Rice: Rinse 150 g (1.5 katori) of white rice under cold water until clear. Add 225 ml water, bring to a boil, reduce to lowest heat, cover, and simmer for 12–15 minutes until all water is absorbed. This gives you enough carbs to fuel your 7 PM workout.',
       'Masoor Dal: Rinse ½ cup of red lentils (masoor dal) until water runs clear. Boil with 1 cup water, ½ tsp turmeric, and salt to taste for 15–18 minutes until a very thick paste forms. Tadka: heat 1 tsp mustard oil in a small pan, add 1 dried red chilli and 3 crushed garlic cloves for 15 seconds, then pour over the dal and mix.',
-      'Protein: Pat 150 g chicken breast or 2 fish pieces dry with a paper towel. Rub with salt, ¼ tsp turmeric, and a squeeze of lemon. Sear in a hot pan with 1 tsp oil — chicken: 6–7 min each side; fish: 4–5 min each side — until golden and cooked through.',
+      'Protein: Pat 150 g chicken breast (about the size of your palm) or 2 medium fish pieces dry with a paper towel. Rub with salt, ¼ tsp turmeric, and a squeeze of lemon. Sear in a hot pan with 1 tsp oil — chicken: 6–7 min each side; fish: 4–5 min each side — until golden and cooked through.',
       'Side: Slice 1 cucumber.',
       'Pack rice, dal, protein, and cucumber into separate airtight lunch containers. Refrigerate until you leave for work.',
     ],
@@ -238,20 +238,21 @@ const TASK_INFO_MAP = {
     desc: 'Take with the last bites of your meal — fat from food improves Omega-3 absorption.',
     steps: [
       'Take 1 Multivitamin tablet. Swallow with a full glass of water.',
-      'Take 1 Omega-3 Fish Oil capsule (1000 mg). Swallow with water.',
-      'Do not take on an empty stomach — the fat-soluble vitamins (A, D, E, K) in the multi need dietary fat to be absorbed.',
-      'Why Omega-3: reduces inflammation, supports joint recovery, and improves insulin sensitivity.',
+      'Take 2–3 Omega-3 Fish Oil capsules (1000 mg each). Standard fish oil has only ~250–300 mg of active EPA+DHA per capsule — you need 2–3 capsules to reach a meaningful daily dose of 600–900 mg EPA+DHA. If you have a triple-strength (3000 mg) capsule, 1 is enough.',
+      'Do not take on an empty stomach — the fat-soluble vitamins (A, D, E, K) in the multivitamin need dietary fat to be absorbed properly.',
+      'Why Omega-3: reduces exercise-related inflammation, supports joint recovery, and improves insulin sensitivity over time.',
     ],
   },
   afternoon_snack_logged: {
     title: '☕ 4:00 PM Energy Snack',
-    desc: 'A clean pre-evening energy boost. Keep it minimal — this is not a meal.',
+    desc: 'A clean bridge between lunch and your 7 PM workout. Keep it minimal — this is not a meal.',
     steps: [
-      'Option A: Brew 1 cup of black coffee (no sugar, no milk). Drink within 20 minutes of brewing.',
-      'Option B: Squeeze half a lemon into 250 ml cold water with a pinch of salt (Lebur Jol). Sugar-free and refreshing.',
-      'Eat exactly 5–6 whole almonds or 4–5 walnuts alongside.',
+      'Option A (recommended at 4 PM): Brew 1 cup of black tea (cha, no sugar or with minimal sugar). Light, natural caffeine that wears off by bedtime.',
+      'Option B — Pre-workout coffee: If you want a proper caffeine boost for your 7 PM workout, save the black coffee for 5:30–6:00 PM (45–60 minutes before training). Coffee at 4 PM is too early to benefit the workout and may still affect sleep for caffeine-sensitive people.',
+      'Option C (no caffeine): Squeeze half a lemon into 250 ml cold water with a pinch of salt (Lebur Jol). Sugar-free, refreshing, and replenishes electrolytes.',
+      'Eat exactly 5–6 whole almonds or 4–5 walnuts alongside. These provide healthy fats and keep hunger away until post-workout dinner.',
       'Do not eat more than this — the goal is to bridge the gap to dinner, not to have a full snack.',
-      'Avoid caffeine after 5:00 PM — it will compromise your sleep quality.',
+      'In summer or on very hot days: skip caffeine entirely and have Lebur Jol with 1–2 extra glasses of water before your workout.',
     ],
   },
   whey_protein_taken: {
@@ -263,14 +264,14 @@ const TASK_INFO_MAP = {
       'Add the protein powder, seal, and shake vigorously for 10 seconds.',
       'Drink immediately. Do not let it sit — it becomes lumpy.',
       'Use water, not milk. Milk slows absorption; water is faster post-workout.',
-      'Skip on Sunday (rest day) unless you genuinely feel you need it.',
+      'On Sunday (rest day): do NOT skip your shake. Muscle protein synthesis peaks 24–48 hours after training — Sunday is exactly when your muscles are repairing from Saturday\'s burnout session. Rest day protein is equally important.',
     ],
   },
   dinner_logged: {
     title: '🍽️ High-Protein Dinner Preparation',
     desc: 'Zero starchy carbs. High protein, high fibre from vegetables. Cook fresh nightly — takes 15 minutes.',
     steps: [
-      'Take 150 g chicken breast or 2 fish pieces from the fridge. Pat completely dry with a paper towel (moisture prevents browning).',
+      'Take 200 g chicken breast (roughly the size of your full hand, slightly thicker than your palm) or 3 medium fish pieces from the fridge. Dinner protein is larger than lunch because this is your post-workout recovery meal. Pat completely dry with a paper towel — moisture prevents browning.',
       'Season both sides generously: salt, a pinch of black pepper, ¼ tsp turmeric, and a squeeze of lemon.',
       'Heat a non-stick or cast-iron pan on HIGH heat for 90 seconds. Add 1 tsp oil — it should shimmer immediately.',
       'Chicken: sear 6–7 minutes per side without moving it, until the top surface looks opaque. Fish: 4–5 minutes per side.',
