@@ -73,7 +73,8 @@ function buildBanner(platform) {
       <div class="pwa-banner__sub">${SUBTITLES[platform]}</div>
       <div class="pwa-banner__actions">
         <button class="pwa-banner__install">Install</button>
-        <button class="pwa-banner__dismiss" style="background:transparent!important;border:1px solid rgba(255,255,255,0.15)!important;color:#8888a8!important">Not now</button>
+        <button class="pwa-banner__dismiss" style="background:transparent!important;border:1px solid rgba(255,255,255,0.08)!important;color:#555570!important;font-size:0.72rem!important;padding:5px 10px!important;margin-left:4px!important;box-shadow:none!important">Not now</button>
+
       </div>
     </div>
   `;
