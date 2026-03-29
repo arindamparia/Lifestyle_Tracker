@@ -2449,19 +2449,16 @@ button:active {
 }
 
 .pwa-banner__title {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: #eeeef8;
-  line-height: 1.2;
+  line-height: 1.25;
   margin-bottom: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .pwa-banner__sub {
-  font-size: 0.72rem;
-  color: #6a6a8e;
+  font-size: 0.75rem;
+  color: #8888aa;
   line-height: 1.3;
 }
 

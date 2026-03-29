@@ -32,7 +32,7 @@ const isMacOSSafari = () =>
 const isDismissedRecently = () => {
   const ts = localStorage.getItem(LS_KEY);
   if (!ts) return false;
-  return (Date.now() - parseInt(ts, 10)) / 864e5 < 7;
+  return (Date.now() - parseInt(ts, 10)) / 864e5 < 3;
 };
 
 // ── App icon ─────────────────────────────────────────────────────────────────
