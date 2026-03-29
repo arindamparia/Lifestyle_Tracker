@@ -141,21 +141,38 @@ export default function AmbientSoundWidget() {
   const gainFor = (audio) => audio === audioA.current ? gainA.current : gainB.current;
 
   // ── Media Session — takes over OS notification controls ───────────────────
-  // Called whenever a track starts. Disables seek (not meaningful for loops)
-  // and wires next/prev to cycle ambient tracks instead.
   const attachMediaSession = useCallback((trackKey) => {
     if (!('mediaSession' in navigator)) return;
     const track = TRACKS.find(t => t.key === trackKey);
+
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track?.label || 'Ambient Sound',
       artist: 'LifeStyle Tracker',
       album: 'Calm Background Sounds',
     });
+
     navigator.mediaSession.playbackState = 'playing';
 
-    // Disable seek controls — ambient loops have no meaningful position
-    ['seekforward', 'seekbackward', 'seekto'].forEach(a => {
-      try { navigator.mediaSession.setActionHandler(a, null); } catch { }
+    // ── 1. THE "LIVE STREAM" TRICK TO HIDE THE SEEK BAR ──
+    if ('setPositionState' in navigator.mediaSession) {
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: Infinity,
+          playbackRate: 1,
+          position: 0
+        });
+      } catch (e) {
+        console.warn('setPositionState not supported', e);
+      }
+    }
+
+    // ── 2. THE EVENT SWALLOWER TO DISABLE SEEKING ──
+    ['seekforward', 'seekbackward', 'seekto'].forEach(action => {
+      try {
+        navigator.mediaSession.setActionHandler(action, () => {
+          // Intentionally empty. Do absolutely nothing if they try to seek.
+        });
+      } catch { }
     });
 
     // Play / Pause
@@ -190,7 +207,7 @@ export default function AmbientSoundWidget() {
         toggleTrackRef.current(TRACKS[(idx - 1 + TRACKS.length) % TRACKS.length].key);
       }
     });
-  }, []); // Removed toggleTrack from dependencies to prevent circular initialization
+  }, []); // Removed toggleTrack from dependencies
 
   const doCrossfade = useCallback((fadeOutAudio, fadeInAudio) => {
     isFading.current = true;
