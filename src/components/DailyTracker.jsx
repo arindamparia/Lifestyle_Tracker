@@ -103,6 +103,7 @@ const TASK_SCHEDULE = [
   { time: 1140, field: 'scheduled_workout_completed',  emoji: '🏋️', label: '7:00 PM — Workout' },
   { time: 1200, field: 'whey_protein_taken',           emoji: '🥛', label: '8:00 PM — Whey Protein' },
   { time: 1230, field: 'dinner_logged',                emoji: '🍽️', label: '8:30 PM — Dinner' },
+  { time: 1235, field: 'ashwagandha_taken',            emoji: '🌿', label: '8:35 PM — Ashwagandha' },
   { time: 1275, field: 'post_dinner_walk_completed',   emoji: '🚶', label: '9:15 PM — Post-Dinner Walk' },
   { time: 1410, field: 'hydration_cutoff_followed',    emoji: '💧', label: '11:30 PM — Hydration Cut-off' },
   { time: 1440, field: 'screen_curfew_followed',       emoji: '📴', label: '12:00 AM — Screen Curfew' },
@@ -238,7 +239,7 @@ const TASK_INFO_MAP = {
     desc: 'Take with the last bites of your meal — fat from food improves Omega-3 absorption.',
     steps: [
       'Take 1 Multivitamin tablet. Swallow with a full glass of water.',
-      'Take 2–3 Omega-3 Fish Oil capsules (1000 mg each). Standard fish oil has only ~250–300 mg of active EPA+DHA per capsule — you need 2–3 capsules to reach a meaningful daily dose of 600–900 mg EPA+DHA. If you have a triple-strength (3000 mg) capsule, 1 is enough.',
+      'Take 1 Omega-3 capsule (your triple-strength / 3x formula). A 3x capsule contains ~900 mg EPA+DHA — equivalent to 3 standard capsules — which is a clinically meaningful daily dose for inflammation, joint recovery, and heart health.',
       'Do not take on an empty stomach — the fat-soluble vitamins (A, D, E, K) in the multivitamin need dietary fat to be absorbed properly.',
       'Why Omega-3: reduces exercise-related inflammation, supports joint recovery, and improves insulin sensitivity over time.',
     ],
@@ -277,6 +278,18 @@ const TASK_INFO_MAP = {
       'Chicken: sear 6–7 minutes per side without moving it, until the top surface looks opaque. Fish: 4–5 minutes per side.',
       'While protein cooks, steam vegetables: add broccoli florets, green beans, or spinach to a covered pot with 3 tbsp water. Steam on medium heat for 3–4 minutes until tender-crisp.',
       'Plate and eat immediately. No rice, no bread, no roti.',
+    ],
+  },
+  ashwagandha_taken: {
+    title: '🌿 Ashwagandha AF-43 (600 mg)',
+    desc: 'Take immediately after finishing dinner — fat and protein in the meal improve absorption and prevent stomach upset.',
+    steps: [
+      'Take 1 capsule of Ashwagandha AF-43 600 mg immediately after your last bite of dinner.',
+      'Swallow with a full glass of water.',
+      'Why with dinner: Ashwagandha is fat-soluble — the fat and protein in your meal significantly improve bioavailability compared to taking it on an empty stomach.',
+      'Why evening: Ashwagandha lowers cortisol and has a mild calming effect. Taking it at night supports your night meditation, improves sleep quality, and maximises overnight recovery.',
+      'Do NOT take with coffee or stimulants — caffeine counteracts the cortisol-lowering effect.',
+      'Consistency matters more than timing: missing one day is fine, but aim for 7 days a week. Benefits (reduced stress, improved strength, better sleep) build over 4–8 weeks of daily use.',
     ],
   },
   post_dinner_walk_completed: {
@@ -376,7 +389,7 @@ export default function DailyTracker({ onSync }) {
   const BLANK_LOG = {
     water_liters: 0, shilajit_taken: false, creatine_taken: false, isabgul_taken: false,
     breakfast_logged: false, rule_50_10_followed: false, lunch_logged: false,
-    afternoon_snack_logged: false, dinner_logged: false,
+    afternoon_snack_logged: false, dinner_logged: false, ashwagandha_taken: false,
     morning_meditation_completed: false, acv_taken: false, multivitamin_taken: false,
     omega3_taken: false, whey_protein_taken: false, post_dinner_walk_completed: false,
     kegels_completed: false, scheduled_workout_completed: false,
@@ -1010,6 +1023,15 @@ export default function DailyTracker({ onSync }) {
               'Plate and eat immediately. No rice, no bread, no roti.',
             ])}
           isInfoActive={activeDetail?.id === 'dinner_logged'}
+        />
+
+        <TaskRow
+          id="ashwagandha_taken" label="🌿 8:35 PM — Ashwagandha AF-43 600mg"
+          checked={log.ashwagandha_taken} onChange={handleToggle}
+          onInfoClick={() => showInfo('ashwagandha_taken', '🌿 Ashwagandha AF-43 (600 mg)',
+            'Take immediately after finishing dinner — fat and protein in the meal improve absorption and prevent stomach upset.',
+            TASK_INFO_MAP.ashwagandha_taken.steps)}
+          isInfoActive={activeDetail?.id === 'ashwagandha_taken'}
         />
 
         <TaskRow

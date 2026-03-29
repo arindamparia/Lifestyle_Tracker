@@ -73,6 +73,7 @@ export const handler = async (event) => {
     `;
     await sql`ALTER TABLE daily_recomposition_log ADD COLUMN IF NOT EXISTS book_name TEXT DEFAULT NULL`;
     await sql`ALTER TABLE daily_recomposition_log ADD COLUMN IF NOT EXISTS book_finished BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE daily_recomposition_log ADD COLUMN IF NOT EXISTS ashwagandha_taken BOOLEAN DEFAULT FALSE`;
     await sql`
       CREATE TABLE IF NOT EXISTS books (
         id            SERIAL PRIMARY KEY,
@@ -133,7 +134,7 @@ export const handler = async (event) => {
           kegels_completed, glute_bridges_completed, morning_meditation_completed, night_meditation_completed,
           doorway_stretches_done, rule_50_10_followed,
           hydration_cutoff_followed, screen_curfew_followed, sleep_logged,
-          book_name, book_finished
+          book_name, book_finished, ashwagandha_taken
         ) VALUES (
           COALESCE(${d.log_date || null}::date, CURRENT_DATE), ${d.water_liters || 0}, ${d.shilajit_taken || false}, ${d.creatine_taken || false},
           ${d.isabgul_taken || false}, ${d.acv_taken || false}, ${d.multivitamin_taken || false},
@@ -144,7 +145,7 @@ export const handler = async (event) => {
           ${d.morning_meditation_completed || false}, ${d.night_meditation_completed || false},
           ${d.doorway_stretches_done || false}, ${d.rule_50_10_followed || false},
           ${d.hydration_cutoff_followed || false}, ${d.screen_curfew_followed || false}, ${d.sleep_logged || false},
-          ${d.book_name || null}, ${d.book_finished || false}
+          ${d.book_name || null}, ${d.book_finished || false}, ${d.ashwagandha_taken || false}
         )
         ON CONFLICT (log_date) DO UPDATE SET
           water_liters = EXCLUDED.water_liters, shilajit_taken = EXCLUDED.shilajit_taken,
@@ -164,7 +165,8 @@ export const handler = async (event) => {
           screen_curfew_followed = EXCLUDED.screen_curfew_followed,
           sleep_logged = EXCLUDED.sleep_logged,
           book_name = EXCLUDED.book_name,
-          book_finished = EXCLUDED.book_finished
+          book_finished = EXCLUDED.book_finished,
+          ashwagandha_taken = EXCLUDED.ashwagandha_taken
         RETURNING *;
       `;
       // Sync books table
