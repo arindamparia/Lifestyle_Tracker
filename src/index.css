@@ -1325,8 +1325,8 @@ button:active {
   background: rgba(14, 15, 20, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  padding: 12px;
-  width: 196px;
+  padding: 8px;
+  width: 222px;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
@@ -1345,10 +1345,24 @@ button:active {
   pointer-events: auto;
 }
 
-/* 3-column track grid — compact square buttons (52px each) */
+/* Scroll wrapper — shows exactly 3 rows (3×60px + 2×6px gaps = 192px) */
+.ambient-tracks-scroll {
+  height: 192px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Hide scrollbar on all browsers */
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE/Edge */
+  border-radius: 8px;
+}
+.ambient-tracks-scroll::-webkit-scrollbar {
+  display: none;                  /* Chrome / Safari / Opera */
+}
+
+/* 3-column track grid — fills panel width evenly */
 .ambient-tracks {
   display: grid;
-  grid-template-columns: repeat(3, 52px);
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
 }
 
@@ -1357,13 +1371,13 @@ button:active {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 52px !important;
-  height: 52px !important;
+  width: 100% !important;
+  height: 60px !important;
   padding: 0 !important;
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 10px !important;
-  font-size: 1.15rem !important;
+  font-size: 1.3rem !important;
   cursor: pointer !important;
   transition: background 0.2s, border-color 0.2s, transform 0.15s !important;
   position: relative;
