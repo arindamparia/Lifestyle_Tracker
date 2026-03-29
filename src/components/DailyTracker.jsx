@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getTodayLog, setTodayLog, getEffectiveDate } from '../cache';
 import { getAuthHeader, handleUnauthorized } from '../auth';
+import { scheduleNotifications, requestNotificationPermission, clearNotificationTimers } from '../notifications';
 
 // Returns parsed JSON only when the response is actually JSON.
 // Guards against Vite's HTML 404 fallback in local dev (no netlify dev running).
@@ -394,25 +395,40 @@ export default function DailyTracker({ onSync }) {
     omega3_taken: false, whey_protein_taken: false, post_dinner_walk_completed: false,
     kegels_completed: false, scheduled_workout_completed: false,
     hydration_cutoff_followed: false, screen_curfew_followed: false,
-    book_name: '', book_finished: false,
+    book_name: '', book_finished: false, weight_kg: null,
   };
 
   const [log, setLog] = useState(BLANK_LOG);
   const [activeDetail, setActiveDetail] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [syncFailed, setSyncFailed] = useState(false);
   // Book autocomplete state
   const [bookSuggestions, setBookSuggestions] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
   const [showBookDropdown, setShowBookDropdown] = useState(false);
   const [readingOpen, setReadingOpen] = useState(false);
   const [bookSaved, setBookSaved] = useState(false);
+  // Weight card
+  const [weightOpen, setWeightOpen] = useState(false);
+  // Notifications permission banner
+  const [notifDismissed, setNotifDismissed] = useState(
+    () => localStorage.getItem('lt_notif_dismissed') === '1'
+  );
   // Re-render every minute so suggestion panel and clock recompute
   const [, setTick] = useState(0);
   // Bump to re-trigger the fetch effect (e.g. at 5 AM day boundary)
   const [fetchKey, setFetchKey] = useState(0);
   const waterSyncTimer = useRef(null);
+  const weightSyncTimer = useRef(null);
+  const syncFailTimer = useRef(null);
   const loadedForDate = useRef(null);
+  // Schedule (or re-schedule) notifications whenever the log changes
+  useEffect(() => { scheduleNotifications(log); }, [log]);
+
+  // Clean up notification timers on unmount
+  useEffect(() => () => clearNotificationTimers(), []);
+
   useEffect(() => {
     const t = setInterval(() => {
       setTick(n => n + 1);
@@ -454,6 +470,13 @@ export default function DailyTracker({ onSync }) {
     return () => controller.abort();
   }, [fetchKey]);
 
+  // Show a "Sync failed" toast for 5 seconds
+  const showSyncFail = () => {
+    setSyncFailed(true);
+    clearTimeout(syncFailTimer.current);
+    syncFailTimer.current = setTimeout(() => setSyncFailed(false), 5000);
+  };
+
   const handleToggle = async (field) => {
     const updatedLog = { ...log, [field]: !log[field] };
     setLog(updatedLog);
@@ -464,9 +487,9 @@ export default function DailyTracker({ onSync }) {
         headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
         body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),
       });
-      if (!res.ok) console.warn('Sync skipped — function not available');
-    } catch (err) {
-      console.error('Failed to sync', err);
+      if (!res.ok) showSyncFail();
+    } catch {
+      showSyncFail();
     }
   };
 
@@ -478,8 +501,37 @@ export default function DailyTracker({ onSync }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
         body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
-      }).catch(() => {});
+      }).catch(() => showSyncFail());
     }, 1000);
+  };
+
+  // Debounce weight saves
+  const flushWeight = (latestLog) => {
+    clearTimeout(weightSyncTimer.current);
+    weightSyncTimer.current = setTimeout(() => {
+      fetch('/.netlify/functions/daily-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
+      }).catch(() => showSyncFail());
+    }, 1000);
+  };
+
+  const handleWeightChange = (value) => {
+    const parsed = value === '' ? null : parseFloat(value);
+    const updatedLog = { ...log, weight_kg: (isNaN(parsed) ? null : parsed) };
+    setLog(updatedLog);
+    setTodayLog(updatedLog);
+    flushWeight(updatedLog);
+  };
+
+  const handleEnableNotifications = async () => {
+    const result = await requestNotificationPermission();
+    if (result === 'granted') scheduleNotifications(log);
+    else {
+      localStorage.setItem('lt_notif_dismissed', '1');
+      setNotifDismissed(true);
+    }
   };
 
   const addWater = () => {
@@ -710,8 +762,54 @@ export default function DailyTracker({ onSync }) {
         </div>
       </div>
 
+      {/* ── Sync failed toast ───────────────────────────── */}
+      {syncFailed && (
+        <div className="sync-fail-toast">⚠️ Sync failed — check your connection</div>
+      )}
+
       {/* ── Book saved toast ────────────────────────────── */}
       {bookSaved && <div className="book-toast">📚 Book saved!</div>}
+
+      {/* ── Notification permission banner ──────────────── */}
+      {typeof Notification !== 'undefined' &&
+        Notification.permission === 'default' &&
+        !notifDismissed && (
+        <div className="notif-permission-bar">
+          <span>🔔 Get reminders for scheduled tasks</span>
+          <button className="notif-enable-btn" onClick={handleEnableNotifications}>Enable</button>
+          <button className="notif-close-btn" onClick={() => {
+            localStorage.setItem('lt_notif_dismissed', '1');
+            setNotifDismissed(true);
+          }}>✕</button>
+        </div>
+      )}
+
+      {/* ── Weight Card ─────────────────────────────────── */}
+      <div className="card weight-card">
+        <div className="weight-header" onClick={() => setWeightOpen(o => !o)}>
+          <span>⚖️</span>
+          <h3>Body Weight</h3>
+          {log.weight_kg != null && (
+            <span className="weight-current-badge">{log.weight_kg} kg</span>
+          )}
+          <span className="weight-toggle">{weightOpen ? '▲' : '▼'}</span>
+        </div>
+        {weightOpen && (
+          <div className="weight-input-row">
+            <input
+              type="number"
+              className="weight-input"
+              placeholder="e.g. 75.5"
+              step="0.1"
+              min="30"
+              max="300"
+              value={log.weight_kg ?? ''}
+              onChange={e => handleWeightChange(e.target.value)}
+            />
+            <span className="weight-unit">kg</span>
+          </div>
+        )}
+      </div>
 
       {/* ── Reading Today Card ──────────────────────────── */}
       <div className="card reading-card">

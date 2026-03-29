@@ -2081,299 +2081,267 @@ button:active {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PWA Install Banner  (design system: Syne + JetBrains Mono)
+   PWA Install Banner  — compact horizontal card
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Scrim overlay ───────────────────────────────────────────────────────── */
-.pwa-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  background: rgba(0, 0, 0, 0);
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
-  pointer-events: none;
-  transition: background 0.35s ease, backdrop-filter 0.35s ease, -webkit-backdrop-filter 0.35s ease;
-}
-.pwa-scrim--in {
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  pointer-events: auto;
-}
-
-/* ── Bottom-sheet card ───────────────────────────────────────────────────── */
 .pwa-banner {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%) translateY(calc(100% + 32px));
   z-index: 9999;
-  background: #0e0f18;
-  border-radius: 24px 24px 0 0;
-  overflow: hidden;
-  /* Shimmer line at very top */
-  border-top: 1px solid rgba(124, 106, 247, 0.22);
-  box-shadow:
-    0 -1px 0 0 rgba(145, 128, 255, 0.35),
-    0 -32px 80px rgba(0, 0, 0, 0.75),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  transform: translateY(100%);
-  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.pwa-banner--in  { transform: translateY(0); transition: transform 0.44s cubic-bezier(0.34, 1.35, 0.64, 1); }
-.pwa-banner--out { transform: translateY(110%); transition: transform 0.26s ease-in; }
-
-/* Top gradient shimmer bar */
-.pwa-banner::before {
-  content: '';
-  display: block;
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(124, 106, 247, 0.5) 30%,
-    rgba(145, 128, 255, 0.9) 50%,
-    rgba(124, 106, 247, 0.5) 70%,
-    transparent 100%);
-}
-
-/* ── Drag handle pill ────────────────────────────────────────────────────── */
-.pwa-banner__handle {
-  width: 40px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.10);
-  border-radius: 2px;
-  margin: 14px auto 0;
-}
-
-/* ── Inner content padding ───────────────────────────────────────────────── */
-.pwa-banner__inner {
-  padding: 22px 22px calc(28px + env(safe-area-inset-bottom, 0px));
-}
-
-/* ── Header: icon + headline ─────────────────────────────────────────────── */
-.pwa-banner__header {
+  width: calc(100% - 32px);
+  max-width: 440px;
+  background: #15161f;
+  border: 1px solid rgba(124, 106, 247, 0.18);
+  border-radius: 18px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.03);
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 12px;
+  padding: 14px 16px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+.pwa-banner--in  { transform: translateX(-50%) translateY(0); transition: transform 0.4s cubic-bezier(0.34, 1.3, 0.64, 1); }
+.pwa-banner--out { transform: translateX(-50%) translateY(calc(100% + 32px)); transition: transform 0.25s ease-in; }
 
 .pwa-banner__icon {
   flex-shrink: 0;
-  width: 58px;
-  height: 58px;
-  border-radius: 16px;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
   overflow: hidden;
   background: #0d0e14;
-  border: 1px solid rgba(124, 106, 247, 0.28);
-  box-shadow:
-    0 0 0 4px rgba(124, 106, 247, 0.07),
-    0 8px 28px rgba(124, 106, 247, 0.22);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 1px solid rgba(124, 106, 247, 0.22);
 }
-.pwa-banner__icon svg { display: block; width: 58px; height: 58px; }
+.pwa-banner__icon svg { display: block; width: 46px; height: 46px; }
 
-.pwa-banner__headline { flex: 1; min-width: 0; }
+.pwa-banner__text {
+  flex: 1;
+  min-width: 0;
+}
 
 .pwa-banner__title {
-  font-family: 'Syne', sans-serif;
-  font-size: 1.12rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  letter-spacing: -0.025em;
+  color: #eeeef8;
   line-height: 1.2;
-  margin-bottom: 5px;
-  background: linear-gradient(125deg, #e8e8f4 45%, #a898ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pwa-banner__sub {
-  font-family: 'JetBrains Mono', monospace;
   font-size: 0.72rem;
-  font-weight: 400;
-  letter-spacing: 0.025em;
-  color: #6868a0;
-  line-height: 1.4;
+  color: #6a6a8e;
+  line-height: 1.3;
 }
 
-/* ── Divider ─────────────────────────────────────────────────────────────── */
-.pwa-banner__divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05) 30%, rgba(255,255,255,0.05) 70%, transparent);
-  margin: 0 0 18px;
-}
-
-/* ── Benefits list (Android) ─────────────────────────────────────────────── */
-.pwa-banner__benefits {
-  list-style: none;
-  margin: 0 0 22px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-.pwa-banner__benefit {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 0.87rem;
-  font-weight: 400;
-  color: #a8a8c8;
-  letter-spacing: -0.01em;
-}
-.pwa-banner__benefit-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(46, 213, 115, 0.10);
-  border: 1px solid rgba(46, 213, 115, 0.22);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 700;
-  color: #2ed573;
-  line-height: 1;
-}
-
-/* ── Steps list (iOS / macOS) ────────────────────────────────────────────── */
-.pwa-banner__steps {
-  list-style: none;
-  margin: 0 0 22px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.pwa-banner__step {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 0.87rem;
-  font-weight: 400;
-  color: #a0a0c0;
-  line-height: 1.45;
-}
-.pwa-banner__step-num {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: rgba(124, 106, 247, 0.12);
-  border: 1px solid rgba(124, 106, 247, 0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #9180ff;
-}
-.pwa-banner__step b { color: #d8d8f0; font-weight: 600; }
-
-/* iOS share icon inline */
-.pwa-share-icon {
-  width: 14px;
-  height: 14px;
-  vertical-align: -2px;
-  color: #9180ff;
-  display: inline-block;
-  margin: 0 2px;
-  flex-shrink: 0;
-}
-
-/* ── Action buttons ──────────────────────────────────────────────────────── */
 .pwa-banner__actions {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-/* Install — primary gradient CTA */
 .pwa-banner__install {
-  width: 100%;
-  padding: 14px 20px;
-  background: linear-gradient(135deg, #8070ff 0%, #6C5CE7 100%);
+  padding: 9px 18px;
+  background: #6C5CE7;
   color: #fff;
   border: none;
-  border-radius: 14px;
-  font-family: 'Syne', sans-serif;
-  font-size: 0.95rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
   font-weight: 700;
-  letter-spacing: 0.015em;
   cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 12px rgba(108, 92, 231, 0.4);
+  transition: background 0.15s, transform 0.15s;
+}
+.pwa-banner__install:hover  { background: #7d6ef5; transform: translateY(-1px); }
+.pwa-banner__install:active { transform: scale(0.97); }
+
+.pwa-banner__dismiss {
+  padding: 9px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #7070a0;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.pwa-banner__dismiss:hover  { background: rgba(255,255,255,0.08); color: #9090b8; }
+.pwa-banner__dismiss:active { transform: scale(0.97); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Sync-fail Toast
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sync-fail-toast {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 71, 87, 0.12);
+  border: 1px solid rgba(255, 71, 87, 0.35);
+  color: #ff6b7a;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  z-index: 1100;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: toast-in 0.2s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Notification Permission Banner
+   ═══════════════════════════════════════════════════════════════════════════ */
+.notif-permission-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  position: relative;
-  overflow: hidden;
-  box-shadow:
-    0 4px 22px rgba(108, 92, 231, 0.40),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  transition: box-shadow 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  gap: 10px;
+  background: rgba(108, 92, 231, 0.08);
+  border: 1px solid rgba(108, 92, 231, 0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
-/* Shine overlay */
-.pwa-banner__install::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 55%);
-  pointer-events: none;
-}
-.pwa-banner__install-spark {
+.notif-permission-bar span { flex: 1; }
+.notif-enable-btn {
+  padding: 5px 14px;
+  background: #6C5CE7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
   font-size: 0.8rem;
-  opacity: 0.85;
-}
-.pwa-banner__install:hover {
-  box-shadow: 0 6px 32px rgba(108, 92, 231, 0.55), inset 0 1px 0 rgba(255,255,255,0.18);
-  transform: translateY(-1px);
-}
-.pwa-banner__install:active { transform: scale(0.98); }
-
-/* Dismiss — ghost secondary */
-.pwa-banner__dismiss {
-  width: 100%;
-  padding: 10px 20px;
-  background: transparent;
-  color: #50506e;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  font-weight: 600;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  white-space: nowrap;
 }
-/* Single-button variant (iOS / macOS "Got it") */
-.pwa-banner__dismiss--sole {
-  background: rgba(124, 106, 247, 0.08);
-  color: #9180ff;
-  border-color: rgba(124, 106, 247, 0.20);
+.notif-enable-btn:hover { background: #7d6ef5; }
+.notif-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 4px;
+  opacity: 0.6;
+}
+.notif-close-btn:hover { opacity: 1; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Weight Card
+   ═══════════════════════════════════════════════════════════════════════════ */
+.weight-card { padding: 0; overflow: hidden; }
+
+.weight-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+.weight-header h3 { flex: 1; margin: 0; font-size: 1rem; }
+.weight-current-badge {
   font-size: 0.82rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  font-family: 'Syne', sans-serif;
-  padding: 13px 20px;
+  color: #9180ff;
+  background: rgba(108, 92, 231, 0.12);
+  border: 1px solid rgba(108, 92, 231, 0.22);
+  border-radius: 20px;
+  padding: 2px 10px;
 }
-.pwa-banner__dismiss:hover {
-  color: #8888b0;
-  border-color: rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.02);
+.weight-toggle { font-size: 0.65rem; color: var(--text-secondary); margin-left: 4px; }
+
+.weight-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 18px;
 }
-.pwa-banner__dismiss--sole:hover {
-  background: rgba(124, 106, 247, 0.14);
-  border-color: rgba(124, 106, 247, 0.35);
-  color: #b0a0ff;
+.weight-input {
+  width: 120px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 600;
+  outline: none;
+  -moz-appearance: textfield;
 }
-.pwa-banner__dismiss:active { transform: scale(0.98); }
+.weight-input::-webkit-outer-spin-button,
+.weight-input::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; }
+.weight-input:focus { border-color: rgba(108, 92, 231, 0.5); }
+.weight-unit { font-size: 0.9rem; color: var(--text-secondary); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Weight Trend Chart (HistoryLog)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.weight-chart-section {
+  margin-bottom: 28px;
+}
+.weight-chart-section h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  margin-bottom: 14px;
+}
+.weight-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 100px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.wc-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  min-width: 38px;
+}
+.wc-val {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.wc-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.wc-bar {
+  width: 100%;
+  background: linear-gradient(180deg, #9180ff 0%, #6C5CE7 100%);
+  border-radius: 4px 4px 0 0;
+  min-height: 6px;
+  transition: height 0.3s ease;
+}
+.wc-date {
+  font-size: 0.55rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  opacity: 0.7;
+}
+.weight-chart-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.weight-chart-stats b { color: var(--text-primary); }

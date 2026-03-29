@@ -104,6 +104,41 @@ export default function HistoryLog({ syncKey = 0 }) {
             </div>
           )}
 
+          {/* ── Weight Trend ───────────────────────────────── */}
+          {(() => {
+            const weightData = [...history].reverse().filter(d => d.weight_kg != null);
+            if (weightData.length < 2) return null;
+            const weights = weightData.map(d => parseFloat(d.weight_kg));
+            const minW = Math.min(...weights);
+            const maxW = Math.max(...weights);
+            const range = maxW - minW || 1;
+            return (
+              <div className="weight-chart-section">
+                <h3>⚖️ Weight Trend</h3>
+                <div className="weight-chart">
+                  {weightData.slice(-30).map((d, i) => {
+                    const pct = ((parseFloat(d.weight_kg) - minW) / range) * 80 + 10;
+                    const dateStr = new Date(d.log_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+                    return (
+                      <div key={i} className="wc-col" title={`${d.weight_kg} kg — ${dateStr}`}>
+                        <span className="wc-val">{d.weight_kg}</span>
+                        <div className="wc-bar-wrap">
+                          <div className="wc-bar" style={{ height: `${pct}%` }} />
+                        </div>
+                        <span className="wc-date">{dateStr}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="weight-chart-stats">
+                  <span>Low <b>{minW} kg</b></span>
+                  <span>Latest <b>{weights[weights.length - 1]} kg</b></span>
+                  <span>High <b>{maxW} kg</b></span>
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="history-grid">
             {history.length === 0 ? (
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No previous logs found. Ensure your SQL table has data.</p>
