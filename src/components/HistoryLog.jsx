@@ -4,7 +4,7 @@ import {
   mergeHistoryRows,
   hasHistoryCache,
 } from '../cache';
-import { getAuthHeader, handleUnauthorized } from '../auth';
+import { getAuthHeader, handleUnauthorized, clearToken } from '../auth';
 
 export default function HistoryLog({ syncKey = 0 }) {
   const [history, setHistory] = useState(() => getHistoryAsArray());
@@ -66,8 +66,18 @@ export default function HistoryLog({ syncKey = 0 }) {
 
   return (
     <div className="section-container">
-      <h2>History & Consistency</h2>
-      <p className="subtitle">Review your consistency and habit completion across previous days.</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h2>History & Consistency</h2>
+          <p className="subtitle">Review your consistency and habit completion across previous days.</p>
+        </div>
+        <button
+          onClick={() => { clearToken(); window.location.reload(); }}
+          style={{ marginTop: '0.25rem', padding: '0.4rem 0.9rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
+        >
+          Log out
+        </button>
+      </div>
 
       {loading ? (
         <p style={{ textAlign: 'center', opacity: 0.5 }}>Loading history...</p>
