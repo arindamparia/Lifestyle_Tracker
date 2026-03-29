@@ -71,10 +71,10 @@ function buildBanner(platform) {
     <div class="pwa-banner__text">
       <div class="pwa-banner__title">Install LifeStyle Tracker</div>
       <div class="pwa-banner__sub">${SUBTITLES[platform]}</div>
-    </div>
-    <div class="pwa-banner__actions">
-      <button class="pwa-banner__install">Install</button>
-      <button class="pwa-banner__dismiss">Not now</button>
+      <div class="pwa-banner__actions">
+        <button class="pwa-banner__install">Install</button>
+        <button class="pwa-banner__dismiss">Not now</button>
+      </div>
     </div>
   `;
 
