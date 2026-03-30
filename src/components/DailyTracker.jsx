@@ -404,6 +404,8 @@ export default function DailyTracker({ onSync }) {
   const [activeDetail, setActiveDetail] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [syncCooldown, setSyncCooldown] = useState(false);
+  const syncCooldownTimer = useRef(null);
   const [syncFailed, setSyncFailed] = useState(false);
   // Book autocomplete state
   const [bookSuggestions, setBookSuggestions] = useState([]);
@@ -520,6 +522,7 @@ export default function DailyTracker({ onSync }) {
 
   // Explicit weight save — only calls DB if value actually changed
   const handleWeightSave = async () => {
+    if (weightSaved) return;                            // cooldown — skip
     const parsed = parseFloat(weightInput);
     if (isNaN(parsed) || parsed <= 0) return;          // invalid — skip
     if (parsed === savedWeightRef.current) return;      // unchanged — skip DB call
@@ -625,6 +628,7 @@ export default function DailyTracker({ onSync }) {
   };
 
   const handleBookSave = () => {
+    if (bookSaved) return;                             // cooldown — skip
     const updatedLog = { ...log };
     setTodayLog(updatedLog);
     saveBook(updatedLog);
@@ -666,7 +670,13 @@ export default function DailyTracker({ onSync }) {
         }
       })
       .catch(() => {})
-      .finally(() => setSyncing(false));
+      .finally(() => {
+        setSyncing(false);
+        // 30-second cooldown to prevent spam
+        setSyncCooldown(true);
+        clearTimeout(syncCooldownTimer.current);
+        syncCooldownTimer.current = setTimeout(() => setSyncCooldown(false), 30_000);
+      });
     // Notify App to clear cache + bump syncKey so HistoryLog also re-fetches all
     if (onSync) onSync();
   };
@@ -696,9 +706,9 @@ export default function DailyTracker({ onSync }) {
         <div className="dt-right">
           <span className="dt-time">{dtTime}</span>
           {_isLateNight && <span className="dt-late-tag">Logging for yesterday</span>}
-          <button className="sync-btn" onClick={handleSync} title="Sync with database" disabled={syncing}>
+          <button className="sync-btn" onClick={handleSync} title="Sync with database" disabled={syncing || syncCooldown}>
             <span className={syncing ? 'sync-spinning' : ''}>↻</span>
-            {syncing ? 'Syncing…' : 'Sync'}
+            {syncing ? 'Syncing…' : syncCooldown ? 'Synced ✓' : 'Sync'}
           </button>
         </div>
       </div>
@@ -804,6 +814,7 @@ export default function DailyTracker({ onSync }) {
         <button
           className={`weight-submit-btn${weightSaved ? ' weight-submit-btn--saved' : ''}`}
           onClick={handleWeightSave}
+          disabled={weightSaved}
           title="Save weight"
         >
           ✓
@@ -835,7 +846,7 @@ export default function DailyTracker({ onSync }) {
                 }}
                 onBlur={() => setTimeout(() => setShowBookDropdown(false), 150)}
               />
-              <button className="book-save-btn" onMouseDown={handleBookSave} title="Save book">✓</button>
+              <button className="book-save-btn" onMouseDown={handleBookSave} disabled={bookSaved} title="Save book">✓</button>
               {showBookDropdown && filteredBooks.length > 0 && (
                 <ul className="book-dropdown">
                   {filteredBooks.map((b, i) => (

@@ -2905,3 +2905,76 @@ button:active {
   }
   .habit-row-label { font-size: 0.76rem; }
 }
+
+/* ── Deploy update banner ─────────────────────────────────────────────────── */
+#update-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(12, 12, 20, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(108, 92, 231, 0.45);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-primary);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(108, 92, 231, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#update-banner.update-banner-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+.update-banner-icon { font-size: 16px; flex-shrink: 0; }
+.update-banner-text { color: var(--text-secondary); }
+.update-banner-btn {
+  background: var(--primary);
+  border: none;
+  border-radius: 7px;
+  padding: 5px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.update-banner-btn:hover  { opacity: 0.85; transform: translateY(-1px); }
+.update-banner-btn:active { transform: scale(0.95); }
+.update-banner-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.update-banner-close:hover { color: var(--text-primary); }
+@media (max-width: 600px) {
+  #update-banner {
+    left: 12px;
+    right: 12px;
+    transform: translateY(80px);
+    bottom: 16px;
+    white-space: normal;
+  }
+  #update-banner.update-banner-visible {
+    transform: translateY(0);
+  }
+}

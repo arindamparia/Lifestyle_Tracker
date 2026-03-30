@@ -13,32 +13,42 @@ const getWeekKey = () => {
 };
 
 const LS_KEY = 'lst_grocery_v2';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-// Fast localStorage read on first render (avoids blank flash)
-const loadLocalChecked = (weekKey) => {
+// Read localStorage state for the current week key
+const loadLocalState = (weekKey) => {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return new Set();
-    const { wk, items } = JSON.parse(raw);
-    if (wk !== weekKey) return new Set(); // new week → clear
-    return new Set(items);
-  } catch { return new Set(); }
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed.wk === weekKey ? parsed : null; // null = wrong week or missing
+  } catch { return null; }
 };
 
 const saveLocal = (weekKey, checkedSet) => {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify({ wk: weekKey, items: [...checkedSet] }));
+    localStorage.setItem(LS_KEY, JSON.stringify({ wk: weekKey, items: [...checkedSet], ts: Date.now() }));
   } catch {}
 };
 
 export default function NutritionPrep() {
   const weekKey = getWeekKey();
-  const [checked, setChecked] = useState(() => loadLocalChecked(weekKey));
+  const [checked, setChecked] = useState(() => {
+    const local = loadLocalState(weekKey);
+    return local ? new Set(local.items) : new Set();
+  });
   const [dbLoading, setDbLoading] = useState(true);
   const syncTimer = useRef(null);
 
-  // ── Load from DB on mount ────────────────────────────────────────────────
+  // ── Load from DB on mount — skip if cache is fresh (< 5 min old) ────────
   useEffect(() => {
+    const local = loadLocalState(weekKey);
+    const isFresh = local?.ts && (Date.now() - local.ts) < CACHE_TTL_MS;
+    if (isFresh) {
+      setDbLoading(false);
+      return;
+    }
+
     fetch(`/.netlify/functions/daily-log?grocery=${weekKey}`, {
       headers: getAuthHeader(),
     })
