@@ -179,19 +179,27 @@ function maybeResetDaily() {
   }
 }
 
-/** Show a browser notification. Skips if app is in the foreground. */
-function notify(task) {
-  if (document.visibilityState === 'visible') return;
+/** Show a browser notification. Skips if app is in the foreground.
+ *  Uses ServiceWorker.showNotification() on mobile (required by Android Chrome).
+ *  Falls back to new Notification() on desktop where SW may not be available.
+ */
+async function notify(task) {
+  const opts = {
+    body:               task.body,
+    icon:               '/icon.svg',
+    badge:              '/icon.svg',
+    tag:                `lt-${task.field ?? task.id}`,  // collapses duplicates
+    renotify:           false,
+    requireInteraction: task.important,
+    silent:             false,
+  };
   try {
-    new Notification(task.title, {
-      body:              task.body,
-      icon:              '/icon.svg',
-      badge:             '/icon.svg',
-      tag:               `lt-${task.field}`,   // collapses duplicate alerts
-      renotify:          false,
-      requireInteraction: task.important,       // high-priority stay until dismissed
-      silent:            false,
-    });
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      reg.showNotification(task.title, opts);  // works on Android + desktop
+    } else {
+      new Notification(task.title, opts);      // fallback for non-SW browsers
+    }
   } catch { /* permission revoked mid-session or unsupported */ }
 }
 
