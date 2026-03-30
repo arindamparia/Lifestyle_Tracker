@@ -1,4 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+
+const HABIT_LABELS = {
+  morning_meditation_completed: { label: 'Morning Meditation',  emoji: '🧘' },
+  shilajit_taken:               { label: 'Shilajit',            emoji: '🧪' },
+  isabgul_taken:                { label: 'Isabgul Husk',        emoji: '🌾' },
+  breakfast_logged:             { label: 'Breakfast',           emoji: '🍳' },
+  rule_50_10_followed:          { label: '50/10 Desk Rule',     emoji: '🪑' },
+  kegels_completed:             { label: 'Kegels',              emoji: '💪' },
+  acv_taken:                    { label: 'ACV Pre-Lunch',       emoji: '🥤' },
+  lunch_logged:                 { label: 'Lunch',               emoji: '🍱' },
+  multivitamin_taken:           { label: 'Multivitamin',        emoji: '💊' },
+  omega3_taken:                 { label: 'Omega-3',             emoji: '🐟' },
+  afternoon_snack_logged:       { label: 'Afternoon Snack',     emoji: '☕' },
+  scheduled_workout_completed:  { label: 'Workout',             emoji: '🏋️' },
+  whey_protein_taken:           { label: 'Whey + Creatine',     emoji: '🥛' },
+  dinner_logged:                { label: 'Dinner',              emoji: '🍽️' },
+  ashwagandha_taken:            { label: 'Ashwagandha',         emoji: '🌿' },
+  post_dinner_walk_completed:   { label: 'Evening Walk',        emoji: '🚶' },
+  hydration_cutoff_followed:    { label: 'Hydration Cutoff',    emoji: '💧' },
+  screen_curfew_followed:       { label: 'Screen Curfew',       emoji: '📴' },
+};
 import {
   getHistoryAsArray,
   mergeHistoryRows,
@@ -63,6 +84,18 @@ export default function HistoryLog({ syncKey = 0 }) {
   };
 
   const booksRead = history.filter(d => d.book_name);
+
+  // Per-habit consistency across all history days, sorted worst→best
+  const habitStats = useMemo(() => {
+    if (history.length === 0) return [];
+    return Object.entries(HABIT_LABELS).map(([field, { label, emoji }]) => {
+      const days = history.filter(d => typeof d[field] === 'boolean');
+      if (days.length === 0) return null;
+      const done = days.filter(d => d[field]).length;
+      const pct  = Math.round((done / days.length) * 100);
+      return { field, label, emoji, done, total: days.length, pct };
+    }).filter(Boolean).sort((a, b) => a.pct - b.pct);
+  }, [history]);
 
   return (
     <div className="section-container">
@@ -149,6 +182,34 @@ export default function HistoryLog({ syncKey = 0 }) {
               </div>
             );
           })()}
+
+          {/* ── Per-Habit Consistency ─────────────────────── */}
+          {habitStats.length > 0 && (
+            <div className="habit-consistency">
+              <h3>📊 Per-Habit Consistency</h3>
+              <p className="habit-consistency-sub">Across {history.length} logged day{history.length !== 1 ? 's' : ''} · sorted worst → best</p>
+              <div className="habit-rows">
+                {habitStats.map(({ field, label, emoji, done, total, pct }) => (
+                  <div key={field} className="habit-row">
+                    <span className="habit-row-label">{emoji} {label}</span>
+                    <div className="habit-row-bar-wrap">
+                      <div
+                        className="habit-row-bar"
+                        style={{
+                          width: `${pct}%`,
+                          background: pct >= 80 ? 'var(--accent-green)'
+                                    : pct >= 50 ? 'var(--primary)'
+                                    : '#e17055',
+                        }}
+                      />
+                    </div>
+                    <span className="habit-row-pct">{pct}%</span>
+                    <span className="habit-row-fraction">{done}/{total}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="history-grid">
             {history.length === 0 ? (

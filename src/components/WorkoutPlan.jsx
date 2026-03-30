@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
 
+// ── Deload week helpers ───────────────────────────────────────────────────────
+const LS_TRAINING_START = 'lt_training_start';
+
+function getWeekInCycle(startDateStr) {
+  if (!startDateStr) return null;
+  const start = new Date(startDateStr);
+  const daysSince = Math.floor((Date.now() - start.getTime()) / 86_400_000);
+  if (daysSince < 0) return null;
+  return (Math.floor(daysSince / 7) % 5) + 1; // 1–5
+}
+
 const WORKOUTS = [
   {
     day: 'Monday',
@@ -100,12 +111,69 @@ export default function WorkoutPlan() {
 
   const isRestDay = todayWorkout.day === 'Sunday';
 
+  // ── Deload week tracking ────────────────────────────────────────────────
+  const [trainingStart, setTrainingStart] = useState(
+    () => localStorage.getItem(LS_TRAINING_START) || ''
+  );
+  const [showStartPicker, setShowStartPicker] = useState(false);
+
+  const weekInCycle  = getWeekInCycle(trainingStart);
+  const isDeloadWeek = weekInCycle === 5;
+
+  const handleSetStart = (e) => {
+    const val = e.target.value;
+    localStorage.setItem(LS_TRAINING_START, val);
+    setTrainingStart(val);
+    setShowStartPicker(false);
+  };
+
   return (
     <div className="section-container">
       <h2>Workout Plan</h2>
       <p className="subtitle">
         Execute at 7:00 PM daily. Today's session is shown below.
       </p>
+
+      {/* ── Deload Week Tracker ─────────────────────────────── */}
+      <div className="deload-tracker">
+        {weekInCycle ? (
+          <>
+            <div className="deload-cycle-pills">
+              {[1,2,3,4,5].map(w => (
+                <div
+                  key={w}
+                  className={`deload-pill${w === weekInCycle ? ' current' : ''}${w === 5 ? ' deload' : ''}`}
+                  title={w === 5 ? 'Deload week' : `Week ${w}`}
+                >
+                  {w === 5 ? '🔄' : `W${w}`}
+                </div>
+              ))}
+            </div>
+            {isDeloadWeek ? (
+              <div className="deload-banner">
+                🔄 <strong>Deload Week</strong> — Replace all workouts with a 30-min brisk walk only. No push-ups, no running.
+              </div>
+            ) : (
+              <p className="deload-sub">Week {weekInCycle} of 5 · <button className="deload-reset-btn" onClick={() => setShowStartPicker(s => !s)}>change start date</button></p>
+            )}
+          </>
+        ) : (
+          <p className="deload-sub">
+            Set your training start date to track deload weeks.{' '}
+            <button className="deload-reset-btn" onClick={() => setShowStartPicker(s => !s)}>Set date</button>
+          </p>
+        )}
+        {showStartPicker && (
+          <input
+            type="date"
+            className="deload-date-input"
+            defaultValue={trainingStart}
+            max={new Date().toISOString().slice(0, 10)}
+            onChange={handleSetStart}
+            autoFocus
+          />
+        )}
+      </div>
 
       {/* ── Today's Hero Card ───────────────────────────── */}
       <div className={`workout-hero-card${isRestDay ? ' workout-hero-rest' : ''}`}>

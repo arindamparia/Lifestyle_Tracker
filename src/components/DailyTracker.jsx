@@ -423,11 +423,16 @@ export default function DailyTracker({ onSync }) {
   const weightSyncTimer = useRef(null);
   const syncFailTimer = useRef(null);
   const loadedForDate = useRef(null);
-  // Schedule (or re-schedule) notifications whenever the log changes
-  useEffect(() => { scheduleNotifications(log); }, [log]);
+  // Schedule (or re-schedule) notifications whenever the log changes.
+  // Debounced 1.5 s so rapid water/weight edits don't thrash the interval.
+  const notifDebounce = useRef(null);
+  useEffect(() => {
+    clearTimeout(notifDebounce.current);
+    notifDebounce.current = setTimeout(() => scheduleNotifications(log), 1500);
+  }, [log]);
 
-  // Clean up notification timers on unmount
-  useEffect(() => () => clearNotificationTimers(), []);
+  // Clean up on unmount
+  useEffect(() => () => { clearNotificationTimers(); clearTimeout(notifDebounce.current); }, []);
 
   useEffect(() => {
     const t = setInterval(() => {
