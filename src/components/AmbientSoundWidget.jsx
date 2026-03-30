@@ -391,6 +391,15 @@ export default function AmbientSoundWidget() {
     <div id="ambient-widget">
       <div id="ambient-panel" className={panelOpen ? 'open' : ''}>
 
+        {/* Panel header */}
+        <div className="ambient-panel-header">
+          <span className="ambient-panel-title">Ambient</span>
+          {currentTrack && isPlaying && (() => {
+            const t = TRACKS.find(tr => tr.key === currentTrack);
+            return t ? <span className="ambient-now-playing">{t.emoji} {t.label}</span> : null;
+          })()}
+        </div>
+
         {/* Track grid — Guide §1: icon + 4 equalizer bars per button */}
         <div className="ambient-tracks-scroll">
           <div className="ambient-tracks">

@@ -158,7 +158,7 @@ const TASK_INFO_MAP = {
   },
   morning_meditation_completed: {
     title: '🧘 Morning Meditation',
-    desc: 'This 20-minute window also lets the Shilajit & Creatine absorb before you eat.',
+    desc: 'This 20-minute window also lets the Shilajit absorb before you eat.',
     steps: [
       'Find a quiet, comfortable sitting position — chair or floor, spine upright.',
       'Set a timer for 20 minutes. Place your phone face-down.',
@@ -789,7 +789,10 @@ export default function DailyTracker({ onSync }) {
           min="30"
           max="300"
           value={weightInput}
-          onChange={e => setWeightInput(e.target.value)}
+          onChange={e => {
+            const v = e.target.value;
+            if (v === '' || /^\d{0,3}(\.\d{0,1})?$/.test(v)) setWeightInput(v);
+          }}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleWeightSave(); } }}
         />
         <span className="weight-unit">kg</span>
@@ -1084,17 +1087,18 @@ export default function DailyTracker({ onSync }) {
         />
 
         <TaskRow
-          id="whey_protein_taken" label="🥛 8:00 PM — Post-Workout Whey Protein"
+          id="whey_protein_taken" label="🥛 8:00 PM — Whey + Creatine (post-workout)"
           checked={log.whey_protein_taken} onChange={handleToggle}
-          onInfoClick={() => showInfo('whey_protein_taken', '🥛 Post-Workout Whey Protein',
-            'The anabolic window: consume within 45 minutes of finishing your workout.',
+          onInfoClick={() => showInfo('whey_protein_taken', '🥛 Post-Workout Whey + Creatine',
+            'Take both within 45 minutes of finishing your workout. Post-workout is the scientifically optimal window for creatine uptake — muscles are primed to absorb nutrients.',
             [
               'Measure 1 level scoop of Whey Protein Concentrate or Isolate.',
               'Add 250–300 ml of cold water to a shaker bottle.',
-              'Add the protein powder, seal, and shake vigorously for 10 seconds.',
-              'Drink immediately. Do not let it sit — it becomes lumpy.',
-              'Use water, not milk. Milk slows absorption; water is faster post-workout.',
-              'Skip on Sunday (rest day) unless you genuinely feel you need it.',
+              'Add the protein powder AND exactly 5 g (1 level teaspoon) of Creatine Monohydrate.',
+              'Seal the shaker and shake vigorously for 10–15 seconds until fully dissolved.',
+              'Drink immediately. Do not let it sit — protein becomes lumpy and creatine loses potency.',
+              'Why post-workout creatine: insulin sensitivity is elevated post-exercise, driving creatine into muscle cells more efficiently than at any other time of day.',
+              "On Sunday (rest day): still take both — muscle protein synthesis peaks 24–48 hours after Saturday's burnout. Rest day protein and creatine are equally important.",
             ])}
           isInfoActive={activeDetail?.id === 'whey_protein_taken'}
         />
