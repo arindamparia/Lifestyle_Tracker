@@ -108,7 +108,7 @@ function App() {
     touchStartX.current = null;
     isDragging.current  = false;
 
-    const THRESHOLD = 50;
+    const THRESHOLD = window.innerWidth * 0.40; // ~22% of screen width
     const idx       = activeIdxRef.current;
     const canGoNext = deltaX < -THRESHOLD && idx < TABS.length - 1;
     const canGoPrev = deltaX >  THRESHOLD && idx > 0;
