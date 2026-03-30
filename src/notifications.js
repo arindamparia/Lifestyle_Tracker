@@ -179,16 +179,27 @@ function maybeResetDaily() {
   }
 }
 
-/** Show a browser notification. Skips if app is in the foreground.
- *  Uses ServiceWorker.showNotification() on mobile (required by Android Chrome).
- *  Falls back to new Notification() on desktop where SW may not be available.
+/**
+ * Show a notification.
+ * - App is VISIBLE → dispatch a custom DOM event so the React app can show
+ *   an in-app toast instead of an intrusive OS popup.
+ * - App is BACKGROUNDED → fire a real OS notification via the Service Worker
+ *   (required on Android; falls back to new Notification() on desktop).
  */
 async function notify(task) {
+  if (document.visibilityState === 'visible') {
+    // In-app toast: let the React layer handle display
+    window.dispatchEvent(new CustomEvent('lt:notify', {
+      detail: { title: task.title, body: task.body },
+    }));
+    return;
+  }
+
   const opts = {
     body:               task.body,
     icon:               '/icon.svg',
     badge:              '/icon.svg',
-    tag:                `lt-${task.field ?? task.id}`,  // collapses duplicates
+    tag:                `lt-${task.field ?? task.id}`,
     renotify:           false,
     requireInteraction: task.important,
     silent:             false,
@@ -196,9 +207,9 @@ async function notify(task) {
   try {
     if ('serviceWorker' in navigator) {
       const reg = await navigator.serviceWorker.ready;
-      reg.showNotification(task.title, opts);  // works on Android + desktop
+      reg.showNotification(task.title, opts);
     } else {
-      new Notification(task.title, opts);      // fallback for non-SW browsers
+      new Notification(task.title, opts);
     }
   } catch { /* permission revoked mid-session or unsupported */ }
 }

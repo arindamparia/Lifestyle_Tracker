@@ -28,7 +28,23 @@ function App() {
   const [activeTab, setActiveTab] = useState('tracker');
   const [syncKey, setSyncKey]   = useState(0);
   const [notifBanner, setNotifBanner] = useState(shouldShowNotifBanner);
+  const [inAppToast, setInAppToast]   = useState(null); // { title, body }
+  const toastTimer = useRef(null);
 
+
+  // ── In-app notification toast ──────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e) => {
+      setInAppToast(e.detail);
+      clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setInAppToast(null), 5000);
+    };
+    window.addEventListener('lt:notify', handler);
+    return () => {
+      window.removeEventListener('lt:notify', handler);
+      clearTimeout(toastTimer.current);
+    };
+  }, []);
 
   // ── Global sync ────────────────────────────────────────────────────────────
   const handleGlobalSync = () => {
@@ -114,6 +130,14 @@ function App() {
       </div>
 
       <AmbientSoundWidget />
+
+      {/* In-app notification toast (shown instead of OS popup when app is visible) */}
+      {inAppToast && (
+        <div className="inapp-toast" onClick={() => setInAppToast(null)}>
+          <span className="inapp-toast-title">{inAppToast.title}</span>
+          <span className="inapp-toast-body">{inAppToast.body}</span>
+        </div>
+      )}
     </>
   );
 }
