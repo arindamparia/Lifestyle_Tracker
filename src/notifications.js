@@ -272,3 +272,34 @@ export function clearNotificationTimers() {
   if (_interval)   { clearInterval(_interval);  _interval   = null; }
   if (_alignTimer) { clearTimeout(_alignTimer); _alignTimer = null; }
 }
+
+// ── PWA install welcome notification ─────────────────────────────────────────
+
+async function sendWelcomeNotification() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const opts = {
+    body:               "Let's reshape your body and habits together — one day at a time. 🔥",
+    icon:               '/icon.svg',
+    badge:              '/icon.svg',
+    tag:                'lt-welcome',
+    requireInteraction: false,
+    silent:             false,
+  };
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      reg.showNotification('Welcome to LifeStyle Tracker! 💪', opts);
+    } else {
+      new Notification('Welcome to LifeStyle Tracker! 💪', opts);
+    }
+    localStorage.setItem('lt_pwa_welcomed', '1');
+  } catch {}
+}
+
+// Fire once when the user installs the PWA (Add to Home Screen)
+if (!localStorage.getItem('lt_pwa_welcomed')) {
+  window.addEventListener('appinstalled', () => {
+    // Small delay so the app has time to fully open after install
+    setTimeout(sendWelcomeNotification, 3000);
+  });
+}
