@@ -7,15 +7,25 @@
  * - notificationclick handler: tapping any app notification opens/focuses the PWA
  */
 
-import { precacheAndRoute } from 'workbox-precaching';
+import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 import { registerRoute }    from 'workbox-routing';
 import { CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin }          from 'workbox-expiration';
 import { CacheableResponsePlugin }   from 'workbox-cacheable-response';
+import { clientsClaim }              from 'workbox-core';
+
+// ── Activate new SW immediately — don't wait for all tabs to close ────────────
+// Without this, a new deploy sits "waiting" until the user manually closes all
+// PWA windows, which is why "delete site data" was needed to see updates.
+self.skipWaiting();
+clientsClaim();
 
 // ── Precache all build artifacts (JS, CSS, HTML, fonts, icons) ───────────────
 // self.__WB_MANIFEST is injected by vite-plugin-pwa at build time
 precacheAndRoute(self.__WB_MANIFEST);
+
+// Remove caches from old precache revisions to keep storage tidy
+cleanupOutdatedCaches();
 
 // ── Runtime caching ───────────────────────────────────────────────────────────
 
