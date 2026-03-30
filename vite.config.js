@@ -16,6 +16,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       // Copy icon assets into the dist root
       includeAssets: ['icon.svg'],
 
@@ -45,46 +48,16 @@ export default defineConfig({
         ]
       },
 
-      // Workbox: cache the app shell and static assets for offline use
-      workbox: {
-        // Pre-cache all built JS, CSS, HTML and the icon
+      // injectManifest: only controls which files go into the precache manifest.
+      // Runtime caching is handled directly in src/sw.js using workbox APIs.
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
-
-        runtimeCaching: [
-          // Cache Google Fonts (used by the Outfit font)
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-stylesheets',
-              expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 365 }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-webfonts',
-              cacheableResponse: { statuses: [0, 200] },
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }
-            }
-          },
-          // Netlify function calls: network-first, fall back to cache
-          {
-            urlPattern: /\/\.netlify\/functions\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 8,
-              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 }
-            }
-          }
-        ]
       },
 
       // Enable SW in dev mode so you can test offline behaviour locally
       devOptions: {
-        enabled: true
+        enabled: true,
+        type: 'module',   // required for injectManifest in dev
       }
     })
   ]

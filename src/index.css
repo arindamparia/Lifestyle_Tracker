@@ -1188,6 +1188,19 @@ button:active {
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* === HISTORY & CALENDAR LOG === */
+.history-refreshing {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 .history-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

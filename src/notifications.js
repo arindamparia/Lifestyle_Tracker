@@ -239,26 +239,96 @@ export async function requestNotificationPermission() {
 }
 
 /**
- * Start the notification scheduler.
+ * Calculates the next Unix timestamp (ms) for a task to fire.
  *
- * Uses a 60-second interval aligned to the wall-clock minute — the ONLY
- * approach that survives browser tab throttling for long delays.
- *
- * Safe to call repeatedly — clears previous timers first.
- * Call whenever `log` changes so completed tasks are excluded immediately.
+ * Rules:
+ *  - If the scheduled time already passed today → schedule tomorrow
+ *  - If the task is already completed in today's log → schedule tomorrow
+ *  - For daysOfWeek-restricted tasks → advance to the next valid weekday
+ *  - Returns null if no valid day found within 7 days
  */
-export function scheduleNotifications(log) {
-  // Clear any previous timers
+function getNextTriggerTimestamp(task, log) {
+  const now = new Date();
+
+  const candidate = new Date(now);
+  candidate.setHours(Math.floor(task.minuteOfDay / 60), task.minuteOfDay % 60, 0, 0);
+
+  const alreadyPassed    = candidate.getTime() <= now.getTime();
+  const alreadyCompleted = task.field && log?.[task.field];
+
+  if (alreadyPassed || alreadyCompleted) {
+    candidate.setDate(candidate.getDate() + 1);
+    // Re-apply the time on the new day
+    candidate.setHours(Math.floor(task.minuteOfDay / 60), task.minuteOfDay % 60, 0, 0);
+  }
+
+  // For day-restricted tasks (e.g. weekend restocks), advance to the next matching weekday
+  if (task.daysOfWeek) {
+    for (let i = 0; i < 7; i++) {
+      if (task.daysOfWeek.includes(candidate.getDay())) break;
+      candidate.setDate(candidate.getDate() + 1);
+    }
+    if (!task.daysOfWeek.includes(candidate.getDay())) return null; // guard
+  }
+
+  return candidate.getTime();
+}
+
+/**
+ * Schedule notifications — two paths depending on browser support:
+ *
+ * PATH A — Notification Triggers API (showTrigger):
+ *   Chrome with chrome://flags/#enable-experimental-web-platform-features, or
+ *   future stable Chrome once the API ships. The OS itself fires each alert at
+ *   the exact timestamp — JS does not need to be running at all.
+ *
+ * PATH B — 60-second setInterval fallback (all other browsers):
+ *   Aligns to the wall-clock minute and polls every 60 s. Works in foreground
+ *   and recent-background tabs on Android/desktop.
+ *
+ * Safe to call repeatedly — always clears previous timers/triggers first.
+ */
+export async function scheduleNotifications(log) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const hasSW       = 'serviceWorker' in navigator;
+  const hasTriggers = typeof TimestampTrigger !== 'undefined' &&
+                      'showTrigger' in Notification.prototype;
+
+  if (hasSW && hasTriggers) {
+    // ── Path A: OS-native scheduling via Notification Triggers API ───────────
+    // No polling needed — clear any running fallback intervals
+    clearNotificationTimers();
+
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      for (const task of TASKS) {
+        const ts = getNextTriggerTimestamp(task, log);
+        if (ts === null) continue;
+
+        // showNotification with same tag overwrites any existing scheduled alert
+        await reg.showNotification(task.title, {
+          body:               task.body,
+          icon:               '/icon.svg',
+          badge:              '/icon.svg',
+          tag:                `lt-${task.field ?? task.id}`,
+          requireInteraction: !!task.important,
+          silent:             false,
+          showTrigger:        new TimestampTrigger(ts),
+        });
+      }
+    } catch { /* SW unavailable — silently skip */ }
+    return;
+  }
+
+  // ── Path B: 60-second interval fallback ──────────────────────────────────
   if (_interval)   { clearInterval(_interval);  _interval   = null; }
   if (_alignTimer) { clearTimeout(_alignTimer); _alignTimer = null; }
 
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
-
-  // Check immediately — catches the case where the app opened right at a scheduled time
+  // Check immediately — catches the case where app opened right at scheduled time
   checkAndNotify(log);
 
-  // Align the interval to the next exact minute boundary (e.g. HH:MM:00)
-  // so checks always happen right at the scheduled time, not drifted
+  // Align to the next exact wall-clock minute, then tick every 60 s
   const msToNextMinute = 60_000 - (Date.now() % 60_000);
   _alignTimer = setTimeout(() => {
     _alignTimer = null;

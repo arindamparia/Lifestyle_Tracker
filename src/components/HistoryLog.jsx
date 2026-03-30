@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useTransition } from 'react';
 
 const HABIT_LABELS = {
   morning_meditation_completed: { label: 'Morning Meditation',  emoji: '🧘' },
@@ -28,19 +28,24 @@ import {
 import { getAuthHeader, handleUnauthorized, clearToken } from '../auth';
 
 export default function HistoryLog({ syncKey = 0 }) {
-  const [history, setHistory] = useState(() => getHistoryAsArray());
-  const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
+  const [history, setHistory]   = useState(() => getHistoryAsArray());
+  // Show skeleton only when there is truly nothing to display yet
+  const [loading, setLoading]   = useState(() => getHistoryAsArray().length === 0);
 
   useEffect(() => {
-    // Cache is warm — read directly, no network call needed
+    // Fresh cache — show immediately, no network needed
     if (hasHistoryCache()) {
       setHistory(getHistoryAsArray());
-      setLoading(false);
       return;
     }
 
-    // Cache is stale or empty (first load / new day / after sync) — fetch all from DB
-    setLoading(true);
+    // Stale / cleared cache — must fetch from DB.
+    // If React state still has data (e.g. after a Sync), keep showing it and
+    // update silently via startTransition (no skeleton flash).
+    // If state is empty (first ever load), show the skeleton.
+    if (history.length === 0) setLoading(true); // eslint-disable-line react-hooks/exhaustive-deps
+
     const controller = new AbortController();
 
     fetch('/.netlify/functions/daily-log?history=true', { signal: controller.signal, headers: getAuthHeader() })
@@ -52,11 +57,13 @@ export default function HistoryLog({ syncKey = 0 }) {
         return res.json();
       })
       .then(data => {
-        if (Array.isArray(data)) {
-          mergeHistoryRows(data);
-          setHistory(getHistoryAsArray());
-        }
-        setLoading(false);
+        startTransition(() => {
+          if (Array.isArray(data)) {
+            mergeHistoryRows(data);
+            setHistory(getHistoryAsArray());
+          }
+          setLoading(false);
+        });
       })
       .catch(err => {
         if (err.name === 'AbortError') return;
@@ -64,7 +71,7 @@ export default function HistoryLog({ syncKey = 0 }) {
       });
 
     return () => controller.abort();
-  }, [syncKey]);
+  }, [syncKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getCompletionData = (day) => {
     let completed = 0;
@@ -101,7 +108,7 @@ export default function HistoryLog({ syncKey = 0 }) {
     <div className="section-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h2>History & Consistency</h2>
+          <h2>History & Consistency {isPending && <span className="history-refreshing">↻</span>}</h2>
           <p className="subtitle">Review your consistency and habit completion across previous days.</p>
         </div>
         <button
