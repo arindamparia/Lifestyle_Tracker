@@ -22,6 +22,8 @@ function shouldShowNotifBanner() {
   return (Date.now() - parseInt(ts, 10)) / 864e5 >= NOTIF_DAYS.default;
 }
 
+const TABS = ['tracker', 'schedule', 'workout', 'nutrition', 'history'];
+
 // ────────────────────────────────────────────────────────────────────────────
 function App() {
   const [authed, setAuthed]     = useState(!!getToken());
@@ -29,7 +31,9 @@ function App() {
   const [syncKey, setSyncKey]   = useState(0);
   const [notifBanner, setNotifBanner] = useState(shouldShowNotifBanner);
   const [inAppToast, setInAppToast]   = useState(null); // { title, body }
-  const toastTimer = useRef(null);
+  const toastTimer    = useRef(null);
+  const touchStartX   = useRef(null);
+  const touchStartY   = useRef(null);
 
 
   // ── In-app notification toast ──────────────────────────────────────────────
@@ -45,6 +49,25 @@ function App() {
       clearTimeout(toastTimer.current);
     };
   }, []);
+
+  // ── Swipe left/right to change tab ────────────────────────────────────────
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+    // Ignore if too short or more vertical than horizontal (scroll intent)
+    if (Math.abs(deltaX) < 50 || Math.abs(deltaX) < Math.abs(deltaY)) return;
+    const idx = TABS.indexOf(activeTab);
+    if (deltaX < 0 && idx < TABS.length - 1) setActiveTab(TABS[idx + 1]); // swipe left  → next
+    if (deltaX > 0 && idx > 0)               setActiveTab(TABS[idx - 1]); // swipe right → prev
+  };
 
   // ── Global sync ────────────────────────────────────────────────────────────
   const handleGlobalSync = () => {
@@ -120,7 +143,7 @@ function App() {
           </div>
         )}
 
-        <main className="tab-content window-fade-in">
+        <main className="tab-content window-fade-in" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           {activeTab === 'tracker'   && <DailyTracker onSync={handleGlobalSync} syncKey={syncKey} />}
           {activeTab === 'schedule'  && <MasterSchedule />}
           {activeTab === 'workout'   && <WorkoutPlan />}
