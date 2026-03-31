@@ -183,23 +183,33 @@ h4 {
   padding: 8px 12px !important;
   font-size: 0.88rem;
   letter-spacing: 0.01em;
-  transition: color 0.2s ease, background 0.2s ease !important;
+  transition: color 0.2s ease !important;
   min-height: 36px !important;
   text-align: center !important;
   outline: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 
+/* Explicitly block global button:hover and button:active styles from bleeding into the nav tabs */
+.tab-navigation button:hover,
+.tab-navigation button:active,
+.tab-navigation button:focus {
+  background: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .tab-navigation button:hover {
     color: rgba(248, 248, 252, 0.9) !important;
     background: rgba(255, 255, 255, 0.05) !important;
+    transition: color 0.2s ease, background 0.2s ease !important;
   }
 }
 
-/* Active — subtle bg + underline dot */
+/* Active — transparent bg + underline dot */
 .tab-navigation button.active {
-  background: rgba(255, 255, 255, 0.07) !important;
+  background: transparent !important;
   color: #f8f8fc !important;
   font-weight: 600 !important;
 }
@@ -229,15 +239,6 @@ h4 {
     0 4px 16px rgba(108, 92, 231, 0.3) !important;
 }
 .tab-navigation button.main-tab::after { display: none; }
-@media (hover: hover) and (pointer: fine) {
-  .tab-navigation button.main-tab:hover {
-    background: linear-gradient(135deg, #7c6af7, #9180ff) !important;
-    box-shadow:
-      0 0 0 1px rgba(108, 92, 231, 0.6),
-      0 6px 20px rgba(108, 92, 231, 0.4) !important;
-    transform: translateY(-1px) !important;
-  }
-}
 .tab-navigation button.main-tab.active {
   background: linear-gradient(135deg, #6c5ce7, #8b7cf8) !important;
   box-shadow:

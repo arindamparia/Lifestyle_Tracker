@@ -256,7 +256,7 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
           {/* ── Weight Trend ───────────────────────────────── */}
           {(() => {
             const weightData = [...history].reverse().filter(d => d.weight_kg != null);
-            if (weightData.length < 2) return null;
+            if (weightData.length === 0) return null;
             const weights = weightData.map(d => parseFloat(d.weight_kg));
             const minW = Math.min(...weights);
             const maxW = Math.max(...weights);
@@ -280,9 +280,22 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
                   })}
                 </div>
                 <div className="weight-chart-stats">
-                  <span>Low <b>{minW} kg</b></span>
-                  <span>Latest <b>{weights[weights.length - 1]} kg</b></span>
-                  <span>High <b>{maxW} kg</b></span>
+                   <span>Low <b>{minW} kg</b></span>
+                   <span>Latest <b>{weights[weights.length - 1]} kg</b></span>
+                   <span>High <b>{maxW} kg</b></span>
+                </div>
+                
+                {/* Recent Logged Weights List */}
+                <div className="recent-weights-list">
+                  <h4 style={{ margin: '12px 0 8px', fontSize: '0.85rem', color: 'rgba(161, 167, 179, 0.7)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recent Logs</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {weightData.slice(-5).reverse().map((d, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '6px', fontSize: '0.9rem' }}>
+                        <span style={{ color: 'rgba(248, 248, 252, 0.9)' }}>{new Date(d.log_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>
+                        <strong style={{ color: 'var(--primary)' }}>{d.weight_kg} kg</strong>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             );
