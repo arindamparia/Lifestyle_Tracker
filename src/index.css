@@ -1372,6 +1372,20 @@ button:active {
   pointer-events: none;
 }
 
+/* Invisible mobile backdrop to intercept outside clicks and prevent interacting with elements underneath */
+.ambient-mobile-backdrop {
+  display: none;
+}
+@media (max-width: 768px) {
+  .ambient-mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 5; /* Below ambient panel (z-index: 10) */
+    pointer-events: auto;
+  }
+}
+
 /* Toggle button — 44px circle, expands on hover to show label */
 #ambient-toggle {
   pointer-events: auto;

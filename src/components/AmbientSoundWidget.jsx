@@ -389,6 +389,14 @@ export default function AmbientSoundWidget() {
 
   return (
     <div id="ambient-widget">
+      {/* Invisible backdrop for mobile to catch clicks without triggering underlying elements */}
+      {panelOpen && (
+        <div 
+          className="ambient-mobile-backdrop" 
+          onClick={(e) => { e.stopPropagation(); setPanelOpen(false); }}
+        />
+      )}
+
       <div id="ambient-panel" className={panelOpen ? 'open' : ''}>
 
         {/* Panel header */}
