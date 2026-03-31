@@ -186,9 +186,11 @@ h4 {
   transition: color 0.2s ease, background 0.2s ease !important;
   min-height: 36px !important;
   text-align: center !important;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .tab-navigation button:hover {
     color: rgba(248, 248, 252, 0.9) !important;
     background: rgba(255, 255, 255, 0.05) !important;
@@ -227,7 +229,7 @@ h4 {
     0 4px 16px rgba(108, 92, 231, 0.3) !important;
 }
 .tab-navigation button.main-tab::after { display: none; }
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .tab-navigation button.main-tab:hover {
     background: linear-gradient(135deg, #7c6af7, #9180ff) !important;
     box-shadow:
