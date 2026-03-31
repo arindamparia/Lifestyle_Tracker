@@ -2859,19 +2859,21 @@ button:active {
 }
 .weight-chart {
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 6px;
-  height: 100px;
+  height: 110px;
   overflow-x: auto;
   padding-bottom: 4px;
 }
 .wc-col {
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   align-items: center;
   gap: 3px;
   flex-shrink: 0;
   min-width: 38px;
+  height: 100%;
 }
 .wc-val {
   font-size: 0.6rem;

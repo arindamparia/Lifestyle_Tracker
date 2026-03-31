@@ -59,6 +59,7 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
     const today = getTodayLog() || {};
     const updatedLog = { ...today, weight_kg: parsed };
     setTodayLog(updatedLog);
+    setHistory(getHistoryAsArray());
     setWeightSaved(true);
     setTimeout(() => setWeightSaved(false), 2500);
     try {
@@ -163,34 +164,23 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
       </div>
 
       {/* ── Theme Options ─────────────────────────────────── */}
-      <div className="card theme-card" style={{ marginBottom: '16px' }}>
-        <h3 style={{ marginTop: 0, marginBottom: '12px', fontSize: '1.05rem' }}>✨ Atmosphere</h3>
-        <div className="theme-toggle-group">
-          <button 
-            className={`theme-toggle-btn ${bgPref === 'mesh' ? 'active' : ''}`}
-            onClick={() => setBgPref && setBgPref('mesh')}
-          >
-            Living Mesh
-          </button>
-          <button 
-            className={`theme-toggle-btn ${bgPref === 'sky' ? 'active' : ''}`}
-            onClick={() => setBgPref && setBgPref('sky')}
-          >
-            Ethereal Sky
-          </button>
-          <button 
-            className={`theme-toggle-btn ${bgPref === 'classic' ? 'active' : ''}`}
-            onClick={() => setBgPref && setBgPref('classic')}
-          >
-            Classic Fast
-          </button>
-        </div>
+      <div className="card theme-card" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
+        <h3 style={{ margin: 0, fontSize: '1.05rem' }}>✨ Atmosphere</h3>
+        <select 
+          value={bgPref || 'mesh'}
+          onChange={(e) => setBgPref && setBgPref(e.target.value)}
+          style={{ background: 'rgba(255,255,255,0.05)', color: '#f8f8fc', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', outline: 'none', fontWeight: 500 }}
+        >
+          <option value="mesh" style={{ color: '#1c1c24' }}>Living Mesh</option>
+          <option value="sky" style={{ color: '#1c1c24' }}>Ethereal Sky</option>
+          <option value="classic" style={{ color: '#1c1c24' }}>Classic Fast</option>
+        </select>
       </div>
 
       {/* ── Weight Card ─────────────────────────────────── */}
       <div className="card weight-card-inline">
         <span className="weight-card-icon">⚖️</span>
-        <span className="weight-card-label">Today's Weight</span>
+        <span className="weight-card-label">Log Weight</span>
         <input
           type="number"
           className="weight-input"
@@ -232,27 +222,6 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
         </div>
       ) : (
         <>
-          {/* ── Books Summary ──────────────────────────────── */}
-          {booksRead.length > 0 && (
-            <div className="books-summary">
-              <h3>📚 Books Read</h3>
-              <ul className="books-list">
-                {booksRead.map((d, i) => {
-                  const dateStr = new Date(d.log_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-                  return (
-                    <li key={i} className="books-list-item">
-                      <span className="book-item-name">{d.book_name}</span>
-                      <span className="book-item-meta">
-                        {dateStr}
-                        {d.book_finished && <span className="book-finished-badge">✓ Finished</span>}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
-
           {/* ── Weight Trend ───────────────────────────────── */}
           {(() => {
             const weightData = [...history].reverse().filter(d => d.weight_kg != null);
@@ -260,19 +229,29 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
             const weights = weightData.map(d => parseFloat(d.weight_kg));
             const minW = Math.min(...weights);
             const maxW = Math.max(...weights);
-            const range = maxW - minW || 1;
+            
+            // Fixed Axis per user request
+            const GRAPH_MIN = 65;
+            const GRAPH_MAX = 100;
+            const range = GRAPH_MAX - GRAPH_MIN;
+            
             return (
               <div className="weight-chart-section">
                 <h3>⚖️ Weight Trend</h3>
                 <div className="weight-chart">
                   {weightData.slice(-30).map((d, i) => {
-                    const pct = ((parseFloat(d.weight_kg) - minW) / range) * 80 + 10;
+                    const w = parseFloat(d.weight_kg);
+                    let pct = ((w - GRAPH_MIN) / range) * 100; 
+                    if (pct < 0) pct = 0; // If lower than 65kg, show as 65kg height (floor)
+                    if (pct > 100) pct = 100; // Cap at 100kg ceiling
                     const dateStr = new Date(d.log_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
                     return (
                       <div key={i} className="wc-col" title={`${d.weight_kg} kg — ${dateStr}`}>
-                        <span className="wc-val">{d.weight_kg}</span>
-                        <div className="wc-bar-wrap">
-                          <div className="wc-bar" style={{ height: `${pct}%` }} />
+                        <div className="wc-bar-wrap" style={{ position: 'relative', width: '100%' }}>
+                          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: `${pct}%`, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
+                            <span className="wc-val" style={{ marginBottom: '4px' }}>{d.weight_kg}</span>
+                            <div className="wc-bar" style={{ flex: 1, width: '100%', minHeight: '4px' }} />
+                          </div>
                         </div>
                         <span className="wc-date">{dateStr}</span>
                       </div>
@@ -326,6 +305,27 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* ── Books Summary ──────────────────────────────── */}
+          {booksRead.length > 0 && (
+            <div className="books-summary">
+              <h3>📚 Books Read</h3>
+              <ul className="books-list">
+                {booksRead.map((d, i) => {
+                  const dateStr = new Date(d.log_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+                  return (
+                    <li key={i} className="books-list-item">
+                      <span className="book-item-name">{d.book_name}</span>
+                      <span className="book-item-meta">
+                        {dateStr}
+                        {d.book_finished && <span className="book-finished-badge">✓ Finished</span>}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           )}
 
