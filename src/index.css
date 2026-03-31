@@ -3219,36 +3219,39 @@ button:active {
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  background-color: #05070a; /* Fallback deep void */
+  background-color: #030408; /* Fallback deep void */
 }
 .mesh-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.6; /* Softly blended orbs */
+  filter: blur(140px); /* Massive volumetric glow */
+  opacity: 0.8; /* Richly saturated */
+  mix-blend-mode: screen; /* Authentic color blooming where orbs intersect */
   will-change: transform;
   transform: translate3d(0,0,0);
 }
 .orb-1 {
-  width: 60vw; height: 60vw;
-  top: -10%; left: -10%;
+  width: 75vw; height: 75vw;
+  top: -15%; left: -10%;
   animation: float-1 25s ease-in-out infinite alternate;
 }
 .orb-2 {
-  width: 70vw; height: 70vw;
-  bottom: -20%; right: -10%;
+  width: 85vw; height: 85vw;
+  bottom: -25%; right: -15%;
   animation: float-2 30s ease-in-out infinite alternate;
 }
 .orb-3 {
-  width: 50vw; height: 50vw;
-  top: 40%; left: 30%;
+  width: 65vw; height: 65vw;
+  top: 35%; left: 25%;
   animation: float-3 35s ease-in-out infinite alternate;
 }
 /* A slight dark tint to preserve text contrast over glowing nodes */
 .mesh-bg-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(5, 7, 10, 0.6); 
+  background: rgba(3, 4, 8, 0.45); 
+  backdrop-filter: blur(40px); /* Authentic iOS-style frosted glass depth */
+  -webkit-backdrop-filter: blur(40px);
   z-index: 1;
 }
 

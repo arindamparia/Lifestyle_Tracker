@@ -72,6 +72,7 @@ export function MeshBackground() {
       <div className="mesh-orb orb-1" style={{ background: `rgb(${c1.join(',')})` }} />
       <div className="mesh-orb orb-2" style={{ background: `rgb(${c2.join(',')})` }} />
       <div className="mesh-orb orb-3" style={{ background: `rgb(${c3.join(',')})` }} />
+      <div className="mesh-bg-overlay" />
     </div>
   );
 }
@@ -89,7 +90,13 @@ export function SkyBackground() {
     <div 
       className="sky-bg-container"
       style={{
-        background: `radial-gradient(circle at 30% 0%, rgb(${c1.join(',')}) 0%, rgb(${c2.join(',')}) 50%, rgb(${c3.join(',')}) 100%)`
+        background: `
+          radial-gradient(circle at 10% 0%, rgba(${c1.join(',')}, 0.8) 0%, transparent 60%),
+          radial-gradient(circle at 90% 100%, rgba(${c2.join(',')}, 0.7) 0%, transparent 65%),
+          radial-gradient(circle at 50% 110%, rgba(${c3.join(',')}, 0.6) 0%, transparent 70%),
+          linear-gradient(135deg, rgba(${c1.join(',')}, 0.15) 0%, rgba(${c3.join(',')}, 0.1) 100%),
+          #030408
+        `
       }}
     />
   );
