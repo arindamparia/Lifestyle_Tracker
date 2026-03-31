@@ -86,10 +86,9 @@ body.theme-night {
   padding: 0 20px 30px;
   box-sizing: border-box;
   min-width: 0;
-  /* overflow: hidden breaks position: sticky — use clip instead.
-     overflow-x: clip prevents horizontal bleed without creating a scroll
-     container, so the sticky nav can properly pin to the viewport top. */
   overflow-x: clip;
+  position: relative;
+  z-index: 10;
 }
 
 /* Every tab's content wrapper: lock width, prevent horizontal bleed */
@@ -143,9 +142,9 @@ h4 {
   left: 0;
   right: 0;
   z-index: 200;
-  background: rgba(10, 10, 14, 0.88);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(10, 10, 14, 0.45);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
@@ -189,9 +188,11 @@ h4 {
   text-align: center !important;
 }
 
-.tab-navigation button:hover {
-  color: rgba(248, 248, 252, 0.9) !important;
-  background: rgba(255, 255, 255, 0.05) !important;
+@media (hover: hover) {
+  .tab-navigation button:hover {
+    color: rgba(248, 248, 252, 0.9) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+  }
 }
 
 /* Active — subtle bg + underline dot */
@@ -226,12 +227,14 @@ h4 {
     0 4px 16px rgba(108, 92, 231, 0.3) !important;
 }
 .tab-navigation button.main-tab::after { display: none; }
-.tab-navigation button.main-tab:hover {
-  background: linear-gradient(135deg, #7c6af7, #9180ff) !important;
-  box-shadow:
-    0 0 0 1px rgba(108, 92, 231, 0.6),
-    0 6px 20px rgba(108, 92, 231, 0.4) !important;
-  transform: translateY(-1px) !important;
+@media (hover: hover) {
+  .tab-navigation button.main-tab:hover {
+    background: linear-gradient(135deg, #7c6af7, #9180ff) !important;
+    box-shadow:
+      0 0 0 1px rgba(108, 92, 231, 0.6),
+      0 6px 20px rgba(108, 92, 231, 0.4) !important;
+    transform: translateY(-1px) !important;
+  }
 }
 .tab-navigation button.main-tab.active {
   background: linear-gradient(135deg, #6c5ce7, #8b7cf8) !important;
@@ -1449,12 +1452,12 @@ button:active {
   pointer-events: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   background: rgba(12, 12, 20, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 10px;
-  width: 222px;
+  padding: 12px;
+  min-width: 250px;
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.10);
@@ -1462,13 +1465,39 @@ button:active {
   transform: translateY(10px) scale(0.95);
   transform-origin: bottom left;
   transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 10;          /* establishes stacking context above page content */
-  position: relative;   /* needed for z-index to apply */
+  z-index: 10;
+  position: relative;
+  overflow: hidden;
+}
+#ambient-panel::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  border-radius: inherit;
+  background: radial-gradient(circle at 100% 100%, rgba(108, 92, 231, 0.7), transparent 55%),
+              radial-gradient(circle at 0% 0%, rgba(6, 214, 160, 0.5), transparent 55%);
+  opacity: 0;
+  transition: opacity 1s ease;
+  z-index: 0; /* Ensures it sits above the dark background but below buttons */
+  pointer-events: none;
+}
+#ambient-panel.playing-bg::before {
+  opacity: 1;
+  animation: dust-spin 20s linear infinite;
+}
+@keyframes dust-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 #ambient-panel.open {
   pointer-events: auto;
   opacity: 1;
   transform: translateY(0) scale(1);
+  animation: divine-panel-aura 4s ease-in-out infinite alternate;
+}
+@keyframes divine-panel-aura {
+  0%   { box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 0 0px rgba(108, 92, 231, 0.0); }
+  100% { box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.20), 0 0 45px rgba(108, 92, 231, 0.50); }
 }
 #ambient-panel.open .ambient-btn,
 #ambient-panel.open .ambient-mute-btn {
@@ -1480,31 +1509,42 @@ button:active {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 2px 8px;
+  padding: 0 4px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
 }
 .ambient-panel-title {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.09em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.30);
 }
 .ambient-now-playing {
-  font-size: 0.72rem;
-  color: #06d6a0;
-  max-width: 130px;
+  font-size: 11px;
+  max-width: 120px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  background: linear-gradient(90deg, #06d6a0 0%, #ffffff 50%, #06d6a0 100%);
+  background-size: 200% auto;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: divine-shimmer 3s linear infinite;
+  font-weight: 800; /* to make shimmer more visible */
+}
+@keyframes divine-shimmer {
+  to { background-position: 200% center; }
 }
 
 /* Scroll wrapper — shows exactly 3 rows (3×60px + 2×6px gaps = 192px)
    padding: 8px creates a safe zone so the pulse ring isn't clipped on the sides */
 .ambient-tracks-scroll {
-  height: 208px;          /* 192 + 8*2 padding compensation */
-  padding: 8px;
+  height: 238px;
+  padding: 6px;
+  margin: -6px;
   overflow-y: auto;
   overflow-x: hidden;
   /* Hide scrollbar on all browsers */
@@ -1520,7 +1560,25 @@ button:active {
 .ambient-tracks {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 8px;
+}
+
+#ambient-panel.open .ambient-btn {
+  animation: cascade-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+#ambient-panel.open .ambient-btn:nth-child(1) { animation-delay: 0.05s; }
+#ambient-panel.open .ambient-btn:nth-child(2) { animation-delay: 0.10s; }
+#ambient-panel.open .ambient-btn:nth-child(3) { animation-delay: 0.15s; }
+#ambient-panel.open .ambient-btn:nth-child(4) { animation-delay: 0.20s; }
+#ambient-panel.open .ambient-btn:nth-child(5) { animation-delay: 0.25s; }
+#ambient-panel.open .ambient-btn:nth-child(6) { animation-delay: 0.30s; }
+#ambient-panel.open .ambient-btn:nth-child(7) { animation-delay: 0.35s; }
+#ambient-panel.open .ambient-btn:nth-child(8) { animation-delay: 0.40s; }
+#ambient-panel.open .ambient-btn:nth-child(9) { animation-delay: 0.45s; }
+
+@keyframes cascade-in {
+  0% { opacity: 0; transform: translateY(15px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Guide §1: Track Button (ambient-btn = .abt equivalent) ─────────────── */
@@ -1531,7 +1589,7 @@ button:active {
   align-items: center !important;
   justify-content: center !important;
   width: 100% !important;
-  height: 60px !important;
+  aspect-ratio: 1/1 !important;
   padding: 0 !important;
   background: rgba(255, 255, 255, 0.03) !important;
   border: 1px solid rgba(255, 255, 255, 0.07) !important;
@@ -1560,9 +1618,13 @@ button:active {
   transition: transform 0.25s ease;
   pointer-events: none;
 }
-/* Nudge icon up when playing so bars have room */
+/* Nudge icon up when playing so bars have room, with ethereal levitation */
 .ambient-btn.playing .abt__icon {
-  transform: translateY(-6px);
+  animation: divine-levitate 1.8s ease-in-out infinite alternate;
+}
+@keyframes divine-levitate {
+  0%   { transform: translateY(-4px); filter: drop-shadow(0 0 4px rgba(6, 214, 160, 0.4)); }
+  100% { transform: translateY(-12px); filter: drop-shadow(0 0 14px rgba(6, 214, 160, 0.9)); }
 }
 
 /* ── Guide §1: Equalizer bars ────────────────────────────────────────────── */
@@ -1675,21 +1737,31 @@ button:active {
 @keyframes lb3 { from { height: 18px; } to { height: 6px;  } }
 @keyframes lb4 { from { height: 7px;  } to { height: 16px; } }
 
+.ambient-btn.playing.reactive .abt__bars span,
+.live-bars.reactive span {
+  animation: none !important;
+  transition: height 0.08s linear;
+}
+
 /* ── Volume row layout ───────────────────────────────────────────────────── */
 .ambient-volume {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 10px;
-  margin-top: 2px;
+  padding-top: 12px;
+  margin-top: -4px;
 }
 .ambient-vol-wrap {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
+}
+.ambient-volume input[type="range"] {
+  width: 100%;
+  height: 24px;
 }
 .ambient-mute-btn {
   font-size: 1.05rem;
@@ -1738,6 +1810,13 @@ button:active {
   transform: scale(1.18);
   box-shadow: 0 0 16px rgba(108, 92, 231, 0.65), 0 2px 8px rgba(0, 0, 0, 0.4);
 }
+.vol-slider:active::-webkit-slider-thumb, .vol-slider:focus::-webkit-slider-thumb {
+  animation: vol-ripple 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+@keyframes vol-ripple {
+  0% { box-shadow: 0 0 16px rgba(108, 92, 231, 0.8), 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 0 0 rgba(255, 255, 255, 0.9); }
+  100% { box-shadow: 0 0 16px rgba(108, 92, 231, 0.8), 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 0 30px rgba(255, 255, 255, 0); }
+}
 /* Firefox */
 .vol-slider::-moz-range-progress { height: 6px; background: var(--primary); border-radius: 3px; }
 .vol-slider::-moz-range-track    { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; }
@@ -1751,8 +1830,11 @@ button:active {
   box-shadow: 0 0 16px rgba(108, 92, 231, 0.7), 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 .ambient-vol-label {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
+  font-size: 10px;
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  margin-top: 4px;
   text-align: center;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
@@ -2503,7 +2585,6 @@ button:active {
   #ambient-toggle:hover { width: 44px !important; }
   #ambient-toggle .ambient-toggle-text { display: none !important; }
   #ambient-widget { bottom: 16px; left: 16px; }
-  #ambient-panel { width: 196px; }
 
   /* ── Reading card / book dropdown ──────────────────────── */
   .reading-card { padding: 16px; }
@@ -3093,4 +3174,97 @@ button:active {
   #update-banner.update-banner-visible {
     transform: translateY(0);
   }
+}
+
+/* ── Atmosphere Toggle ──────────────────────────────── */
+.theme-toggle-group {
+  display: flex;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.theme-toggle-btn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.theme-toggle-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+.theme-toggle-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.4);
+}
+
+/* ── Mesh Background ───────────────────────────────── */
+.mesh-bg-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background-color: #05070a; /* Fallback deep void */
+}
+.mesh-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.6; /* Softly blended orbs */
+  will-change: transform;
+  transform: translate3d(0,0,0);
+}
+.orb-1 {
+  width: 60vw; height: 60vw;
+  top: -10%; left: -10%;
+  animation: float-1 25s ease-in-out infinite alternate;
+}
+.orb-2 {
+  width: 70vw; height: 70vw;
+  bottom: -20%; right: -10%;
+  animation: float-2 30s ease-in-out infinite alternate;
+}
+.orb-3 {
+  width: 50vw; height: 50vw;
+  top: 40%; left: 30%;
+  animation: float-3 35s ease-in-out infinite alternate;
+}
+/* A slight dark tint to preserve text contrast over glowing nodes */
+.mesh-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 7, 10, 0.6); 
+  z-index: 1;
+}
+
+@keyframes float-1 { 
+  0%   { transform: translate(0, 0) scale(1); } 
+  100% { transform: translate(15vw, 10vh) scale(1.1); } 
+}
+@keyframes float-2 { 
+  0%   { transform: translate(0, 0) scale(1); } 
+  100% { transform: translate(-10vw, -15vh) scale(1.05); } 
+}
+@keyframes float-3 { 
+  0%   { transform: translate(0, 0) scale(1); } 
+  100% { transform: translate(20vw, -5vh) scale(1.15); } 
+}
+
+/* ── Sky Background ────────────────────────────────── */
+.sky-bg-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  transition: background 1s linear; /* smooth lerps */
 }

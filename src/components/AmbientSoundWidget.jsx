@@ -48,9 +48,9 @@ const getSavedSlider = () => {
 };
 
 // ── Live Bars — shown in toggle button when playing (Guide §2) ───────────────
-function LiveBars() {
+function LiveBars({ className = '' }) {
   return (
-    <span className="live-bars" aria-label="Playing">
+    <span className={`live-bars ${className}`.trim()} aria-label="Playing">
       <span /><span /><span /><span />
     </span>
   );
@@ -74,6 +74,11 @@ export default function AmbientSoundWidget() {
   const activeDeck = useRef('A');
   const isFading = useRef(false);
   const fadeRaf = useRef(null);
+
+  // ── Visualizer refs ──────────────────────────────────────────────────────
+  const analyser = useRef(null);
+  const dataArray = useRef(null);
+  const visualizeRaf = useRef(null);
 
   // Ref to hold the toggleTrack function to avoid circular dependencies
   const toggleTrackRef = useRef(null);
@@ -123,6 +128,7 @@ export default function AmbientSoundWidget() {
   useEffect(() => {
     return () => {
       cancelAnimationFrame(fadeRaf.current);
+      cancelAnimationFrame(visualizeRaf.current);
       if (audioA.current) { audioA.current.pause(); audioA.current.src = ''; }
       if (audioB.current) { audioB.current.pause(); audioB.current.src = ''; }
       if (audioCtx.current && audioCtx.current.state !== 'closed') {
@@ -247,6 +253,11 @@ export default function AmbientSoundWidget() {
     if (audioA.current) return; // already initialised
 
     audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
+    
+    analyser.current = audioCtx.current.createAnalyser();
+    analyser.current.fftSize = 64; 
+    analyser.current.smoothingTimeConstant = 0.85; 
+    dataArray.current = new Uint8Array(analyser.current.frequencyBinCount);
 
     const makeAudio = () => {
       const a = new Audio();
@@ -266,10 +277,12 @@ export default function AmbientSoundWidget() {
     const wire = (audio, gain) => {
       const src = audioCtx.current.createMediaElementSource(audio);
       src.connect(gain);
-      gain.connect(audioCtx.current.destination);
+      gain.connect(analyser.current);
     };
     wire(audioA.current, gainA.current);
     wire(audioB.current, gainB.current);
+    
+    analyser.current.connect(audioCtx.current.destination);
 
     // Error / buffering indicators
     const attach = (deck) => {
@@ -296,6 +309,80 @@ export default function AmbientSoundWidget() {
     monitor(audioA.current, audioB.current);
     monitor(audioB.current, audioA.current);
   }, [doCrossfade]);
+
+  const startVisualizer = useCallback(() => {
+    if (!analyser.current) return;
+    
+    const loop = () => {
+      visualizeRaf.current = requestAnimationFrame(loop);
+      if (!isPlayingRef.current) return;
+
+      analyser.current.getByteFrequencyData(dataArray.current);
+      const data = dataArray.current;
+
+      // Use max peak in the band to find sudden noises
+      const getRawPeak = (start, end) => {
+        let max = 0;
+        for (let i = start; i < end; i++) if (data[i] > max) max = data[i];
+        return max / 255; 
+      };
+
+      const raw1 = getRawPeak(0, 3);
+      const raw2 = getRawPeak(3, 7);
+      const raw3 = getRawPeak(7, 13);
+      const raw4 = getRawPeak(13, 25);
+
+      // Auto-Gain: Meditation drones are often incredibly quiet, so we dynamically multiply 
+      // the signal based on the current loudest frequency, forcing the bars to visually stretch upward.
+      const currentMax = Math.max(0.01, raw1, raw2, raw3, raw4);
+      // We push the loudest peak to fill at least 80% of the bar size 
+      const multiplier = Math.min(15, 0.8 / currentMax);
+
+      const v1 = raw1 * multiplier;
+      const v2 = raw2 * multiplier;
+      const v3 = raw3 * multiplier;
+      const v4 = raw4 * multiplier;
+
+      // Jitter adds a 0–1.2px organic crackle to prevent bars from completely freezing on pure static drones
+      const jt = () => Math.random() * 1.2;
+
+      const h1 = Math.min(14, 3 + (v1 * 11) + jt());
+      const h2 = Math.min(14, 3 + (v2 * 11) + jt());
+      const h3 = Math.min(14, 3 + (v3 * 11) + jt());
+      const h4 = Math.min(14, 3 + (v4 * 11) + jt());
+
+      const lh1 = Math.min(20, 4 + (v1 * 16) + jt() * 1.2);
+      const lh2 = Math.min(20, 4 + (v2 * 16) + jt() * 1.2);
+      const lh3 = Math.min(20, 4 + (v3 * 16) + jt() * 1.2);
+      const lh4 = Math.min(20, 4 + (v4 * 16) + jt() * 1.2);
+
+      const btnBars = document.querySelector('.ambient-btn.playing.reactive .abt__bars');
+      if (btnBars && btnBars.children.length === 4) {
+        btnBars.children[0].style.height = `${h1}px`;
+        btnBars.children[1].style.height = `${h2}px`;
+        btnBars.children[2].style.height = `${h3}px`;
+        btnBars.children[3].style.height = `${h4}px`;
+      }
+
+      const liveBars = document.querySelector('.live-bars.reactive');
+      if (liveBars && liveBars.children.length === 4) {
+        liveBars.children[0].style.height = `${lh1}px`;
+        liveBars.children[1].style.height = `${lh2}px`;
+        liveBars.children[2].style.height = `${lh3}px`;
+        liveBars.children[3].style.height = `${lh4}px`;
+      }
+    };
+    cancelAnimationFrame(visualizeRaf.current);
+    loop();
+  }, []);
+
+  useEffect(() => {
+    if (isPlaying) {
+      startVisualizer();
+    } else {
+      cancelAnimationFrame(visualizeRaf.current);
+    }
+  }, [isPlaying, startVisualizer]);
 
   // ── Toggle track (play / pause) ───────────────────────────────────────────
   const toggleTrack = useCallback((track) => {
@@ -397,7 +484,7 @@ export default function AmbientSoundWidget() {
         />
       )}
 
-      <div id="ambient-panel" className={panelOpen ? 'open' : ''}>
+      <div id="ambient-panel" className={`${panelOpen ? 'open' : ''} ${isPlaying ? 'playing-bg' : ''}`.trim()}>
 
         {/* Panel header */}
         <div className="ambient-panel-header">
@@ -419,7 +506,7 @@ export default function AmbientSoundWidget() {
                   key={t.key}
                   className={[
                     'ambient-btn',
-                    playing ? 'playing' : '',
+                    playing ? 'playing reactive' : '',
                     loading ? 'loading' : '',
                   ].filter(Boolean).join(' ')}
                   title={t.label}
@@ -467,7 +554,7 @@ export default function AmbientSoundWidget() {
         title="Calm Sound"
       >
         <span className="ambient-toggle-icon">
-          {isPlaying ? <LiveBars /> : '🎵'}
+          {isPlaying ? <LiveBars className="reactive" /> : '🎵'}
         </span>
         <span className="ambient-toggle-text">Calm Sound</span>
       </button>

@@ -30,7 +30,7 @@ import {
 } from '../cache';
 import { getAuthHeader, handleUnauthorized, clearToken } from '../auth';
 
-export default function HistoryLog({ syncKey = 0 }) {
+export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
   const [isPending, startTransition] = useTransition();
   const [history, setHistory]   = useState(() => getHistoryAsArray());
   // Show skeleton only when there is truly nothing to display yet
@@ -160,6 +160,31 @@ export default function HistoryLog({ syncKey = 0 }) {
             <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
         </button>
+      </div>
+
+      {/* ── Theme Options ─────────────────────────────────── */}
+      <div className="card theme-card" style={{ marginBottom: '16px' }}>
+        <h3 style={{ marginTop: 0, marginBottom: '12px', fontSize: '1.05rem' }}>✨ Atmosphere</h3>
+        <div className="theme-toggle-group">
+          <button 
+            className={`theme-toggle-btn ${bgPref === 'mesh' ? 'active' : ''}`}
+            onClick={() => setBgPref && setBgPref('mesh')}
+          >
+            Living Mesh
+          </button>
+          <button 
+            className={`theme-toggle-btn ${bgPref === 'sky' ? 'active' : ''}`}
+            onClick={() => setBgPref && setBgPref('sky')}
+          >
+            Ethereal Sky
+          </button>
+          <button 
+            className={`theme-toggle-btn ${bgPref === 'classic' ? 'active' : ''}`}
+            onClick={() => setBgPref && setBgPref('classic')}
+          >
+            Classic Fast
+          </button>
+        </div>
       </div>
 
       {/* ── Weight Card ─────────────────────────────────── */}

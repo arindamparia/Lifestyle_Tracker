@@ -6,6 +6,7 @@ import NutritionPrep from './components/NutritionPrep';
 import HistoryLog from './components/HistoryLog';
 import AmbientSoundWidget from './components/AmbientSoundWidget';
 import PasswordGate from './components/PasswordGate';
+import { ClassicBackground, MeshBackground, SkyBackground } from './components/Backgrounds';
 import { getToken } from './auth';
 import { clearAllCache } from './cache';
 import { requestNotificationPermission } from './notifications';
@@ -33,6 +34,12 @@ function App() {
   const [syncKey, setSyncKey]         = useState(0);
   const [notifBanner, setNotifBanner] = useState(shouldShowNotifBanner);
   const [inAppToast, setInAppToast]   = useState(null); // { title, body }
+  const [bgPref, setBgPref]           = useState(() => localStorage.getItem('lt_bg_pref') || 'mesh');
+
+  const handleBgPrefChange = (mode) => {
+    setBgPref(mode);
+    localStorage.setItem('lt_bg_pref', mode);
+  };
 
   const toastTimer   = useRef(null);
   const contentRef   = useRef(null);   // ref on <main> for direct DOM translate
@@ -196,29 +203,14 @@ function App() {
     setNotifBanner(false);
   };
 
-  // ── Time-aware theme ───────────────────────────────────────────────────────
-  useEffect(() => {
-    const updateTheme = () => {
-      const hour = new Date().getHours();
-      let theme = 'theme-night';
-      let bg    = '#07080a';
-
-      if (hour >= 5  && hour < 9)  { theme = 'theme-morning'; bg = '#120e15'; }
-      else if (hour >= 9  && hour < 16) { theme = 'theme-day';     bg = '#0a0f16'; }
-      else if (hour >= 16 && hour < 19) { theme = 'theme-evening'; bg = '#140a16'; }
-
-      document.body.className = theme;
-      document.documentElement.style.backgroundColor = bg;
-    };
-    updateTheme();
-    const t = setInterval(updateTheme, 60 * 60 * 1000);
-    return () => clearInterval(t);
-  }, []);
-
   if (!authed) return <PasswordGate onAuth={() => setAuthed(true)} />;
 
   return (
     <>
+      {bgPref === 'mesh' && <MeshBackground />}
+      {bgPref === 'sky' && <SkyBackground />}
+      {bgPref === 'classic' && <ClassicBackground />}
+      
       <div className="app-container">
         <nav className="tab-navigation">
           <div className="tab-inner" ref={tabInnerRef}>
@@ -261,7 +253,7 @@ function App() {
           {activeTab === 'schedule'  && <MasterSchedule />}
           {activeTab === 'workout'   && <WorkoutPlan />}
           {activeTab === 'nutrition' && <NutritionPrep />}
-          {activeTab === 'history'   && <HistoryLog syncKey={syncKey} />}
+          {activeTab === 'history'   && <HistoryLog syncKey={syncKey} bgPref={bgPref} setBgPref={handleBgPrefChange} />}
         </main>
       </div>
 
