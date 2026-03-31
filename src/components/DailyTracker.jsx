@@ -110,6 +110,22 @@ const TASK_SCHEDULE = [
   { time: 1440, field: 'screen_curfew_followed',       emoji: '📴', label: '12:00 AM — Screen Curfew' },
 ];
 
+// Returns the TASK_SCHEDULE entry that is currently active (start time passed,
+// next task hasn't started yet). Used to render the "Now" pill in the header.
+const getActiveTask = () => {
+  const now = new Date();
+  const raw = now.getHours() * 60 + now.getMinutes();
+  const t = raw < 90 ? raw + 1440 : raw; // shift past-midnight times
+  for (let i = 0; i < TASK_SCHEDULE.length; i++) {
+    const itemMins = TASK_SCHEDULE[i].time < 90 ? TASK_SCHEDULE[i].time + 1440 : TASK_SCHEDULE[i].time;
+    const nextMins = i + 1 < TASK_SCHEDULE.length
+      ? (TASK_SCHEDULE[i + 1].time < 90 ? TASK_SCHEDULE[i + 1].time + 1440 : TASK_SCHEDULE[i + 1].time)
+      : 1440 + 90;
+    if (t >= itemMins && t < nextMins) return TASK_SCHEDULE[i];
+  }
+  return null;
+};
+
 // Returns up to 3 suggestions:
 //   • any task whose scheduled time falls within ±30 min of now (done or not)
 //   • any task that was scheduled 30–240 min ago and is still NOT done (overdue)
@@ -413,16 +429,11 @@ export default function DailyTracker({ onSync }) {
   const [showBookDropdown, setShowBookDropdown] = useState(false);
   const [readingOpen, setReadingOpen] = useState(false);
   const [bookSaved, setBookSaved] = useState(false);
-  // Weight card — controlled input with explicit submit
-  const [weightInput, setWeightInput] = useState('');
-  const [weightSaved, setWeightSaved] = useState(false);
-  const savedWeightRef = useRef(null); // last value confirmed in DB
   // Re-render every minute so suggestion panel and clock recompute
   const [, setTick] = useState(0);
   // Bump to re-trigger the fetch effect (e.g. at 5 AM day boundary)
   const [fetchKey, setFetchKey] = useState(0);
   const waterSyncTimer = useRef(null);
-  const weightSyncTimer = useRef(null);
   const syncFailTimer = useRef(null);
   const loadedForDate = useRef(null);
   // Schedule (or re-schedule) notifications whenever the log changes.
@@ -477,14 +488,6 @@ export default function DailyTracker({ onSync }) {
     return () => controller.abort();
   }, [fetchKey]);
 
-  // Sync weightInput when log loads/reloads from DB (only if different from what we have)
-  useEffect(() => {
-    if (log.weight_kg != null && log.weight_kg !== savedWeightRef.current) {
-      savedWeightRef.current = log.weight_kg;
-      setWeightInput(String(log.weight_kg));
-    }
-  }, [log.weight_kg]);
-
   // Show a "Sync failed" toast for 5 seconds
   const showSyncFail = () => {
     setSyncFailed(true);
@@ -518,34 +521,6 @@ export default function DailyTracker({ onSync }) {
         body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
       }).catch(() => showSyncFail());
     }, 1000);
-  };
-
-  // Explicit weight save — only calls DB if value actually changed
-  const handleWeightSave = async () => {
-    if (weightSaved) return;                            // cooldown — skip
-    const parsed = parseFloat(weightInput);
-    if (isNaN(parsed) || parsed <= 0) return;          // invalid — skip
-    if (parsed === savedWeightRef.current) return;      // unchanged — skip DB call
-
-    savedWeightRef.current = parsed;
-    const updatedLog = { ...log, weight_kg: parsed };
-    setLog(updatedLog);
-    setTodayLog(updatedLog);
-
-    // Flash saved indicator
-    setWeightSaved(true);
-    setTimeout(() => setWeightSaved(false), 2000);
-
-    try {
-      const res = await fetch('/.netlify/functions/daily-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-        body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),
-      });
-      if (!res.ok) showSyncFail();
-    } catch {
-      showSyncFail();
-    }
   };
 
   const addWater = () => {
@@ -713,6 +688,19 @@ export default function DailyTracker({ onSync }) {
         </div>
       </div>
 
+      {/* ── Now Pill ────────────────────────────────────── */}
+      {(() => {
+        const task = getActiveTask();
+        if (!task) return null;
+        const name = task.label.includes('—') ? task.label.split('—').pop().trim() : task.label;
+        return (
+          <div className="schedule-now-pill">
+            <span className="schedule-now-dot" />
+            Now: <strong>{task.emoji} {name}</strong>
+          </div>
+        );
+      })()}
+
       {/* ── Water Card ──────────────────────────────────── */}
       <div className={`card water-card${log.water_liters >= 4 ? ' water-card-full' : ''}`}>
         <div className="water-visual-row">
@@ -790,36 +778,6 @@ export default function DailyTracker({ onSync }) {
 
       {/* ── Book saved toast ────────────────────────────── */}
       {bookSaved && <div className="book-toast">📚 Book saved!</div>}
-
-      {/* ── Weight Card ─────────────────────────────────── */}
-      <div className="card weight-card-inline">
-        <span className="weight-card-icon">⚖️</span>
-        <span className="weight-card-label">Body Weight</span>
-        {weightSaved && <span className="weight-saved-badge">✓ Saved</span>}
-        <input
-          type="number"
-          className="weight-input"
-          placeholder="-- kg"
-          step="0.1"
-          min="30"
-          max="300"
-          value={weightInput}
-          onChange={e => {
-            const v = e.target.value;
-            if (v === '' || /^\d{0,3}(\.\d{0,1})?$/.test(v)) setWeightInput(v);
-          }}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleWeightSave(); } }}
-        />
-        <span className="weight-unit">kg</span>
-        <button
-          className={`weight-submit-btn${weightSaved ? ' weight-submit-btn--saved' : ''}`}
-          onClick={handleWeightSave}
-          disabled={weightSaved}
-          title="Save weight"
-        >
-          ✓
-        </button>
-      </div>
 
       {/* ── Reading Today Card ──────────────────────────── */}
       <div className="card reading-card">

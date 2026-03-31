@@ -91,14 +91,6 @@ export default function MasterSchedule() {
       <h2>Master Schedule</h2>
       <p className="subtitle">Follow this exact chronological order. Timing is designed to maximise supplement absorption and fat loss.</p>
 
-      {/* Live time indicator */}
-      {activeTitle && (
-        <div className="schedule-now-pill">
-          <span className="schedule-now-dot" />
-          Now: <strong>{activeTitle}</strong>
-        </div>
-      )}
-
       {scheduleData.map((block, idx) => (
         <div key={idx} className="schedule-block">
           <h3 className="block-title">{block.period}</h3>

@@ -29,12 +29,14 @@ const SWIPE_EASE = 'transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
 function App() {
   const [authed, setAuthed]           = useState(!!getToken());
   const [activeTab, setActiveTab]     = useState('tracker');
+  const [navTab, setNavTab]           = useState('tracker'); // updates immediately on swipe; activeTab waits for animation
   const [syncKey, setSyncKey]         = useState(0);
   const [notifBanner, setNotifBanner] = useState(shouldShowNotifBanner);
   const [inAppToast, setInAppToast]   = useState(null); // { title, body }
 
   const toastTimer   = useRef(null);
   const contentRef   = useRef(null);   // ref on <main> for direct DOM translate
+  const tabInnerRef  = useRef(null);   // ref on .tab-inner for auto-scroll
   const touchStartX  = useRef(null);
   const touchStartY  = useRef(null);
   const isDragging   = useRef(false);
@@ -45,6 +47,13 @@ function App() {
   useEffect(() => {
     activeIdxRef.current = TABS.indexOf(activeTab);
   }, [activeTab]);
+
+  // Scroll the active tab button into view whenever navTab changes
+  useEffect(() => {
+    if (!tabInnerRef.current) return;
+    const activeBtn = tabInnerRef.current.querySelector('button.active');
+    if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, [navTab]);
 
   // ── In-app notification toast ──────────────────────────────────────────────
   useEffect(() => {
@@ -120,6 +129,9 @@ function App() {
       const exitX  = deltaX < 0 ? -vw : vw;   // current slides out this direction
       const enterX = deltaX < 0 ?  vw : -vw;  // new content enters from opposite side
 
+      // Nav highlight updates immediately so it tracks the swipe
+      setNavTab(TABS[newIdx]);
+
       if (contentRef.current) {
         contentRef.current.style.transition = SWIPE_EASE;
         contentRef.current.style.transform  = `translateX(${exitX}px)`;
@@ -155,13 +167,14 @@ function App() {
     }
   }, []);
 
-  // Register touchmove as non-passive so e.preventDefault() works
+  // Register touchmove as non-passive so e.preventDefault() works.
+  // Also re-run when authed changes — contentRef is null before login.
   useEffect(() => {
     const el = contentRef.current;
     if (!el) return;
     el.addEventListener('touchmove', handleTouchMove, { passive: false });
     return () => el.removeEventListener('touchmove', handleTouchMove);
-  }, [handleTouchMove]);
+  }, [handleTouchMove, authed]);
 
   // ── Global sync ────────────────────────────────────────────────────────────
   const handleGlobalSync = () => {
@@ -208,21 +221,21 @@ function App() {
     <>
       <div className="app-container">
         <nav className="tab-navigation">
-          <div className="tab-inner">
-            <button className={`main-tab${activeTab === 'tracker' ? ' active' : ''}`} onClick={() => setActiveTab('tracker')}>
+          <div className="tab-inner" ref={tabInnerRef}>
+            <button className={`main-tab${navTab === 'tracker' ? ' active' : ''}`} onClick={() => { setActiveTab('tracker'); setNavTab('tracker'); }}>
               Daily Tracker
             </button>
-            <button className={activeTab === 'schedule' ? 'active' : ''} onClick={() => setActiveTab('schedule')}>
+            <button className={navTab === 'schedule' ? 'active' : ''} onClick={() => { setActiveTab('schedule'); setNavTab('schedule'); }}>
               Master Schedule
             </button>
-            <button className={activeTab === 'workout' ? 'active' : ''} onClick={() => setActiveTab('workout')}>
+            <button className={navTab === 'workout' ? 'active' : ''} onClick={() => { setActiveTab('workout'); setNavTab('workout'); }}>
               Workouts
             </button>
-            <button className={activeTab === 'nutrition' ? 'active' : ''} onClick={() => setActiveTab('nutrition')}>
+            <button className={navTab === 'nutrition' ? 'active' : ''} onClick={() => { setActiveTab('nutrition'); setNavTab('nutrition'); }}>
               Preparation
             </button>
-            <button className={activeTab === 'history' ? 'active' : ''} onClick={() => setActiveTab('history')}>
-              History
+            <button className={navTab === 'history' ? 'active' : ''} onClick={() => { setActiveTab('history'); setNavTab('history'); }}>
+              Profile
             </button>
           </div>
         </nav>

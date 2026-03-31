@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useTransition } from 'react';
+import React, { useState, useEffect, useMemo, useTransition, useRef } from 'react';
 
 const HABIT_LABELS = {
   morning_meditation_completed: { label: 'Morning Meditation',  emoji: '🧘' },
@@ -24,6 +24,9 @@ import {
   getHistoryAsArray,
   mergeHistoryRows,
   hasHistoryCache,
+  getTodayLog,
+  setTodayLog,
+  getEffectiveDate,
 } from '../cache';
 import { getAuthHeader, handleUnauthorized, clearToken } from '../auth';
 
@@ -32,6 +35,40 @@ export default function HistoryLog({ syncKey = 0 }) {
   const [history, setHistory]   = useState(() => getHistoryAsArray());
   // Show skeleton only when there is truly nothing to display yet
   const [loading, setLoading]   = useState(() => getHistoryAsArray().length === 0);
+
+  // ── Weight card ───────────────────────────────────────────────────────────
+  const [weightInput, setWeightInput] = useState('');
+  const [weightSaved, setWeightSaved] = useState(false);
+  const savedWeightRef = useRef(null);
+
+  // Initialise weight input from today's cached log
+  useEffect(() => {
+    const today = getTodayLog();
+    if (today?.weight_kg != null && today.weight_kg !== savedWeightRef.current) {
+      savedWeightRef.current = today.weight_kg;
+      setWeightInput(String(today.weight_kg));
+    }
+  }, []);
+
+  const handleWeightSave = async () => {
+    if (weightSaved) return;
+    const parsed = parseFloat(weightInput);
+    if (isNaN(parsed) || parsed <= 0) return;
+    if (parsed === savedWeightRef.current) return;
+    savedWeightRef.current = parsed;
+    const today = getTodayLog() || {};
+    const updatedLog = { ...today, weight_kg: parsed };
+    setTodayLog(updatedLog);
+    setWeightSaved(true);
+    setTimeout(() => setWeightSaved(false), 2500);
+    try {
+      await fetch('/.netlify/functions/daily-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),
+      });
+    } catch {}
+  };
 
   useEffect(() => {
     // Fresh cache — show immediately, no network needed
@@ -112,12 +149,48 @@ export default function HistoryLog({ syncKey = 0 }) {
           <p className="subtitle">Review your consistency and habit completion across previous days.</p>
         </div>
         <button
+          className="logout-btn"
           onClick={() => { clearToken(); window.location.reload(); }}
-          style={{ marginTop: '0.25rem', padding: '0.4rem 0.9rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
+          title="Log out"
+          aria-label="Log out"
         >
-          Log out
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
         </button>
       </div>
+
+      {/* ── Weight Card ─────────────────────────────────── */}
+      <div className="card weight-card-inline">
+        <span className="weight-card-icon">⚖️</span>
+        <span className="weight-card-label">Today's Weight</span>
+        <input
+          type="number"
+          className="weight-input"
+          placeholder="-- kg"
+          step="0.1"
+          min="30"
+          max="300"
+          value={weightInput}
+          onChange={e => {
+            const v = e.target.value;
+            if (v === '' || /^\d{0,3}(\.\d{0,1})?$/.test(v)) setWeightInput(v);
+          }}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleWeightSave(); } }}
+        />
+        <span className="weight-unit">kg</span>
+        <button
+          className="weight-submit-btn"
+          onClick={handleWeightSave}
+          disabled={weightSaved}
+          title="Save weight"
+        >
+          ✓
+        </button>
+      </div>
+      {weightSaved && <div className="book-toast">⚖️ Weight saved!</div>}
 
       {loading ? (
         <div className="history-grid">

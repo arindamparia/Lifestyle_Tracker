@@ -114,7 +114,7 @@ h3 {
   color: var(--primary);
   font-weight: 700;
   font-size: 1.3rem;
-  margin: 30px 0 15px 0;
+  margin: 18px 0 8px 0;
   text-transform: uppercase;
   letter-spacing: 1px;
   overflow-wrap: break-word;
@@ -246,7 +246,7 @@ h4 {
 .grid-stack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
   /* Contain any overflow from child elements */
   overflow: hidden;
   width: 100%;
@@ -277,7 +277,7 @@ h4 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 20px;
+  padding: 10px 14px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -511,7 +511,7 @@ h4 {
   background: rgba(22, 24, 33, 0.7);
   border: 1px solid var(--border-color);
   border-radius: 14px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   backdrop-filter: blur(10px);
   overflow: hidden;
 }
@@ -773,7 +773,7 @@ input[type="checkbox"]:checked::after {
 }
 
 .water-card {
-  margin-bottom: 30px;
+  margin-bottom: 14px;
   background: linear-gradient(135deg, rgba(22, 24, 33, 0.85), rgba(66, 90, 180, 0.12));
   transition: background 0.6s ease;
 }
@@ -1188,6 +1188,37 @@ button:active {
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* === HISTORY & CALENDAR LOG === */
+.logout-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-height: unset !important;
+  padding: 0 !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 10px !important;
+  color: var(--text-secondary) !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: background 0.18s, color 0.18s, border-color 0.18s !important;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.logout-btn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.logout-btn:hover {
+  background: rgba(255, 99, 99, 0.10) !important;
+  border-color: rgba(255, 99, 99, 0.30) !important;
+  color: #ff8080 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .history-refreshing {
   font-size: 0.85rem;
   color: var(--text-muted);
@@ -1279,7 +1310,7 @@ button:active {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   padding: 14px 20px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   gap: 12px;
 }
 
@@ -1853,7 +1884,7 @@ button:active {
   padding: 6px 14px;
   font-size: 0.82rem;
   color: #c4b5fd;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 .schedule-now-pill strong { color: #e0d7ff; }
 
@@ -2060,7 +2091,7 @@ button:active {
 .sync-spinning { display: inline-block; animation: spin 0.8s linear infinite; }
 
 /* ── Reading Today card ───────────────────────────────────────────────────── */
-.reading-card { padding: 20px 24px; }
+.reading-card { padding: 20px 24px; margin-bottom: 14px; }
 .reading-header {
   display: flex;
   align-items: center;
@@ -2636,6 +2667,7 @@ button:active {
   gap: 10px;
   padding: 12px 16px;
   flex-wrap: nowrap;
+  margin-bottom: 14px;
 }
 
 .weight-card-icon { font-size: 1.1rem; flex-shrink: 0; }
@@ -2883,19 +2915,37 @@ button:active {
   line-height: 1.45;
 }
 .deload-sub {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
   margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .deload-reset-btn {
-  background: none;
-  border: none;
-  color: var(--primary);
-  font-size: 0.78rem;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  display: inline-flex !important;
+  align-items: center !important;
+  background: rgba(108, 92, 231, 0.12) !important;
+  border: 1px solid rgba(108, 92, 231, 0.30) !important;
+  color: #a89cf7 !important;
+  font-size: 0.76rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  padding: 3px 10px !important;
+  border-radius: 12px !important;
+  min-height: unset !important;
+  height: auto !important;
+  box-shadow: none !important;
+  letter-spacing: 0 !important;
+  text-decoration: none !important;
+  transition: background 0.15s !important;
+  white-space: nowrap;
+}
+.deload-reset-btn:hover {
+  background: rgba(108, 92, 231, 0.25) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 .deload-date-input {
   margin-top: 8px;
