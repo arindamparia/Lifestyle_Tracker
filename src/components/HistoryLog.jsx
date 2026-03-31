@@ -231,9 +231,17 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
             const maxW = Math.max(...weights);
             
             // Fixed Axis per user request
-            const GRAPH_MIN = 65;
+            const GRAPH_MIN = 50;
             const GRAPH_MAX = 100;
             const range = GRAPH_MAX - GRAPH_MIN;
+            
+            // Helper for BMI category colors
+            const getBarColor = (w) => {
+              if (w < 55.5) return 'linear-gradient(180deg, #48dbfb 0%, #0abde3 100%)'; // Underweight (Blue)
+              if (w >= 55.5 && w <= 74.4) return 'linear-gradient(180deg, #1dd1a1 0%, #10ac84 100%)'; // Perfect (Green)
+              if (w >= 74.5 && w <= 89.3) return 'linear-gradient(180deg, #feca57 0%, #ff9f43 100%)'; // Overweight (Orange)
+              return 'linear-gradient(180deg, #ff6b6b 0%, #ee5253 100%)'; // Obese (Red)
+            };
             
             return (
               <div className="weight-chart-section">
@@ -242,7 +250,7 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
                   {weightData.slice(-30).map((d, i) => {
                     const w = parseFloat(d.weight_kg);
                     let pct = ((w - GRAPH_MIN) / range) * 100; 
-                    if (pct < 0) pct = 0; // If lower than 65kg, show as 65kg height (floor)
+                    if (pct < 0) pct = 0; // If lower than 50kg, show as 50kg height (floor)
                     if (pct > 100) pct = 100; // Cap at 100kg ceiling
                     const dateStr = new Date(d.log_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
                     return (
@@ -250,7 +258,7 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
                         <div className="wc-bar-wrap" style={{ position: 'relative', width: '100%' }}>
                           <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: `${pct}%`, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
                             <span className="wc-val" style={{ marginBottom: '4px' }}>{d.weight_kg}</span>
-                            <div className="wc-bar" style={{ flex: 1, width: '100%', minHeight: '4px' }} />
+                            <div className="wc-bar" style={{ flex: 1, width: '100%', minHeight: '4px', background: getBarColor(w) }} />
                           </div>
                         </div>
                         <span className="wc-date">{dateStr}</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getTodayLog, setTodayLog, getEffectiveDate } from '../cache';
+import { getTodayLog, setTodayLog, getEffectiveDate, getHistoryAsArray } from '../cache';
 import { getAuthHeader, handleUnauthorized } from '../auth';
 import { scheduleNotifications, clearNotificationTimers } from '../notifications';
 
@@ -429,6 +429,18 @@ export default function DailyTracker({ onSync }) {
   const [showBookDropdown, setShowBookDropdown] = useState(false);
   const [readingOpen, setReadingOpen] = useState(false);
   const [bookSaved, setBookSaved] = useState(false);
+  
+  // Collapse toggle states with localStorage persistence
+  const [weightOpen, setWeightOpen] = useState(() => {
+    try { const val = localStorage.getItem('lt_dt_weight_open'); return val ? JSON.parse(val) : true; } catch { return true; }
+  });
+  const [waterOpen, setWaterOpen] = useState(() => {
+    try { const val = localStorage.getItem('lt_dt_water_open'); return val ? JSON.parse(val) : true; } catch { return true; }
+  });
+
+  const toggleWeight = () => { const val = !weightOpen; setWeightOpen(val); localStorage.setItem('lt_dt_weight_open', JSON.stringify(val)); };
+  const toggleWater = () => { const val = !waterOpen; setWaterOpen(val); localStorage.setItem('lt_dt_water_open', JSON.stringify(val)); };
+
   // Re-render every minute so suggestion panel and clock recompute
   const [, setTick] = useState(0);
   // Bump to re-trigger the fetch effect (e.g. at 5 AM day boundary)
@@ -701,74 +713,126 @@ export default function DailyTracker({ onSync }) {
         );
       })()}
 
+      {/* ── Current Situation (Weight Status) ───────────── */}
+      {(() => {
+         const history = getHistoryAsArray();
+         const weightLogs = history.filter(d => d.weight_kg != null);
+         const latestWeight = weightLogs.length > 0 ? parseFloat(weightLogs[weightLogs.length - 1].weight_kg) : null;
+         const currentWeight = log.weight_kg != null ? parseFloat(log.weight_kg) : latestWeight;
+
+         if (!currentWeight) return null;
+
+         let status = '';
+         let icon = '';
+         let color = '';
+         let message = '';
+         
+         if (currentWeight < 55.5) {
+           status = 'Underweight'; icon = '❄️'; color = '#0abde3'; message = 'Focus on caloric surplus and strength training.';
+         } else if (currentWeight >= 55.5 && currentWeight <= 74.4) {
+           status = 'Perfect'; icon = '🔥'; color = '#1dd1a1'; message = 'Optimal range maintaining lean mass and vitality.';
+         } else if (currentWeight >= 74.5 && currentWeight <= 89.3) {
+           status = 'Overweight'; icon = '⚠️'; color = '#ff9f43'; message = 'Cut refined carbs and ensure daily cardio intervals.';
+         } else {
+           status = 'Obesity'; icon = '🚨'; color = '#ff6b6b'; message = 'Strict adherence to caloric deficit and 50/10 rule required.';
+         }
+
+         return (
+           <div className="card" style={{ display: 'flex', flexDirection: 'column', borderLeft: `4px solid ${color}`, marginBottom: '16px' }}>
+              <div onClick={toggleWeight} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', opacity: weightOpen ? 1 : 0.8 }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ fontSize: '1.4rem' }}>{icon}</div>
+                    <div style={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
+                       Status: <span style={{ color }}>{status}</span> · {currentWeight.toFixed(1)} kg
+                    </div>
+                 </div>
+                 <span className="reading-toggle">{weightOpen ? '▲' : '▼'}</span>
+              </div>
+              {weightOpen && (
+                 <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                   <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
+                     {message}
+                   </p>
+                 </div>
+              )}
+           </div>
+         );
+      })()}
+
       {/* ── Water Card ──────────────────────────────────── */}
       <div className={`card water-card${log.water_liters >= 4 ? ' water-card-full' : ''}`}>
-        <div className="water-visual-row">
-
-          {/* Animated water bottle */}
-          <div className={`wbt-outer${log.water_liters >= 4 ? ' wbt-full' : ''}`}>
-            <div className="wbt-neck">
-              <div className="wbt-cap" />
-            </div>
-            <div className="wbt-body">
-              <div
-                className="wbt-fill-wrap"
-                style={{ height: `${(log.water_liters / 4) * 100}%` }}
-              >
-                <div className="wbt-wave-a" />
-                <div className="wbt-wave-b" />
-                <div className="wbt-water" />
-                {log.water_liters > 0 && (
-                  <>
-                    <div className="wbt-bub wbt-bub1" />
-                    <div className="wbt-bub wbt-bub2" />
-                    <div className="wbt-bub wbt-bub3" />
-                  </>
-                )}
-              </div>
-              <div className="wbt-marks">
-                <span className="wbt-mark" style={{ bottom: '75%' }}>3L</span>
-                <span className="wbt-mark" style={{ bottom: '50%' }}>2L</span>
-                <span className="wbt-mark" style={{ bottom: '25%' }}>1L</span>
-              </div>
-              <div className="wbt-shine" />
-            </div>
-          </div>
-
-          {/* Right panel: stats + buttons */}
-          <div className="water-right-panel">
-            <div className="water-stat-block">
-              <div className="water-liters-num">
-                {Math.round(parseFloat(log.water_liters || 0))}
-                <span className="water-of-goal"> / 4L</span>
-                {log.water_liters >= 4 && (
-                  <span className="water-goal-badge">✓ Goal Complete</span>
-                )}
-              </div>
-              <div className="water-stat-label">Hydration Today</div>
-            </div>
-            <p className="water-tip">Drink from a 1L bottle. Finish before 11:30 PM cut-off.</p>
-            <div className="water-btns">
-              <button
-                className="water-btn-remove"
-                onClick={removeWater}
-                disabled={log.water_liters <= 0}
-                aria-label="Remove 1 litre"
-              >
-                −1L
-              </button>
-              <button
-                className="water-btn-add"
-                onClick={addWater}
-                disabled={log.water_liters >= 4}
-                aria-label="Add 1 litre"
-              >
-                +1L
-              </button>
-            </div>
-          </div>
-
+        <div onClick={toggleWater} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: waterOpen ? '16px' : '0' }}>
+           <h3 style={{ margin: 0 }}>💧 Hydration Track</h3>
+           <span className="reading-toggle">{waterOpen ? '▲' : '▼'}</span>
         </div>
+        {waterOpen && (
+          <div className="water-visual-row">
+
+            {/* Animated water bottle */}
+            <div className={`wbt-outer${log.water_liters >= 4 ? ' wbt-full' : ''}`}>
+              <div className="wbt-neck">
+                <div className="wbt-cap" />
+              </div>
+              <div className="wbt-body">
+                <div
+                  className="wbt-fill-wrap"
+                  style={{ height: `${(log.water_liters / 4) * 100}%` }}
+                >
+                  <div className="wbt-wave-a" />
+                  <div className="wbt-wave-b" />
+                  <div className="wbt-water" />
+                  {log.water_liters > 0 && (
+                    <>
+                      <div className="wbt-bub wbt-bub1" />
+                      <div className="wbt-bub wbt-bub2" />
+                      <div className="wbt-bub wbt-bub3" />
+                    </>
+                  )}
+                </div>
+                <div className="wbt-marks">
+                  <span className="wbt-mark" style={{ bottom: '75%' }}>3L</span>
+                  <span className="wbt-mark" style={{ bottom: '50%' }}>2L</span>
+                  <span className="wbt-mark" style={{ bottom: '25%' }}>1L</span>
+                </div>
+                <div className="wbt-shine" />
+              </div>
+            </div>
+
+            {/* Right panel: stats + buttons */}
+            <div className="water-right-panel">
+              <div className="water-stat-block">
+                <div className="water-liters-num">
+                  {Math.round(parseFloat(log.water_liters || 0))}
+                  <span className="water-of-goal"> / 4L</span>
+                  {log.water_liters >= 4 && (
+                    <span className="water-goal-badge">✓ Goal Complete</span>
+                  )}
+                </div>
+                <div className="water-stat-label">Hydration Today</div>
+              </div>
+              <p className="water-tip">Drink from a 1L bottle. Finish before 11:30 PM cut-off.</p>
+              <div className="water-btns">
+                <button
+                  className="water-btn-remove"
+                  onClick={removeWater}
+                  disabled={log.water_liters <= 0}
+                  aria-label="Remove 1 litre"
+                >
+                  −1L
+                </button>
+                <button
+                  className="water-btn-add"
+                  onClick={addWater}
+                  disabled={log.water_liters >= 4}
+                  aria-label="Add 1 litre"
+                >
+                  +1L
+                </button>
+              </div>
+            </div>
+
+          </div>
+        )}
       </div>
 
       {/* ── Sync failed toast ───────────────────────────── */}
