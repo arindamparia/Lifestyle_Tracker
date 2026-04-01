@@ -1,0 +1,528 @@
+/* === DATE / TIME HEADER === */
+
+.dt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 14px 20px;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+
+.dt-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dt-weekday {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.dt-date {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.dt-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.dt-time {
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
+  letter-spacing: 0.02em;
+}
+
+.dt-late-tag {
+  font-size: 0.72rem;
+  color: #ffa01e;
+  background: rgba(255, 160, 30, 0.12);
+  border: 1px solid rgba(255, 160, 30, 0.3);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Skeleton Loading
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes skel-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skel-line {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 1200px 100%;
+  animation: skel-shimmer 1.6s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.skeleton-card {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Workout Hero Card — Today's session
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.workout-hero-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.18), rgba(124, 106, 247, 0.08));
+  border: 1px solid rgba(108, 92, 231, 0.35);
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 32px rgba(108, 92, 231, 0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+/* Glow blob in the corner */
+.workout-hero-card::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(108, 92, 231, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+.workout-hero-rest {
+  background: linear-gradient(135deg, rgba(46, 213, 115, 0.10), rgba(46, 213, 115, 0.04));
+  border-color: rgba(46, 213, 115, 0.25);
+  box-shadow: 0 4px 24px rgba(46, 213, 115, 0.08);
+}
+.workout-hero-rest::before {
+  background: radial-gradient(circle, rgba(46, 213, 115, 0.15), transparent 70%);
+}
+
+.workout-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.workout-hero-badge {
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(108, 92, 231, 0.4);
+}
+
+.workout-hero-emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.workout-hero-meta {
+  margin-bottom: 14px;
+}
+
+.workout-hero-day {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+
+.workout-hero-focus {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.workout-hero-steps {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.workout-hero-steps li {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.workout-day-emoji {
+  margin-right: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Master Schedule — Live Time Indicator
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* "Now:" pill at the top */
+.schedule-now-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(108, 92, 231, 0.12);
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  color: #c4b5fd;
+  margin-bottom: 14px;
+}
+.schedule-now-pill strong { color: #e0d7ff; }
+
+.schedule-now-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(108, 92, 231, 0.8);
+  animation: pulse-now 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse-now {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.75); }
+}
+
+/* Active timeline item */
+.timeline-item--active {
+  position: relative;
+  background: rgba(108, 92, 231, 0.08) !important;
+  border-radius: 10px;
+  padding: 10px 10px 10px 14px !important;
+  margin-left: -10px;
+  margin-right: -10px;
+  border-left: 3px solid var(--primary) !important;
+}
+/* Pulse ring on the left side */
+.timeline-active-pulse {
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 12px rgba(108, 92, 231, 0.8);
+  animation: pulse-now 2s ease-in-out infinite;
+}
+
+/* Live dot inline in the title */
+.timeline-live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 6px rgba(108, 92, 231, 0.7);
+  margin-right: 7px;
+  vertical-align: middle;
+  animation: pulse-now 2s ease-in-out infinite;
+}
+
+.timeline-item--active h4 {
+  color: #ddd6fe !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Grocery Checklist — Interactive Shopping List
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.grocery-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.grocery-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.grocery-progress-pill {
+  background: rgba(108, 92, 231, 0.15);
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #c4b5fd;
+  font-variant-numeric: tabular-nums;
+}
+
+.grocery-sync-badge {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.grocery-sync-badge--loading { color: #f59e0b; }
+
+.grocery-reset-btn {
+
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.grocery-reset-btn:hover { color: var(--text-secondary); border-color: rgba(255,255,255,0.2); }
+
+.grocery-progress-bar-wrap {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 2px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.grocery-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #9180ff);
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.grocery-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grocery-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: 1px solid transparent;
+  user-select: none;
+}
+.grocery-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.grocery-item--checked {
+  background: rgba(46, 213, 115, 0.06) !important;
+  border-color: rgba(46, 213, 115, 0.15);
+}
+
+.grocery-checkbox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #2ed573;
+  transition: background 0.15s, border-color 0.15s;
+  margin-top: 1px;
+}
+.grocery-item--checked .grocery-checkbox {
+  background: rgba(46, 213, 115, 0.2);
+  border-color: #2ed573;
+}
+
+.grocery-item-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  transition: color 0.2s, text-decoration 0.2s;
+}
+.grocery-item--checked .grocery-item-label {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(46, 213, 115, 0.4);
+}
+
+/* ── Sync button ──────────────────────────────────────────────────────────── */
+
+.sync-btn {
+  padding: 6px 12px !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  min-height: unset !important;
+  height: 30px !important;
+  border-radius: 8px !important;
+  opacity: 0.75;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+.sync-btn:hover { opacity: 1; }
+.sync-btn:disabled { opacity: 0.4; cursor: not-allowed !important; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sync-spinning { display: inline-block; animation: spin 0.8s linear infinite; }
+
+/* ── Reading Today card ───────────────────────────────────────────────────── */
+.reading-card { padding: 20px 24px; margin-bottom: 14px; }
+.reading-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+  user-select: none;
+}
+.reading-header h3 { margin: 0; font-size: 1rem; font-weight: 700; flex: 1; }
+.reading-toggle { font-size: 0.75rem; color: var(--text-secondary); }
+.reading-input-wrap { position: relative; margin-top: 14px; margin-bottom: 14px; display: flex; gap: 8px; align-items: flex-start; }
+.book-save-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+}
+.book-save-btn:hover { opacity: 0.85; }
+.reading-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+.reading-input:focus { border-color: var(--primary); }
+.reading-input::placeholder { color: var(--text-muted); }
+.book-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: #1a1c27;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  list-style: none;
+  margin: 0; padding: 4px 0;
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.book-dropdown li {
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.book-dropdown li:hover { background: rgba(108,92,231,0.2); }
+.reading-finished {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+.reading-finished input[type="checkbox"] { margin-right: 12px; }
+
+/* ── History book row ─────────────────────────────────────────────────────── */
+.history-book {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.book-finished-badge {
+  background: rgba(46,213,115,0.15);
+  color: var(--accent-green);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ── Books summary section ────────────────────────────────────────────────── */
+.books-summary {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+}
+.books-summary h3 { margin: 0 0 14px; font-size: 1rem; }
+.books-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.books-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+.book-item-name { font-size: 0.92rem; color: var(--text-primary); font-weight: 500; }
+.book-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+

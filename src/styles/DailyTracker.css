@@ -1,0 +1,61 @@
+/* === DAILY TRACKER === */
+.grid-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Contain any overflow from child elements */
+  overflow: hidden;
+  width: 100%;
+}
+
+/* === BUTTONS === */
+button {
+  background: var(--primary) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 14px 28px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 4px 15px var(--primary-glow) !important;
+  /* Prevent double-tap zoom delay on mobile */
+  touch-action: manipulation;
+  /* Ensure tap target is at least 44px (Apple HIG / WCAG 2.5.8) */
+  min-height: 44px;
+}
+
+button:hover {
+  background: #7a6bed !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px var(--primary-glow) !important;
+}
+
+button:active {
+  transform: translateY(1px) !important;
+}
+
+
+/* === BOOK SAVED TOAST === */
+.book-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  z-index: 1000;
+  pointer-events: none;
+  animation: toast-in 0.2s ease;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+

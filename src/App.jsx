@@ -3,6 +3,7 @@ import DailyTracker from './components/DailyTracker';
 import MasterSchedule from './components/MasterSchedule';
 import WorkoutPlan from './components/WorkoutPlan';
 import NutritionPrep from './components/NutritionPrep';
+import './styles/Navigation.css';
 import HistoryLog from './components/HistoryLog';
 import AmbientSoundWidget from './components/AmbientSoundWidget';
 import PasswordGate from './components/PasswordGate';

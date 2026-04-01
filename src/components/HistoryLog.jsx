@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useTransition, useRef } from 'react';
+import '../styles/HistoryLog.css';
 
 const HABIT_LABELS = {
   morning_meditation_completed: { label: 'Morning Meditation',  emoji: '🧘' },

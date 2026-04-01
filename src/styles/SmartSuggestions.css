@@ -1,0 +1,123 @@
+/* === SMART SUGGESTIONS PANEL === */
+.suggestions-panel {
+  background: rgba(22, 24, 33, 0.7);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.suggestions-heading {
+  padding: 9px 9px 9px 16px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.suggestions-toggle {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  padding: 3px 9px !important;
+  font-size: 0.62rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: none !important;
+  min-height: unset !important;
+  line-height: 1.4;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0;
+}
+.suggestions-toggle:hover {
+  color: var(--text-primary) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  transform: none !important;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.2s ease;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+/* Overdue: faint red tint */
+.suggestion-item.suggestion-overdue {
+  background: rgba(255, 71, 87, 0.04);
+}
+
+/* Done: fade out and strike through */
+.suggestion-item.suggestion-done {
+  opacity: 0.4;
+}
+
+.suggestion-emoji {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.suggestion-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.suggestion-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: break-word;
+}
+
+.suggestion-item.suggestion-done .suggestion-label {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.suggestion-missed-tag {
+  display: inline-block;
+  background: rgba(255, 71, 87, 0.12);
+  color: var(--accent-red);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* Suggestion checkbox — proper tap target */
+.suggestion-check {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 4px;
+}
+
+.suggestion-check input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  flex-shrink: 0;
+}
+

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import '../styles/WorkoutPlan.css';
 
 // ── Deload week helpers ───────────────────────────────────────────────────────
 const LS_TRAINING_START = 'lt_training_start';

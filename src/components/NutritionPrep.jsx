@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import '../styles/NutritionPrep.css';
 import { getAuthHeader } from '../auth';
 
 // ── Week key: always the most recent Saturday (YYYY-MM-DD) ───────────────────

@@ -1,0 +1,112 @@
+/* === DETAILED INFO MODAL === */
+.detailed-info-overlay {
+  position: fixed;
+  inset: 0; /* replaces top/left/width/height — avoids 100vw overflow bug */
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+           env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.detailed-info-box {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 30px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  transform: translateY(0);
+  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.detailed-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 15px;
+}
+
+.detailed-info-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.close-btn {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  box-shadow: none !important;
+  padding: 5px 10px !important;
+  font-size: 1.2rem !important;
+}
+
+.close-btn:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.detailed-info-box h4 {
+  color: var(--text-primary);
+  margin-top: 0;
+}
+
+.detailed-info-box p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-size: 1.05rem;
+  margin-bottom: 12px;
+}
+
+/* Numbered step list inside the info modal */
+.detail-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: steps;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-steps li {
+  counter-increment: steps;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.detail-steps li::before {
+  content: counter(steps);
+  min-width: 24px;
+  height: 24px;
+  background: rgba(108, 92, 231, 0.25);
+  border: 1px solid rgba(108, 92, 231, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #a29bfe;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Modal scroll for long step lists */
+.detailed-info-box {
+  max-height: 80vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+

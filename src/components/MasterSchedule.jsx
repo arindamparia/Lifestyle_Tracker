@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import '../styles/MasterSchedule.css';
 
 // Parse a time string like "7:30 AM" or "9:00 AM - 1:00 PM" → minutes from midnight
 const parseTimeToMins = (timeStr) => {

@@ -1,0 +1,113 @@
+/* === HISTORY & CALENDAR LOG === */
+.logout-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-height: unset !important;
+  padding: 0 !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 10px !important;
+  color: var(--text-secondary) !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: background 0.18s, color 0.18s, border-color 0.18s !important;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.logout-btn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.logout-btn:hover {
+  background: rgba(255, 99, 99, 0.10) !important;
+  border-color: rgba(255, 99, 99, 0.30) !important;
+  color: #ff8080 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.history-refreshing {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.history-card {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.water-badge {
+  background: rgba(66, 179, 255, 0.15);
+  color: #88c0ff;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.progress-container {
+  width: 100%;
+  margin: 10px 0;
+}
+
+.progress-bg {
+  background: rgba(255, 255, 255, 0.05);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.history-stats {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  color: #fff;
+}
+
+.history-stats .fraction {
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-left: 8px;
+}
+
+.window-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

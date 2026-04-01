@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import '../styles/Backgrounds.css';
 
 const STOPS = [
   { time: 0,  c1: [25, 12, 55],    c2: [12, 28, 58],    c3: [35, 10, 48] }, // Midnight: Deep Indigo, Navy, Purple void
@@ -91,9 +92,9 @@ export function SkyBackground() {
       className="sky-bg-container"
       style={{
         background: `
-          radial-gradient(circle at 10% 0%, rgba(${c1.join(',')}, 0.8) 0%, transparent 60%),
-          radial-gradient(circle at 90% 100%, rgba(${c2.join(',')}, 0.7) 0%, transparent 65%),
-          radial-gradient(circle at 50% 110%, rgba(${c3.join(',')}, 0.6) 0%, transparent 70%),
+          radial-gradient(circle at 10% 0%, rgba(${c1.join(',')}, 0.8) 0%, transparent 85vmax),
+          radial-gradient(circle at 90% 100%, rgba(${c2.join(',')}, 0.7) 0%, transparent 85vmax),
+          radial-gradient(circle at 50% 110%, rgba(${c3.join(',')}, 0.6) 0%, transparent 90vmax),
           linear-gradient(135deg, rgba(${c1.join(',')}, 0.15) 0%, rgba(${c3.join(',')}, 0.1) 100%),
           #030408
         `

@@ -1,0 +1,93 @@
+/* === NUTRITION & PREP === */
+.grocery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.grocery-category ul, .meal-step-card ul {
+  padding-left: 20px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+.grocery-category li::marker {
+  color: var(--primary);
+}
+
+.steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Scrollbar tuning */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-color); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* === MEAL STEP CARDS (NutritionPrep) === */
+.meal-step-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.meal-step-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.meal-step-header h4 {
+  margin: 0 0 4px 0;
+}
+
+.meal-step-time {
+  font-size: 0.8rem;
+  color: var(--primary);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.meal-step-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: meal-steps;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.meal-step-list li {
+  counter-increment: meal-steps;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.meal-step-list li::before {
+  content: counter(meal-steps);
+  min-width: 24px;
+  height: 24px;
+  background: rgba(46, 213, 115, 0.15);
+  border: 1px solid rgba(46, 213, 115, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-green);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+

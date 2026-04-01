@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import '../styles/PasswordGate.css';
 import { setToken } from '../auth';
 
 export default function PasswordGate({ onAuth }) {

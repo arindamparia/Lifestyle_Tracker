@@ -1,0 +1,115 @@
+/* === NAVIGATION TABS === */
+
+/* Outer bar — full viewport width, handles background + fixed position only */
+.tab-navigation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: rgba(10, 10, 14, 0.45);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+    0 4px 24px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+}
+.tab-navigation::-webkit-scrollbar { display: none; }
+
+/* Inner container — matches content column width, buttons fill equally */
+.tab-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Spacer */
+.tab-spacer {
+  height: 64px;
+  flex-shrink: 0;
+}
+
+/* All tab buttons — flex: 1 so they share space equally */
+.tab-navigation button {
+  flex: 1;
+  position: relative;
+  white-space: nowrap;
+  background: transparent !important;
+  color: rgba(161, 167, 179, 0.8) !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  padding: 8px 12px !important;
+  font-size: 0.88rem;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease !important;
+  min-height: 36px !important;
+  text-align: center !important;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Explicitly block global button:hover and button:active styles from bleeding into the nav tabs */
+.tab-navigation button:hover,
+.tab-navigation button:active,
+.tab-navigation button:focus {
+  background: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tab-navigation button:hover {
+    color: rgba(248, 248, 252, 0.9) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    transition: color 0.2s ease, background 0.2s ease !important;
+  }
+}
+
+/* Active — transparent bg + underline dot */
+.tab-navigation button.active {
+  background: transparent !important;
+  color: #f8f8fc !important;
+  font-weight: 600 !important;
+}
+.tab-navigation button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--primary);
+  box-shadow: 0 0 8px rgba(108, 92, 231, 0.6);
+}
+
+/* ★ Daily Tracker — solid purple pill */
+.tab-navigation button.main-tab {
+  background: linear-gradient(135deg, #6c5ce7, #7c6af7) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  box-shadow:
+    0 0 0 1px rgba(108, 92, 231, 0.4),
+    0 4px 16px rgba(108, 92, 231, 0.3) !important;
+}
+.tab-navigation button.main-tab::after { display: none; }
+.tab-navigation button.main-tab.active {
+  background: linear-gradient(135deg, #6c5ce7, #8b7cf8) !important;
+  box-shadow:
+    0 0 0 1px rgba(108, 92, 231, 0.7),
+    0 4px 20px rgba(108, 92, 231, 0.45),
+    0 0 32px rgba(108, 92, 231, 0.2) !important;
+  color: #fff !important;
+}
+
