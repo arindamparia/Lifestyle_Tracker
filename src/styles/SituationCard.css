@@ -110,3 +110,15 @@
   scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
 
+/* Ensure modal header isn't hidden under top navigation on mobile */
+@media (max-width: 600px) {
+  .detailed-info-overlay {
+    align-items: flex-start;
+    padding-top: 80px; 
+    padding-bottom: 20px;
+  }
+  .detailed-info-box {
+    max-height: calc(100vh - 100px);
+    margin: 0;
+  }
+}

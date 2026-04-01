@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import '../styles/DailyTracker.css';
 import '../styles/SmartSuggestions.css';
 import '../styles/DailyTrackerHeader.css';
@@ -598,7 +599,7 @@ export default function DailyTracker({ onSync }) {
       </div>
 
       {/* ── Info Modal ──────────────────────────────────── */}
-      {activeDetail && (
+      {activeDetail && createPortal(
         <div className="detailed-info-overlay" onClick={() => setActiveDetail(null)}>
           <div className="detailed-info-box" onClick={e => e.stopPropagation()}>
             <div className="detailed-info-header">
@@ -613,7 +614,8 @@ export default function DailyTracker({ onSync }) {
               </ol>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
