@@ -86,7 +86,6 @@ export default function ReadingCard({ log, setLog }) {
   const handleBookChange = (value) => {
     const updatedLog = { ...log, book_name: value };
     setLog(updatedLog);
-    setTodayLog(updatedLog);
     if (value.trim()) {
       setFilteredBooks(fuzzyFilter(bookSuggestions, value));
       setShowBookDropdown(true);
