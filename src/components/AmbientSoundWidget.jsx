@@ -33,7 +33,7 @@ const TRACKS = [
   { key: 'krishnaFlute', emoji: '🪈', label: 'Krishna Flute of Peace' },
   // ── Original tracks ────────────────────────────────────────────────────────
   { key: 'rain', emoji: '🌧️', label: 'Calming Rain' },
-  { key: 'rain2', emoji: '🌦️', label: 'Light Rain' },
+  { key: 'rain2', emoji: '⛈️', label: 'Rain & Thunderstorms' },
   { key: 'ocean', emoji: '🌊', label: 'Ocean Waves' },
   { key: 'forest', emoji: '🌲', label: 'Forest Ambience' },
   { key: 'forest2', emoji: '🍃', label: 'Wind & Crickets' },
