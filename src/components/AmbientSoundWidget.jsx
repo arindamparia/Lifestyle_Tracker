@@ -3,6 +3,9 @@ import '../styles/AmbientSoundWidget.css';
 
 const AUDIO_URLS = {
   // ── New tracks (priority) ──────────────────────────────────────────────────
+  omNamahShivay: 'https://res.cloudinary.com/dnju7wfma/video/upload/v1775153821/Om_Namah_Shivay_h7hx0r.mp3',
+  aadidevMahadev: 'https://res.cloudinary.com/dnju7wfma/video/upload/v1775153339/Aadidev_Mahadev_He_Shivaya_Shambho_tkoco6.mp3',
+  ramSankirtan: 'https://res.cloudinary.com/dnju7wfma/video/upload/v1775154585/Shri_Ram_Naam_Sankirtanam_lnhm8t.mp3',
   healing: 'https://res.cloudinary.com/dnju7wfma/video/upload/v1774780549/HealingSound.mp3',
   windMandir: 'https://res.cloudinary.com/dnju7wfma/video/upload/v1774779620/Winds_Through_the_Old_Mandir_Flute___Sitar_in_Timeless_Tranquility_MP3_160K_llh2me.mp3',
   shivaDeep: 'https://res.cloudinary.com/dnju7wfma/video/upload/v1774779618/SHIVA___Beautiful_Indian_Background_Music___Deep___Mystical_Meditation_Music___Ambient_Hindu_Music_MP3_160K_sgrn1q.mp3',
@@ -20,6 +23,9 @@ const AUDIO_URLS = {
 
 const TRACKS = [
   // ── New tracks first (highest priority) ───────────────────────────────────
+  { key: 'omNamahShivay', emoji: '🕉️', label: 'Om Namah Shivay' },
+  { key: 'aadidevMahadev', emoji: '🏔️', label: 'Aadidev Mahadev' },
+  { key: 'ramSankirtan', emoji: '🪷', label: 'Shri Ram Sankirtanam' },
   { key: 'healing', emoji: '✨', label: 'Healing Sounds' },
   { key: 'windMandir', emoji: '🛕', label: 'Winds of the Mandir' },
   { key: 'shivaDeep', emoji: '🔱', label: 'Shiva — Deep Mystical' },
@@ -75,6 +81,7 @@ export default function AmbientSoundWidget() {
   const activeDeck = useRef('A');
   const isFading = useRef(false);
   const fadeRaf = useRef(null);
+  const fadeTimeout = useRef(null);
 
   // ── Visualizer refs ──────────────────────────────────────────────────────
   const analyser = useRef(null);
@@ -129,6 +136,7 @@ export default function AmbientSoundWidget() {
   useEffect(() => {
     return () => {
       cancelAnimationFrame(fadeRaf.current);
+      clearTimeout(fadeTimeout.current);
       cancelAnimationFrame(visualizeRaf.current);
       if (audioA.current) { audioA.current.pause(); audioA.current.src = ''; }
       if (audioB.current) { audioB.current.pause(); audioB.current.src = ''; }
@@ -187,6 +195,7 @@ export default function AmbientSoundWidget() {
       audioA.current?.pause();
       audioB.current?.pause();
       cancelAnimationFrame(fadeRaf.current);
+      clearTimeout(fadeTimeout.current);
       setIsPlaying(false);
       navigator.mediaSession.playbackState = 'paused';
     });
@@ -222,32 +231,39 @@ export default function AmbientSoundWidget() {
 
     const fadeOutGain = gainFor(fadeOutAudio);
     const fadeInGain = gainFor(fadeInAudio);
-    fadeInGain.gain.value = 0;
+    
+    // Leverage Web Audio API precise scheduling to run the volume fade on the 
+    // audio thread so it continues perfectly even if the tab is backgrounded.
+    const now = audioCtx.current.currentTime;
+    const targetVol = sliderToVol(volSliderRef.current);
+    
+    fadeOutGain.gain.cancelScheduledValues(now);
+    fadeInGain.gain.cancelScheduledValues(now);
+    
+    fadeOutGain.gain.setValueAtTime(fadeOutGain.gain.value, now);
+    fadeOutGain.gain.linearRampToValueAtTime(0, now + CROSSFADE_SEC);
+    
+    fadeInGain.gain.setValueAtTime(0, now);
+    fadeInGain.gain.linearRampToValueAtTime(targetVol, now + CROSSFADE_SEC);
 
     fadeInAudio.play().catch(() => { });
 
-    const duration = CROSSFADE_SEC * 1000;
-    const fadeStart = performance.now();
     cancelAnimationFrame(fadeRaf.current);
-
-    const tick = (now) => {
-      const ratio = Math.min((now - fadeStart) / duration, 1);
-      const targetVol = sliderToVol(volSliderRef.current);
-      fadeOutGain.gain.value = Math.max(0, targetVol * (1 - ratio));
-      fadeInGain.gain.value = targetVol * ratio;
-
-      if (ratio < 1) {
-        fadeRaf.current = requestAnimationFrame(tick);
-      } else {
-        fadeOutAudio.pause();
-        fadeOutAudio.currentTime = 0;
-        fadeOutGain.gain.value = 0;
-        fadeInGain.gain.value = targetVol;
-        activeDeck.current = activeDeck.current === 'A' ? 'B' : 'A';
-        isFading.current = false;
-      }
-    };
-    fadeRaf.current = requestAnimationFrame(tick);
+    clearTimeout(fadeTimeout.current);
+    
+    fadeTimeout.current = setTimeout(() => {
+      // Ensure values are fully zeroed/set in case of floating point precision issues
+      fadeOutGain.gain.cancelScheduledValues(audioCtx.current.currentTime);
+      fadeInGain.gain.cancelScheduledValues(audioCtx.current.currentTime);
+      
+      fadeOutGain.gain.value = 0;
+      fadeInGain.gain.value = sliderToVol(volSliderRef.current);
+      
+      fadeOutAudio.pause();
+      fadeOutAudio.currentTime = 0;
+      activeDeck.current = activeDeck.current === 'A' ? 'B' : 'A';
+      isFading.current = false;
+    }, CROSSFADE_SEC * 1000 + 150);
   }, []); // only refs → stable
 
   const lazyInitDecks = useCallback(() => {
@@ -390,6 +406,7 @@ export default function AmbientSoundWidget() {
     // Tap same playing track → pause
     if (currentTrackRef.current === track && isPlayingRef.current) {
       cancelAnimationFrame(fadeRaf.current);
+      clearTimeout(fadeTimeout.current);
       isFading.current = false;
       audioA.current?.pause();
       audioB.current?.pause();
@@ -404,6 +421,7 @@ export default function AmbientSoundWidget() {
     if (audioCtx.current?.state === 'suspended') audioCtx.current.resume();
 
     cancelAnimationFrame(fadeRaf.current);
+    clearTimeout(fadeTimeout.current);
     isFading.current = false;
     activeDeck.current = 'A';
 
@@ -427,6 +445,15 @@ export default function AmbientSoundWidget() {
       .then(() => {
         setIsPlaying(true);
         attachMediaSession(track);
+        
+        // Trick for Mobile Browsers: We unlock audio B right here inside the synchronous 
+        // user-gesture execution stack so that it doesn't get blocked later when programmatic crossfade begins.
+        if (audioB.current.paused && audioB.current.currentTime === 0) {
+          audioB.current.play().then(() => {
+            audioB.current.pause();
+            audioB.current.currentTime = 0;
+          }).catch(() => {});
+        }
       })
       .catch((err) => {
         setLoadingTrack(null);
@@ -457,7 +484,10 @@ export default function AmbientSoundWidget() {
 
     if (!isFading.current) {
       const target = activeDeck.current === 'A' ? gainA.current : gainB.current;
-      if (target) target.gain.value = vol;
+      if (target) {
+        target.gain.cancelScheduledValues(audioCtx.current.currentTime);
+        target.gain.value = vol;
+      }
     }
   }, []);
 

@@ -613,56 +613,6 @@ h4 {
   color: var(--primary);
   margin-bottom: 14px;
 }
-.weight-chart {
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
-  height: 110px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-.wc-col {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
-  min-width: 38px;
-  height: 100%;
-}
-.wc-val {
-  font-size: 0.6rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-.wc-bar-wrap {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-}
-.wc-bar {
-  width: 100%;
-  background: linear-gradient(180deg, #9180ff 0%, #6C5CE7 100%);
-  border-radius: 4px 4px 0 0;
-  min-height: 6px;
-  transition: height 0.3s ease;
-}
-.wc-date {
-  font-size: 0.55rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  opacity: 0.7;
-}
-.weight-chart-stats {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-.weight-chart-stats b { color: var(--text-primary); }
 
 /* ── Per-Habit Consistency ────────────────────────────────────────────────── */
 .habit-consistency {

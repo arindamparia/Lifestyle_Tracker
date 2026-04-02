@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useTransition, useRef } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import '../styles/HistoryLog.css';
 
 const HABIT_LABELS = {
@@ -31,18 +32,45 @@ import {
 } from '../cache';
 import { getAuthHeader, handleUnauthorized, clearToken } from '../auth';
 
+// Helper to determine color based on BMI cutoff limits
+const getWeightColor = (w) => {
+  if (w < 55) return '#48dbfb';     // Underweight
+  if (w <= 68.5) return '#1dd1a1';  // Healthy
+  if (w <= 74.5) return '#feca57';  // Overweight
+  if (w <= 89.5) return '#ff6b6b';  // Obesity I
+  return '#ee5253';                 // Obesity II+
+};
+
+// Custom Tooltip for Recharts
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const w = payload[0].value;
+    const color = getWeightColor(w);
+    return (
+      <div className="chart-tooltip">
+        <p className="chart-tooltip-date">{label}</p>
+        <p className="chart-tooltip-weight" style={{ color }}>{w} kg</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
   const [isPending, startTransition] = useTransition();
   const [history, setHistory]   = useState(() => getHistoryAsArray());
-  // Show skeleton only when there is truly nothing to display yet
   const [loading, setLoading]   = useState(() => getHistoryAsArray().length === 0);
+
+  // ── Ui States ─────────────────────────────────────────────────────────────
+  const [isBooksOpen, setIsBooksOpen] = useState(true);
+  const [isTasksOpen, setIsTasksOpen] = useState(true);
+  const [visibleTasksCount, setVisibleTasksCount] = useState(6);
 
   // ── Weight card ───────────────────────────────────────────────────────────
   const [weightInput, setWeightInput] = useState('');
   const [weightSaved, setWeightSaved] = useState(false);
   const savedWeightRef = useRef(null);
 
-  // Initialise weight input from today's cached log
   useEffect(() => {
     const today = getTodayLog();
     if (today?.weight_kg != null && today.weight_kg !== savedWeightRef.current) {
@@ -73,17 +101,12 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
   };
 
   useEffect(() => {
-    // Fresh cache — show immediately, no network needed
     if (hasHistoryCache()) {
       setHistory(getHistoryAsArray());
       return;
     }
 
-    // Stale / cleared cache — must fetch from DB.
-    // If React state still has data (e.g. after a Sync), keep showing it and
-    // update silently via startTransition (no skeleton flash).
-    // If state is empty (first ever load), show the skeleton.
-    if (history.length === 0) setLoading(true); // eslint-disable-line react-hooks/exhaustive-deps
+    if (history.length === 0) setLoading(true);
 
     const controller = new AbortController();
 
@@ -110,7 +133,7 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
       });
 
     return () => controller.abort();
-  }, [syncKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [syncKey]);
 
   const getCompletionData = (day) => {
     let completed = 0;
@@ -129,9 +152,9 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
     };
   };
 
-  const booksRead = history.filter(d => d.book_name);
+  // ── Derived Data ──────────────────────────────────────────────────────────
 
-  // Per-habit consistency across all history days, sorted worst→best
+  // Computed properties
   const habitStats = useMemo(() => {
     if (history.length === 0) return [];
     return Object.entries(HABIT_LABELS).map(([field, { label, emoji }]) => {
@@ -142,6 +165,55 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
       return { field, label, emoji, done, total: days.length, pct };
     }).filter(Boolean).sort((a, b) => a.pct - b.pct);
   }, [history]);
+
+  // Unique Books Calculation
+  const uniqueBooks = useMemo(() => {
+    const booksMap = new Map();
+    [...history].reverse().forEach(d => {
+      if (!d.book_name) return;
+      const key = d.book_name.trim().toLowerCase();
+      if (!booksMap.has(key)) {
+        booksMap.set(key, {
+          name: d.book_name,
+          startDate: d.log_date,
+          completionDate: d.book_finished ? d.log_date : null,
+          lastLogDate: d.log_date,
+          completionCount: d.book_finished ? 1 : 0,
+          wasJustFinished: !!d.book_finished,
+          currentlyReading: !d.book_finished
+        });
+      } else {
+        const entry = booksMap.get(key);
+        entry.lastLogDate = d.log_date;
+        entry.currentlyReading = !d.book_finished;
+        
+        if (d.book_finished) {
+          entry.completionDate = d.log_date;
+          if (!entry.wasJustFinished) {
+            entry.completionCount += 1;
+          }
+          entry.wasJustFinished = true;
+        } else {
+          entry.wasJustFinished = false;
+        }
+      }
+    });
+    return Array.from(booksMap.values()).sort((a, b) => new Date(b.lastLogDate) - new Date(a.lastLogDate));
+  }, [history]);
+
+  // Weight Trend Data
+  const weightData = useMemo(() => {
+    return [...history].reverse()
+      .filter(d => d.weight_kg != null)
+      .map(d => ({
+        ...d,
+        weight: parseFloat(d.weight_kg),
+        dateStr: new Date(d.log_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+      }));
+  }, [history]);
+
+  // View state arrays
+  const visibleTasks = history.slice(0, visibleTasksCount);
 
   return (
     <div className="section-container">
@@ -223,66 +295,93 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
         </div>
       ) : (
         <>
-          {/* ── Weight Trend ───────────────────────────────── */}
+          {/* ── Weight Trend Graph ──────────────────────────── */}
           {(() => {
-            const weightData = [...history].reverse().filter(d => d.weight_kg != null);
             if (weightData.length === 0) return null;
-            const weights = weightData.map(d => parseFloat(d.weight_kg));
-            const minW = Math.min(...weights);
-            const maxW = Math.max(...weights);
-            
-            // Fixed Axis per user request
-            const GRAPH_MIN = 50;
-            const GRAPH_MAX = 100;
-            const range = GRAPH_MAX - GRAPH_MIN;
-            
-            // Helper for BMI category colors
-            const getBarColor = (w) => {
-              if (w < 55.5) return 'linear-gradient(180deg, #48dbfb 0%, #0abde3 100%)'; // Underweight (Blue)
-              if (w >= 55.5 && w <= 74.4) return 'linear-gradient(180deg, #1dd1a1 0%, #10ac84 100%)'; // Perfect (Green)
-              if (w >= 74.5 && w <= 89.3) return 'linear-gradient(180deg, #feca57 0%, #ff9f43 100%)'; // Overweight (Orange)
-              return 'linear-gradient(180deg, #ff6b6b 0%, #ee5253 100%)'; // Obese (Red)
-            };
-            
+            let ticks = [];
+            if (weightData.length > 0) {
+              ticks.push(weightData[0].dateStr);
+              if (weightData.length > 2) ticks.push(weightData[Math.floor(weightData.length / 2)].dateStr);
+              if (weightData.length > 1) ticks.push(weightData[weightData.length - 1].dateStr);
+              ticks = [...new Set(ticks)];
+            }
             return (
               <div className="weight-chart-section">
                 <h3>⚖️ Weight Trend</h3>
-                <div className="weight-chart">
-                  {weightData.slice(-30).map((d, i) => {
-                    const w = parseFloat(d.weight_kg);
-                    let pct = ((w - GRAPH_MIN) / range) * 100; 
-                    if (pct < 0) pct = 0; // If lower than 50kg, show as 50kg height (floor)
-                    if (pct > 100) pct = 100; // Cap at 100kg ceiling
-                    const dateStr = new Date(d.log_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-                    return (
-                      <div key={i} className="wc-col" title={`${d.weight_kg} kg — ${dateStr}`}>
-                        <div className="wc-bar-wrap" style={{ position: 'relative', width: '100%' }}>
-                          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: `${pct}%`, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
-                            <span className="wc-val" style={{ marginBottom: '4px' }}>{d.weight_kg}</span>
-                            <div className="wc-bar" style={{ flex: 1, width: '100%', minHeight: '4px', background: getBarColor(w) }} />
-                          </div>
-                        </div>
-                        <span className="wc-date">{dateStr}</span>
-                      </div>
-                    );
-                  })}
+                <div className="modern-weight-chart-container" style={{ paddingBottom: '8px' }}>
+                  <div style={{ width: '100%', height: '240px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={weightData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                        <XAxis 
+                          dataKey="dateStr" 
+                          stroke="rgba(255,255,255,0.2)" 
+                          tick={{fill: 'rgba(255,255,255,0.4)', fontSize: 11}} 
+                          tickMargin={10} 
+                          ticks={ticks}
+                          interval={0}
+                        />
+                        <YAxis 
+                          domain={[50, 100]} 
+                          stroke="rgba(255,255,255,0.2)" 
+                          tick={{fill: 'rgba(255,255,255,0.4)', fontSize: 11}} 
+                        />
+                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+                        <Line 
+                          type="monotone" 
+                          dataKey="weight"
+                          stroke="#6C5CE7" 
+                          strokeWidth={3} 
+                          dot={{ r: 4, fill: '#161821', stroke: '#6C5CE7', strokeWidth: 2 }} 
+                          activeDot={{ r: 6, fill: '#6C5CE7', stroke: '#f8f8fc', strokeWidth: 2 }} 
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="weight-chart-stats">
-                   <span>Low <b>{minW} kg</b></span>
-                   <span>Latest <b>{weights[weights.length - 1]} kg</b></span>
-                   <span>High <b>{maxW} kg</b></span>
-                </div>
-                
-                {/* Recent Logged Weights List */}
-                <div className="recent-weights-list">
-                  <h4 style={{ margin: '12px 0 8px', fontSize: '0.85rem', color: 'rgba(161, 167, 179, 0.7)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recent Logs</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {weightData.slice(-5).reverse().map((d, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '6px', fontSize: '0.9rem' }}>
-                        <span style={{ color: 'rgba(248, 248, 252, 0.9)' }}>{new Date(d.log_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>
-                        <strong style={{ color: 'var(--primary)' }}>{d.weight_kg} kg</strong>
-                      </div>
-                    ))}
+
+                {/* ── Asian-Indian BMI Classification ────────────────────────── */}
+                <div className="bmi-warning-table" style={{ marginTop: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', padding: '12px' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Weight Classification
+                  </h4>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', fontSize: '0.8rem', color: 'var(--text-secondary)', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                          <th style={{ textAlign: 'left', padding: '6px 4px', fontWeight: 500 }}>Category</th>
+                          <th style={{ textAlign: 'left', padding: '6px 4px', fontWeight: 500 }}>BMI Cutoff</th>
+                          <th style={{ textAlign: 'left', padding: '6px 4px', fontWeight: 500 }}>Weight Range</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '6px 4px', color: '#48dbfb' }}>Underweight</td>
+                          <td style={{ padding: '6px 4px' }}>Below 18.5</td>
+                          <td style={{ padding: '6px 4px' }}>Less than 55 kg</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '6px 4px', color: '#1dd1a1' }}>Healthy / Normal</td>
+                          <td style={{ padding: '6px 4px' }}>18.5 – 22.9</td>
+                          <td style={{ padding: '6px 4px' }}>55 kg – 68.5 kg</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '6px 4px', color: '#feca57' }}>Overweight</td>
+                          <td style={{ padding: '6px 4px' }}>23.0 – 24.9</td>
+                          <td style={{ padding: '6px 4px' }}>68.6 kg – 74.5 kg</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '6px 4px', color: '#ff6b6b' }}>Obesity (Class I)</td>
+                          <td style={{ padding: '6px 4px' }}>25.0 – 29.9</td>
+                          <td style={{ padding: '6px 4px' }}>74.6 kg – 89.5 kg</td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '6px 4px', color: '#ee5253' }}>Obesity (Class II+)</td>
+                          <td style={{ padding: '6px 4px' }}>30.0+</td>
+                          <td style={{ padding: '6px 4px' }}>89.6 kg or more</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -318,66 +417,125 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
           )}
 
           {/* ── Books Summary ──────────────────────────────── */}
-          {booksRead.length > 0 && (
+          {uniqueBooks.length > 0 && (
             <div className="books-summary">
-              <h3>📚 Books Read</h3>
-              <ul className="books-list">
-                {booksRead.map((d, i) => {
-                  const dateStr = new Date(d.log_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-                  return (
-                    <li key={i} className="books-list-item">
-                      <span className="book-item-name">{d.book_name}</span>
-                      <span className="book-item-meta">
-                        {dateStr}
-                        {d.book_finished && <span className="book-finished-badge">✓ Finished</span>}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="collapsible-header" onClick={() => setIsBooksOpen(!isBooksOpen)}>
+                <h3>📚 Books Read</h3>
+                <span className={`collapse-icon ${isBooksOpen ? 'open' : ''}`}>▼</span>
+              </div>
+              
+              {isBooksOpen && (
+                <ul className="books-list window-fade-in">
+                  {uniqueBooks.map((book, i) => {
+                    const startStr = new Date(book.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+                    const endStr = book.completionDate ? new Date(book.completionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : 'Present';
+                    return (
+                      <li key={i} className="books-list-item unique-book-item">
+                        <div className="book-item-content">
+                          <span className="book-item-name">{book.name}</span>
+                          <span className="book-item-timeline">{startStr} — {endStr}</span>
+                        </div>
+                        {book.currentlyReading ? (
+                          <span className="book-reading-badge">Reading</span>
+                        ) : book.completionCount > 0 ? (
+                          <span className="book-finished-badge" style={
+                            book.completionCount >= 3 ? {
+                              background: 'linear-gradient(135deg, #ff9f43 0%, #ff6b6b 100%)',
+                              color: '#fff',
+                              border: 'none',
+                              padding: '5px 12px'
+                            } : book.completionCount === 2 ? {
+                              background: 'linear-gradient(135deg, #48dbfb 0%, #1dd1a1 100%)',
+                              color: '#fff',
+                              border: 'none',
+                              padding: '5px 12px'
+                            } : {}
+                          }>
+                            {book.completionCount >= 3 ? '🎯 Finished (3x+)' : 
+                             book.completionCount === 2 ? '🌟 Finished (2x)' : 
+                             '✓ Finished'}
+                          </span>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           )}
 
-          <div className="history-grid">
-            {history.length === 0 ? (
-              <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No previous logs found. Ensure your SQL table has data.</p>
-            ) : (
-              history.map((day, idx) => {
-                const stats = getCompletionData(day);
-                const dateStr = new Date(day.log_date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' });
+          {/* ── Task History Grid ──────────────────────────── */}
+          <div className="card task-history-outer" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)' }}>
+            <div className="task-history-section">
+              <div className="collapsible-header" style={{ paddingTop: '0' }} onClick={() => setIsTasksOpen(!isTasksOpen)}>
+                <h3>📓 Task Logging History</h3>
+                <span className={`collapse-icon ${isTasksOpen ? 'open' : ''}`}>▼</span>
+              </div>
+              
+              {isTasksOpen && (
+                <div className="window-fade-in" style={{ marginTop: '16px' }}>
+                  {history.length === 0 ? (
+                    <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No previous logs found. Ensure your SQL table has data.</p>
+                  ) : (
+                    <>
+                      <div className="history-grid">
+                        {visibleTasks.map((day, idx) => {
+                          const stats = getCompletionData(day);
+                          const dateStr = new Date(day.log_date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' });
 
-                return (
-                  <div key={idx} className="card history-card">
-                    <div className="history-header">
-                      <h3>{dateStr}</h3>
-                      <div className="water-badge">💧 {Math.round(parseFloat(day.water_liters || 0))}L</div>
-                    </div>
+                          return (
+                            <div key={idx} className="card history-card" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                              <div className="history-header">
+                                <h3>{dateStr}</h3>
+                                <div className="water-badge">💧 {Math.round(parseFloat(day.water_liters || 0))}L</div>
+                              </div>
+                              
+                              {/* Inner Details */}
+                              <div className="history-details-row">
+                                {day.weight_kg != null && (
+                                  <span className="history-weight-tag">⚖️ {day.weight_kg} kg</span>
+                                )}
+                                {day.book_name && (
+                                  <span className="history-book-tag" title={day.book_name}>
+                                    📚 {day.book_name} {day.book_finished ? '✓' : ''}
+                                  </span>
+                                )}
+                              </div>
 
-                    {day.book_name && (
-                      <div className="history-book">
-                        <span>📚 {day.book_name}</span>
-                        {day.book_finished && <span className="book-finished-badge">✓ Finished</span>}
+                              <div className="progress-container">
+                                <div className="progress-bg">
+                                  <div
+                                    className="progress-fill"
+                                    style={{
+                                      width: `${stats.percentage}%`,
+                                      background: stats.percentage === 100 ? 'var(--accent-green)' : 'var(--primary)'
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                              <p className="history-stats">
+                                {stats.percentage}% Complete <span className="fraction">({stats.completed}/{stats.total} checkpoints)</span>
+                              </p>
+                            </div>
+                          );
+                        })}
                       </div>
-                    )}
-
-                    <div className="progress-container">
-                      <div className="progress-bg">
-                        <div
-                          className="progress-fill"
-                          style={{
-                            width: `${stats.percentage}%`,
-                            background: stats.percentage === 100 ? 'var(--accent-green)' : 'var(--primary)'
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <p className="history-stats">
-                      {stats.percentage}% Complete <span className="fraction">({stats.completed}/{stats.total} checkpoints)</span>
-                    </p>
-                  </div>
-                );
-              })
-            )}
+                      
+                      {visibleTasksCount < history.length && (
+                        <div className="load-more-container">
+                          <button 
+                            className="load-more-btn"
+                            onClick={() => setVisibleTasksCount(c => c + 6)}
+                          >
+                            Show More ({history.length - visibleTasksCount} left)
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}

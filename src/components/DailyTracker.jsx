@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import '../styles/DailyTracker.css';
 import '../styles/SmartSuggestions.css';
 import '../styles/DailyTrackerHeader.css';
-import { getTodayLog, setTodayLog, getEffectiveDate, getHistoryAsArray } from '../cache';
+import { getTodayLog, setTodayLog, getEffectiveDate, getHistoryAsArray, isTodayLogFresh } from '../cache';
 import { getAuthHeader, handleUnauthorized } from '../auth';
 import { scheduleNotifications, clearNotificationTimers } from '../notifications';
 import { 
@@ -55,7 +55,7 @@ export default function DailyTracker({ onSync }) {
     book_name: '', book_finished: false, weight_kg: null,
   };
 
-  const [log, setLog] = useState(BLANK_LOG);
+  const [log, setLog] = useState(() => getTodayLog() || BLANK_LOG);
   const [activeDetail, setActiveDetail] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -81,7 +81,7 @@ export default function DailyTracker({ onSync }) {
   const [fetchKey, setFetchKey] = useState(0);
   const waterSyncTimer = useRef(null);
   const syncFailTimer = useRef(null);
-  const loadedForDate = useRef(null);
+  const loadedForDate = useRef(getTodayLog() ? getEffectiveDate() : null);
   // Schedule (or re-schedule) notifications whenever the log changes.
   // Debounced 1.5 s so rapid water/weight edits don't thrash the interval.
   const notifDebounce = useRef(null);
@@ -108,14 +108,16 @@ export default function DailyTracker({ onSync }) {
   useEffect(() => {
     const effectiveDate = getEffectiveDate();
     const cached = getTodayLog();
-    if (cached) {
+    if (cached && isTodayLogFresh()) {
       loadedForDate.current = effectiveDate;
       setLog(cached);
       return;
     }
 
     // New day — reset to blank defaults immediately so stale data doesn't linger
-    setLog(BLANK_LOG);
+    if (loadedForDate.current !== effectiveDate) {
+      setLog(BLANK_LOG);
+    }
 
     const controller = new AbortController();
     fetch(`/.netlify/functions/daily-log?date=${effectiveDate}`, { signal: controller.signal, headers: getAuthHeader() })

@@ -67,8 +67,13 @@ export function setTodayLog(data) {
 
 export function getTodayLog() {
   if (_daily.date !== _todayKey()) return null;
-  if (!_daily.ts || Date.now() - _daily.ts > DAILY_TTL_MS) return null;
   return _daily.data;
+}
+
+export function isTodayLogFresh() {
+  if (_daily.date !== _todayKey()) return false;
+  if (!_daily.ts || Date.now() - _daily.ts > DAILY_TTL_MS) return false;
+  return true;
 }
 
 // ── History (past + today mirror) ─────────────────────────────────────────────
@@ -129,15 +134,8 @@ export function hasHistoryCache() {
   return Object.keys(_historyDays).some(k => k !== today);
 }
 
-/** Wipe all in-memory cache and localStorage — forces a full DB re-fetch on next component mount. */
+/** Marks cache as stale so next components fetch invisibly in background */
 export function clearAllCache() {
-  _daily.date = null;
-  _daily.data = null;
-  _cacheDate = null;
-  for (const k of Object.keys(_historyDays)) delete _historyDays[k];
-  try {
-    localStorage.removeItem(LS_HISTORY);
-    localStorage.removeItem(LS_DAILY);
-    localStorage.removeItem(LS_CACHE_DATE);
-  } catch {}
+  _daily.ts = 0; // force daily fetch
+  _cacheDate = 'STALE'; // force history fetch
 }

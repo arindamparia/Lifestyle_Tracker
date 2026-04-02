@@ -15,14 +15,16 @@ export default function SituationCard({ log, weightOpen, toggleWeight }) {
   let color = '';
   let message = '';
   
-  if (currentWeight < 55.5) {
+  if (currentWeight < 55) {
     status = 'Underweight'; icon = '❄️'; color = '#0abde3'; message = 'Focus on caloric surplus and strength training.';
-  } else if (currentWeight >= 55.5 && currentWeight <= 74.4) {
-    status = 'Perfect'; icon = '🔥'; color = '#1dd1a1'; message = 'Optimal range maintaining lean mass and vitality.';
-  } else if (currentWeight >= 74.5 && currentWeight <= 89.3) {
+  } else if (currentWeight >= 55 && currentWeight <= 68.5) {
+    status = 'Healthy'; icon = '🔥'; color = '#1dd1a1'; message = 'Optimal range maintaining lean mass and vitality.';
+  } else if (currentWeight > 68.5 && currentWeight <= 74.5) {
     status = 'Overweight'; icon = '⚠️'; color = '#ff9f43'; message = 'Cut refined carbs and ensure daily cardio intervals.';
+  } else if (currentWeight > 74.5 && currentWeight <= 89.5) {
+    status = 'Obesity (Class I)'; icon = '🚨'; color = '#ff6b6b'; message = 'Strict adherence to caloric deficit and 50/10 rule required.';
   } else {
-    status = 'Obesity'; icon = '🚨'; color = '#ff6b6b'; message = 'Strict adherence to caloric deficit and 50/10 rule required.';
+    status = 'Obesity (Class II+)'; icon = '🆘'; color = '#ee5253'; message = 'Immediate dietary intervention and structured caloric deficit required.';
   }
 
   return (

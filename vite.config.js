@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   server: {
-    host: true,   // expose on local network so Android can reach it
+    host: true,
     proxy: {
       '/.netlify/functions': {
         target: 'http://localhost:9888',
@@ -19,7 +19,6 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.js',
-      // Copy icon assets into the dist root
       includeAssets: ['icon.svg'],
 
       manifest: {
