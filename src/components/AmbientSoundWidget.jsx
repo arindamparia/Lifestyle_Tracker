@@ -240,10 +240,11 @@ export default function AmbientSoundWidget() {
     fadeOutGain.gain.cancelScheduledValues(now);
     fadeInGain.gain.cancelScheduledValues(now);
     
-    fadeOutGain.gain.setValueAtTime(fadeOutGain.gain.value, now);
-    fadeOutGain.gain.linearRampToValueAtTime(0, now + CROSSFADE_SEC);
+    // Linear ramp starting/ending slightly above 0 avoids browser audio engine pops/glitches
+    fadeOutGain.gain.setValueAtTime(fadeOutGain.gain.value || targetVol, now);
+    fadeOutGain.gain.linearRampToValueAtTime(0.001, now + CROSSFADE_SEC);
     
-    fadeInGain.gain.setValueAtTime(0, now);
+    fadeInGain.gain.setValueAtTime(0.001, now);
     fadeInGain.gain.linearRampToValueAtTime(targetVol, now + CROSSFADE_SEC);
 
     fadeInAudio.play().catch(() => { });
@@ -272,8 +273,10 @@ export default function AmbientSoundWidget() {
     audioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
     
     analyser.current = audioCtx.current.createAnalyser();
-    analyser.current.fftSize = 64; 
-    analyser.current.smoothingTimeConstant = 0.85; 
+    analyser.current.fftSize = 128; // Increased resolution for ambient nuances
+    analyser.current.smoothingTimeConstant = 0.65; // Faster decay for snappier drop
+    analyser.current.minDecibels = -90; // Standard bottom floor
+    analyser.current.maxDecibels = -10; // Prevent loud parts from getting artificially stuck at 255
     dataArray.current = new Uint8Array(analyser.current.frequencyBinCount);
 
     const makeAudio = () => {
@@ -337,41 +340,57 @@ export default function AmbientSoundWidget() {
       analyser.current.getByteFrequencyData(dataArray.current);
       const data = dataArray.current;
 
-      // Use max peak in the band to find sudden noises
-      const getRawPeak = (start, end) => {
+      // Differentiate UI reactivity for vocal/chant vs atmospheric
+      const trackId = currentTrackRef.current;
+      const isVoice = ['omNamahShivay', 'aadidevMahadev', 'ramSankirtan'].includes(trackId);
+
+      // Calculate both peak and average to get dynamic but stable ambient waves
+      const getEnergy = (start, end) => {
         let max = 0;
-        for (let i = start; i < end; i++) if (data[i] > max) max = data[i];
-        return max / 255; 
+        let sum = 0;
+        for (let i = start; i < end; i++) {
+          if (data[i] > max) max = data[i];
+          sum += data[i];
+        }
+        const avg = sum / (end - start);
+        // Rely purely on dynamic scaling. Use more peak for voice.
+        return isVoice ? ((max * 0.8) + (avg * 0.2)) / 255 : ((max * 0.6) + (avg * 0.4)) / 255;
       };
 
-      const raw1 = getRawPeak(0, 3);
-      const raw2 = getRawPeak(3, 7);
-      const raw3 = getRawPeak(7, 13);
-      const raw4 = getRawPeak(13, 25);
+      // With fftSize = 128 (64 bins), each bin is about 375 Hz.
+      // We must start from Bin 0 to catch the heavy bass, drums, and tabla beats.
+      const raw1 = getEnergy(0, 3);   // 0 - 1100Hz (Bass & Beats)
+      const raw2 = getEnergy(3, 10);  // 1100 - 3750Hz (Middle Voice)
+      const raw3 = getEnergy(10, 24); // 3750 - 9000Hz (High Pitch Voice)
+      const raw4 = getEnergy(24, 56); // 9000Hz+ (Highs / Flutes)
 
-      // Auto-Gain: Meditation drones are often incredibly quiet, so we dynamically multiply 
-      // the signal based on the current loudest frequency, forcing the bars to visually stretch upward.
-      const currentMax = Math.max(0.01, raw1, raw2, raw3, raw4);
-      // We push the loudest peak to fill at least 80% of the bar size 
-      const multiplier = Math.min(15, 0.8 / currentMax);
+      let v1, v2, v3, v4;
+      if (isVoice) {
+         // Beats (Low frequency). By using Math.pow(raw1, 2.5) we create a "noise gate"
+         // that squashes drone down to a low height, but allows loud hits to peak aggressively.
+         v1 = Math.min(1, Math.pow(raw1, 2.5) * 2.5);
+         v2 = Math.min(0.65, raw2 * 1.5);
+         v3 = Math.min(1, raw3 * 2.8);
+         v4 = Math.min(1, raw4 * 2.0);
+      } else {
+         v1 = Math.min(1, raw1 * 1.4);
+         v2 = Math.min(1, raw2 * 1.6);
+         v3 = Math.min(1, raw3 * 1.8);
+         v4 = Math.min(1, raw4 * 2.0);
+      }
 
-      const v1 = raw1 * multiplier;
-      const v2 = raw2 * multiplier;
-      const v3 = raw3 * multiplier;
-      const v4 = raw4 * multiplier;
+      // Remove random artificial jitter for voice so peaks accurately map to actual audio content
+      const jt = () => isVoice ? 0 : (Math.random() - 0.5) * 1.5;
 
-      // Jitter adds a 0–1.2px organic crackle to prevent bars from completely freezing on pure static drones
-      const jt = () => Math.random() * 1.2;
+      const h1 = Math.max(3, Math.min(14, 3 + (v1 * 11) + jt()));
+      const h2 = Math.max(3, Math.min(14, 3 + (v2 * 11) + jt()));
+      const h3 = Math.max(3, Math.min(14, 3 + (v3 * 11) + jt()));
+      const h4 = Math.max(3, Math.min(14, 3 + (v4 * 11) + jt()));
 
-      const h1 = Math.min(14, 3 + (v1 * 11) + jt());
-      const h2 = Math.min(14, 3 + (v2 * 11) + jt());
-      const h3 = Math.min(14, 3 + (v3 * 11) + jt());
-      const h4 = Math.min(14, 3 + (v4 * 11) + jt());
-
-      const lh1 = Math.min(20, 4 + (v1 * 16) + jt() * 1.2);
-      const lh2 = Math.min(20, 4 + (v2 * 16) + jt() * 1.2);
-      const lh3 = Math.min(20, 4 + (v3 * 16) + jt() * 1.2);
-      const lh4 = Math.min(20, 4 + (v4 * 16) + jt() * 1.2);
+      const lh1 = Math.max(4, Math.min(20, 4 + (v1 * 16) + (isVoice ? 0 : jt() * 1.5)));
+      const lh2 = Math.max(4, Math.min(20, 4 + (v2 * 16) + (isVoice ? 0 : jt() * 1.5)));
+      const lh3 = Math.max(4, Math.min(20, 4 + (v3 * 16) + (isVoice ? 0 : jt() * 1.5)));
+      const lh4 = Math.max(4, Math.min(20, 4 + (v4 * 16) + (isVoice ? 0 : jt() * 1.5)));
 
       const btnBars = document.querySelector('.ambient-btn.playing.reactive .abt__bars');
       if (btnBars && btnBars.children.length === 4) {
