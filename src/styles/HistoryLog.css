@@ -245,3 +245,15 @@
   color: #0abde3;
   margin: 0;
 }
+
+/* Ensure mobile weight chart doesn't squish horizontally */
+.chart-scroll-content {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .chart-scroll-content {
+    /* Guarantees 35px width per data point, enabling overflow scrolling if it exceeds 100% viewport */
+    min-width: max(100%, calc(var(--chart-data-len) * 35px));
+  }
+}

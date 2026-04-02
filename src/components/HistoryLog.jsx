@@ -308,8 +308,8 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
             return (
               <div className="weight-chart-section">
                 <h3>⚖️ Weight Trend</h3>
-                <div className="modern-weight-chart-container" style={{ paddingBottom: '8px' }}>
-                  <div style={{ width: '100%', height: '240px' }}>
+                <div className="modern-weight-chart-container" style={{ paddingBottom: '8px', overflowX: 'auto', overflowY: 'hidden', '--chart-data-len': weightData.length }}>
+                  <div className="chart-scroll-content" style={{ width: '100%', height: '240px' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={weightData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
