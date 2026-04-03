@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getEffectiveDate, setTodayLog } from '../../cache';
+import { getEffectiveDate, setTodayLog, encryptData, decryptData } from '../../cache';
 import { getAuthHeader, handleUnauthorized } from '../../auth';
 
 // Refined safeJson guard
@@ -46,10 +46,13 @@ export default function ReadingCard({ log, setLog }) {
     try {
       const raw = localStorage.getItem('lt_books');
       if (raw) {
-        const { data, ts } = JSON.parse(raw);
-        if (Array.isArray(data) && Date.now() - ts < 5 * 60 * 1000) {
-          setBookSuggestions(data);
-          return;
+        const decrypted = decryptData(raw, 'lt_books');
+        if (decrypted) {
+          const { data, ts } = decrypted;
+          if (Array.isArray(data) && Date.now() - ts < 5 * 60 * 1000) {
+            setBookSuggestions(data);
+            return;
+          }
         }
       }
     } catch {}
@@ -58,7 +61,7 @@ export default function ReadingCard({ log, setLog }) {
       .then(data => {
         if (Array.isArray(data)) {
           setBookSuggestions(data);
-          try { localStorage.setItem('lt_books', JSON.stringify({ data, ts: Date.now() })); } catch {}
+          try { localStorage.setItem('lt_books', encryptData({ data, ts: Date.now() })); } catch {}
         }
       })
       .catch(() => {});
@@ -76,7 +79,7 @@ export default function ReadingCard({ log, setLog }) {
           .then(data => {
             if (Array.isArray(data)) {
               setBookSuggestions(data);
-              try { localStorage.setItem('lt_books', JSON.stringify({ data, ts: Date.now() })); } catch {}
+              try { localStorage.setItem('lt_books', encryptData({ data, ts: Date.now() })); } catch {}
             }
           }).catch(() => {});
       }

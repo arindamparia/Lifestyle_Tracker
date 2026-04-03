@@ -1,6 +1,39 @@
 // Centralized module-level cache — survives tab switches (component unmount/remount)
 // and page reloads (persisted to localStorage). Both DailyTracker and HistoryLog share this.
 
+import CryptoJS from 'crypto-js';
+
+const SECRET_KEY = import.meta.env.VITE_CACHE_SECRET_KEY || 'lt_secure_cache_key_2026';
+
+export function encryptData(data) {
+  return CryptoJS.AES.encrypt(JSON.stringify(data), SECRET_KEY).toString();
+}
+
+function clearLocalStorageCache() {
+  try {
+    localStorage.removeItem('lt_history');
+    localStorage.removeItem('lt_daily');
+    localStorage.removeItem('lt_books');
+    localStorage.removeItem('lst_grocery_v2');
+    localStorage.removeItem('lt_cache_date');
+  } catch {}
+}
+
+export function decryptData(ciphertext, keyName) {
+  try {
+    const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
+    const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
+    if (!decryptedString) {
+        if (keyName) localStorage.removeItem(keyName);
+        return null;
+    }
+    return JSON.parse(decryptedString);
+  } catch (e) {
+    if (keyName) localStorage.removeItem(keyName);
+    return null;
+  }
+}
+
 // "Effective date" treats before-5-AM as still belonging to the previous calendar day.
 // Formatted in LOCAL time (not UTC) to match the user's clock.
 export function getEffectiveDate() {
@@ -36,17 +69,23 @@ try {
   const cd = localStorage.getItem(LS_CACHE_DATE);
   if (cd) _cacheDate = cd;
   const h = localStorage.getItem(LS_HISTORY);
-  if (h) Object.assign(_historyDays, JSON.parse(h));
+  if (h) {
+    const decryptedH = decryptData(h, 'lt_history');
+    if (decryptedH) Object.assign(_historyDays, decryptedH);
+  }
   const d = localStorage.getItem(LS_DAILY);
-  if (d) Object.assign(_daily, JSON.parse(d));
+  if (d) {
+    const decryptedD = decryptData(d, 'lt_daily');
+    if (decryptedD) Object.assign(_daily, decryptedD);
+  }
 } catch { /* ignore parse / quota errors */ }
 
 // ── Persist helpers ────────────────────────────────────────────────────────
 function _persistHistory() {
-  try { localStorage.setItem(LS_HISTORY, JSON.stringify(_historyDays)); } catch {}
+  try { localStorage.setItem(LS_HISTORY, encryptData(_historyDays)); } catch {}
 }
 function _persistDaily() {
-  try { localStorage.setItem(LS_DAILY, JSON.stringify(_daily)); } catch {}
+  try { localStorage.setItem(LS_DAILY, encryptData(_daily)); } catch {}
 }
 function _persistCacheDate() {
   try { localStorage.setItem(LS_CACHE_DATE, _cacheDate || ''); } catch {}

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import '../styles/DailyTracker.css';
 import '../styles/SmartSuggestions.css';
 import '../styles/DailyTrackerHeader.css';
-import { getTodayLog, setTodayLog, getEffectiveDate, getHistoryAsArray, isTodayLogFresh } from '../cache';
+import { getTodayLog, setTodayLog, getEffectiveDate, getHistoryAsArray, isTodayLogFresh, encryptData } from '../cache';
 import { getAuthHeader, handleUnauthorized } from '../auth';
 import { scheduleNotifications, clearNotificationTimers } from '../notifications';
 import { 
@@ -199,7 +199,7 @@ export default function DailyTracker({ onSync }) {
       .then(data => {
         if (Array.isArray(data)) {
           setBookSuggestions(data);
-          try { localStorage.setItem('lt_books', JSON.stringify({ data, ts: Date.now() })); } catch {}
+          try { localStorage.setItem('lt_books', encryptData({ data, ts: Date.now() })); } catch {}
         }
       })
       .catch(() => {})

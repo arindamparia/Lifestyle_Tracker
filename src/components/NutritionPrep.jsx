@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/NutritionPrep.css';
 import { getAuthHeader } from '../auth';
+import { encryptData, decryptData } from '../cache';
 
 // ── Week key: always the most recent Saturday (YYYY-MM-DD) ───────────────────
 // Week = Saturday → Friday (per user's definition)
@@ -21,14 +22,15 @@ const loadLocalState = (weekKey) => {
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
+    const parsed = decryptData(raw, LS_KEY);
+    if (!parsed) return null;
     return parsed.wk === weekKey ? parsed : null; // null = wrong week or missing
   } catch { return null; }
 };
 
 const saveLocal = (weekKey, checkedSet) => {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify({ wk: weekKey, items: [...checkedSet], ts: Date.now() }));
+    localStorage.setItem(LS_KEY, encryptData({ wk: weekKey, items: [...checkedSet], ts: Date.now() }));
   } catch {}
 };
 
