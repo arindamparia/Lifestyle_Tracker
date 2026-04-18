@@ -4,7 +4,6 @@
  * Strategy: injectManifest (vite-plugin-pwa)
  * - self.__WB_MANIFEST is replaced at build time with the precache asset list
  * - Runtime caching rules mirror what was previously in vite.config.js workbox block
- * - notificationclick handler: tapping any app notification opens/focuses the PWA
  */
 
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
@@ -64,22 +63,3 @@ registerRoute(
   })
 );
 
-// ── Notification click — open / focus the PWA when user taps a notification ──
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  event.waitUntil(
-    self.clients
-      .matchAll({ type: 'window', includeUncontrolled: true })
-      .then((windowClients) => {
-        // If a PWA window is already open anywhere, focus it
-        for (const client of windowClients) {
-          if ('focus' in client) return client.focus();
-        }
-        // Otherwise open a fresh window at the app root
-        if (self.clients.openWindow) {
-          return self.clients.openWindow('/');
-        }
-      })
-  );
-});

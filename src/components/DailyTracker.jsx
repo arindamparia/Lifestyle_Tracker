@@ -5,8 +5,7 @@ import '../styles/SmartSuggestions.css';
 import '../styles/DailyTrackerHeader.css';
 import { getTodayLog, setTodayLog, getEffectiveDate, getHistoryAsArray, isTodayLogFresh, encryptData } from '../cache';
 import { getAuthHeader, handleUnauthorized } from '../auth';
-import { scheduleNotifications, clearNotificationTimers } from '../notifications';
-import { 
+import {
   WORKOUT_ROTATION, 
   getTodayWorkout, 
   TASK_SCHEDULE, 
@@ -46,7 +45,7 @@ export default function DailyTracker({ onSync }) {
 
   const BLANK_LOG = {
     water_liters: 0, shilajit_taken: false, creatine_taken: false, isabgul_taken: false,
-    breakfast_logged: false, rule_50_10_followed: false, lunch_logged: false,
+    breakfast_logged: false, bathing_completed: false, rule_50_10_followed: false, lunch_logged: false,
     afternoon_snack_logged: false, dinner_logged: false, ashwagandha_taken: false,
     morning_meditation_completed: false, acv_taken: false, multivitamin_taken: false,
     omega3_taken: false, whey_protein_taken: false, post_dinner_walk_completed: false,
@@ -82,17 +81,6 @@ export default function DailyTracker({ onSync }) {
   const waterSyncTimer = useRef(null);
   const syncFailTimer = useRef(null);
   const loadedForDate = useRef(getTodayLog() ? getEffectiveDate() : null);
-  // Schedule (or re-schedule) notifications whenever the log changes.
-  // Debounced 1.5 s so rapid water/weight edits don't thrash the interval.
-  const notifDebounce = useRef(null);
-  useEffect(() => {
-    clearTimeout(notifDebounce.current);
-    notifDebounce.current = setTimeout(() => scheduleNotifications(log), 1500);
-  }, [log]);
-
-  // Clean up on unmount
-  useEffect(() => () => { clearNotificationTimers(); clearTimeout(notifDebounce.current); }, []);
-
   useEffect(() => {
     const t = setInterval(() => {
       setTick(n => n + 1);
@@ -331,10 +319,14 @@ export default function DailyTracker({ onSync }) {
       <div className="grid-stack">
 
         {/* ── Morning ─────────────────────────────────── */}
-        <h3>🌅 Morning Launch (7:30 AM – 9:00 AM)</h3>
+        {(() => {
+          const d = new Date().getDay();
+          const wknd = d === 0 || d === 6;
+          return <h3>🌅 Morning Launch {wknd ? '(7:30 AM – 10:00 AM)' : '(7:00 AM – leave by 9:30 AM)'}</h3>;
+        })()}
 
         <TaskRow
-          id="shilajit_taken" label="🧪 7:30 AM — Shilajit (empty stomach)"
+          id="shilajit_taken" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'shilajit_taken'); return t ? `${t.emoji} ${t.label}` : '🧪 Shilajit'; })()}
           checked={log.shilajit_taken} onChange={handleToggle}
           onInfoClick={() => showInfo('shilajit_taken', '🧪 Shilajit',
             'Take on a completely empty stomach in the morning before food or coffee.',
@@ -350,7 +342,7 @@ export default function DailyTracker({ onSync }) {
         />
 
         <TaskRow
-          id="morning_meditation_completed" label="🧘 7:45 AM — Morning Meditation (20 min)"
+          id="morning_meditation_completed" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'morning_meditation_completed'); return t ? `${t.emoji} ${t.label}` : '🧘 Meditation'; })()}
           checked={log.morning_meditation_completed} onChange={handleToggle}
           onInfoClick={() => showInfo('morning_meditation_completed', '🧘 Morning Meditation',
             'This 20-minute window lets the Shilajit absorb before you eat.',
@@ -366,7 +358,7 @@ export default function DailyTracker({ onSync }) {
         />
 
         <TaskRow
-          id="isabgul_taken" label="🌾 8:15 AM — Isabgul Psyllium Husk"
+          id="isabgul_taken" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'isabgul_taken'); return t ? `${t.emoji} ${t.label}` : '🌾 Isabgul Husk'; })()}
           checked={log.isabgul_taken} onChange={handleToggle}
           onInfoClick={() => showInfo('isabgul_taken', '🌾 Isabgul (Psyllium Husk)',
             'A soluble fibre that slows glucose absorption and keeps you full through the morning.',
@@ -381,7 +373,7 @@ export default function DailyTracker({ onSync }) {
         />
 
         <TaskRow
-          id="breakfast_logged" label="🍳 8:30 AM — 3 Boiled Eggs & Fruit"
+          id="breakfast_logged" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'breakfast_logged'); return t ? `${t.emoji} ${t.label} — 3 Boiled Eggs & Fruit` : '🍳 Breakfast'; })()}
           checked={log.breakfast_logged} onChange={handleToggle}
           onInfoClick={() => showInfo('breakfast_logged', '🍳 Breakfast — Boiled Eggs & Fruit',
             'High-protein, low-effort breakfast. Takes about 12 minutes to make fresh.',
@@ -397,8 +389,17 @@ export default function DailyTracker({ onSync }) {
           isInfoActive={activeDetail?.id === 'breakfast_logged'}
         />
 
+        <TaskRow
+          id="bathing_completed" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'bathing_completed'); return t ? `${t.emoji} ${t.label}` : '🚿 Bath & Get Ready'; })()}
+          checked={log.bathing_completed} onChange={handleToggle}
+          onInfoClick={() => showInfo('bathing_completed', '🚿 Bath & Get Ready',
+            'A proper shower resets body temperature, improves alertness, and sets a clean mental state for the day.',
+            TASK_INFO_MAP.bathing_completed.steps)}
+          isInfoActive={activeDetail?.id === 'bathing_completed'}
+        />
+
         {/* ── Mid-Day ─────────────────────────────────── */}
-        <h3>🖥️ Work & Mid-Day (9:00 AM – 4:00 PM)</h3>
+        <h3>🖥️ Work & Mid-Day (10:00 AM – 4:00 PM)</h3>
 
         <TaskRow
           id="rule_50_10_followed" label="🪑 Desk Habit — 50/10 Rule & Posture"
@@ -461,16 +462,11 @@ export default function DailyTracker({ onSync }) {
         />
 
         <TaskRow
-          id="multivitamin_taken" label="💊 1:45 PM — Multivitamin & Omega-3"
+          id="multivitamin_taken" label="💊 1:45 PM — MuscleBlaze Biozyme Multivitamin & Omega-3"
           checked={log.multivitamin_taken} onChange={handleToggle}
-          onInfoClick={() => showInfo('multivitamin_taken', '💊 Multivitamin & Omega-3',
+          onInfoClick={() => showInfo('multivitamin_taken', '💊 MuscleBlaze Biozyme Multivitamin & Omega-3',
             'Take with the last bites of your meal — fat from food improves Omega-3 absorption.',
-            [
-              'Take 1 Multivitamin tablet. Swallow with a full glass of water.',
-              'Take 1 Omega-3 Fish Oil capsule (1000 mg). Swallow with water.',
-              'Do not take on an empty stomach — the fat-soluble vitamins (A, D, E, K) in the multi need dietary fat to be absorbed.',
-              'Why Omega-3: reduces inflammation, supports joint recovery, and improves insulin sensitivity.',
-            ])}
+            TASK_INFO_MAP.multivitamin_taken.steps)}
           isInfoActive={activeDetail?.id === 'multivitamin_taken'}
         />
 
@@ -542,9 +538,9 @@ export default function DailyTracker({ onSync }) {
         />
 
         <TaskRow
-          id="ashwagandha_taken" label="🌿 8:35 PM — Ashwagandha AF-43 600mg"
+          id="ashwagandha_taken" label="🌿 8:35 PM — Kapiva Ashwagandha Gold"
           checked={log.ashwagandha_taken} onChange={handleToggle}
-          onInfoClick={() => showInfo('ashwagandha_taken', '🌿 Ashwagandha AF-43 (600 mg)',
+          onInfoClick={() => showInfo('ashwagandha_taken', '🌿 Kapiva Ashwagandha Gold',
             'Take immediately after finishing dinner — fat and protein in the meal improve absorption and prevent stomach upset.',
             TASK_INFO_MAP.ashwagandha_taken.steps)}
           isInfoActive={activeDetail?.id === 'ashwagandha_taken'}

@@ -10,19 +10,6 @@ import PasswordGate from './components/PasswordGate';
 import { ClassicBackground, MeshBackground, SkyBackground } from './components/Backgrounds';
 import { getToken } from './auth';
 import { clearAllCache } from './cache';
-import { requestNotificationPermission } from './notifications';
-
-// ── Notification banner ──────────────────────────────────────────────────────
-const NOTIF_LS   = 'lt_notif_snoozed';
-const NOTIF_DAYS = { default: 3, denied: 7 };
-
-function shouldShowNotifBanner() {
-  if (typeof Notification === 'undefined') return false;
-  if (Notification.permission !== 'default') return false;
-  const ts = localStorage.getItem(NOTIF_LS);
-  if (!ts) return true;
-  return (Date.now() - parseInt(ts, 10)) / 864e5 >= NOTIF_DAYS.default;
-}
 
 const TABS = ['tracker', 'schedule', 'workout', 'nutrition', 'history'];
 const SWIPE_EASE = 'transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -33,8 +20,6 @@ function App() {
   const [activeTab, setActiveTab]     = useState('tracker');
   const [navTab, setNavTab]           = useState('tracker'); // updates immediately on swipe; activeTab waits for animation
   const [syncKey, setSyncKey]         = useState(0);
-  const [notifBanner, setNotifBanner] = useState(shouldShowNotifBanner);
-  const [inAppToast, setInAppToast]   = useState(null); // { title, body }
   const [bgPref, setBgPref]           = useState(() => localStorage.getItem('lt_bg_pref') || 'mesh');
 
   const handleBgPrefChange = (mode) => {
@@ -42,7 +27,6 @@ function App() {
     localStorage.setItem('lt_bg_pref', mode);
   };
 
-  const toastTimer   = useRef(null);
   const contentRef   = useRef(null);   // ref on <main> for direct DOM translate
   const tabInnerRef  = useRef(null);   // ref on .tab-inner for auto-scroll
   const touchStartX  = useRef(null);
@@ -62,20 +46,6 @@ function App() {
     const activeBtn = tabInnerRef.current.querySelector('button.active');
     if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }, [navTab]);
-
-  // ── In-app notification toast ──────────────────────────────────────────────
-  useEffect(() => {
-    const handler = (e) => {
-      setInAppToast(e.detail);
-      clearTimeout(toastTimer.current);
-      toastTimer.current = setTimeout(() => setInAppToast(null), 5000);
-    };
-    window.addEventListener('lt:notify', handler);
-    return () => {
-      window.removeEventListener('lt:notify', handler);
-      clearTimeout(toastTimer.current);
-    };
-  }, []);
 
   // ── Swipe gesture — stable callbacks use refs, not closed-over state ────────
 
@@ -190,20 +160,6 @@ function App() {
     setSyncKey(k => k + 1);
   };
 
-  // ── Notification handlers ──────────────────────────────────────────────────
-  const handleEnableNotifications = async () => {
-    const result = await requestNotificationPermission();
-    if (result !== 'granted') {
-      localStorage.setItem(NOTIF_LS, Date.now().toString());
-    }
-    setNotifBanner(false);
-  };
-
-  const handleSnoozeNotif = () => {
-    localStorage.setItem(NOTIF_LS, Date.now().toString());
-    setNotifBanner(false);
-  };
-
   if (!authed) return <PasswordGate onAuth={() => setAuthed(true)} />;
 
   return (
@@ -234,15 +190,6 @@ function App() {
         </nav>
         <div className="tab-spacer" />
 
-        {/* Notification permission bar */}
-        {notifBanner && (
-          <div className="notif-permission-bar">
-            <span className="notif-permission-bar__text">🔔 Enable notifications to get task reminders</span>
-            <button className="notif-enable-btn" onClick={handleEnableNotifications}>Enable</button>
-            <button className="notif-close-btn" onClick={handleSnoozeNotif}>Not now</button>
-          </div>
-        )}
-
         <main
           ref={contentRef}
           className="tab-content"
@@ -259,14 +206,6 @@ function App() {
       </div>
 
       <AmbientSoundWidget />
-
-      {/* In-app notification toast (shown instead of OS popup when app is visible) */}
-      {inAppToast && (
-        <div className="inapp-toast" onClick={() => setInAppToast(null)}>
-          <span className="inapp-toast-title">{inAppToast.title}</span>
-          <span className="inapp-toast-body">{inAppToast.body}</span>
-        </div>
-      )}
     </>
   );
 }

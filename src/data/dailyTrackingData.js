@@ -73,14 +73,29 @@ export const getTodayWorkout = () => {
 };
 
 // ── Smart suggestion schedule ─────────────────────────────────────────────
-// Each task with its scheduled minute-of-day (0 = midnight, 450 = 7:30 AM…)
-// Used to compute the ±30-min window and the 4-hour overdue check.
-export const TASK_SCHEDULE = [
+// Weekday (Mon–Fri): compressed morning to leave by 9:30 AM for 10 AM office.
+// Weekend (Sat–Sun): relaxed 30-min-later start, bath after breakfast.
+const _isWeekend = () => { const d = new Date().getDay(); return d === 0 || d === 6; };
+
+const _WEEKDAY_MORNING = [
+  { time: 420,  field: 'shilajit_taken',              emoji: '🧪', label: '7:00 AM — Shilajit (empty stomach)' },
+  { time: 435,  field: 'morning_meditation_completed', emoji: '🧘', label: '7:15 AM — Meditation (20 min)' },
+  { time: 460,  field: 'isabgul_taken',                emoji: '🌾', label: '7:40 AM — Isabgul Husk' },
+  { time: 470,  field: 'breakfast_logged',             emoji: '🍳', label: '7:50 AM — Breakfast' },
+  { time: 500,  field: 'bathing_completed',            emoji: '🚿', label: '8:20 AM — Bath & Get Ready' },
+  { time: 600,  field: 'rule_50_10_followed',          emoji: '🪑', label: '10:00 AM — 50/10 Desk Rule (at office)' },
+];
+
+const _WEEKEND_MORNING = [
   { time: 450,  field: 'shilajit_taken',              emoji: '🧪', label: '7:30 AM — Shilajit (empty stomach)' },
   { time: 465,  field: 'morning_meditation_completed', emoji: '🧘', label: '7:45 AM — Meditation (20 min)' },
   { time: 495,  field: 'isabgul_taken',                emoji: '🌾', label: '8:15 AM — Isabgul Husk' },
   { time: 510,  field: 'breakfast_logged',             emoji: '🍳', label: '8:30 AM — Breakfast' },
-  { time: 540,  field: 'rule_50_10_followed',          emoji: '🪑', label: '9:00 AM — 50/10 Desk Rule' },
+  { time: 570,  field: 'bathing_completed',            emoji: '🚿', label: '9:30 AM — Bath (relaxed)' },
+  { time: 600,  field: 'rule_50_10_followed',          emoji: '🪑', label: '10:00 AM — 50/10 Desk Rule' },
+];
+
+const _MIDDAY_EVENING = [
   { time: 720,  field: 'kegels_completed',             emoji: '🔄', label: 'Midday — Kegel Exercises' },
   { time: 780,  field: 'acv_taken',                    emoji: '🥤', label: '1:00 PM — ACV Drink' },
   { time: 795,  field: 'lunch_logged',                 emoji: '🍱', label: '1:15 PM — Lunch' },
@@ -93,6 +108,11 @@ export const TASK_SCHEDULE = [
   { time: 1275, field: 'post_dinner_walk_completed',   emoji: '🚶', label: '9:15 PM — Post-Dinner Walk' },
   { time: 1410, field: 'hydration_cutoff_followed',    emoji: '💧', label: '11:30 PM — Hydration Cut-off' },
   { time: 1440, field: 'screen_curfew_followed',       emoji: '📴', label: '12:00 AM — Screen Curfew' },
+];
+
+export const TASK_SCHEDULE = [
+  ...(_isWeekend() ? _WEEKEND_MORNING : _WEEKDAY_MORNING),
+  ..._MIDDAY_EVENING,
 ];
 
 // Returns the TASK_SCHEDULE entry that is currently active (start time passed,
@@ -238,11 +258,11 @@ export const TASK_INFO_MAP = {
     ],
   },
   multivitamin_taken: {
-    title: '💊 Multivitamin & Omega-3',
+    title: '💊 MuscleBlaze Biozyme Multivitamin & Omega-3',
     desc: 'Take with the last bites of your meal — fat from food improves Omega-3 absorption.',
     steps: [
-      'Take 1 Multivitamin tablet. Swallow with a full glass of water.',
-      'Take 1 Omega-3 capsule (your triple-strength / 3x formula). A 3x capsule contains ~900 mg EPA+DHA — equivalent to 3 standard capsules — which is a clinically meaningful daily dose for inflammation, joint recovery, and heart health.',
+      'Take 1 sachet (3 tablets) of MuscleBlaze Biozyme 5-in-1 Multivitamin. Swallow with a full glass of water.',
+      'Take 1 Omega-3 capsule (triple-strength / 3x formula). A 3x capsule contains ~900 mg EPA+DHA — equivalent to 3 standard capsules — a clinically meaningful daily dose for inflammation, joint recovery, and heart health.',
       'Do not take on an empty stomach — the fat-soluble vitamins (A, D, E, K) in the multivitamin need dietary fat to be absorbed properly.',
       'Why Omega-3: reduces exercise-related inflammation, supports joint recovery, and improves insulin sensitivity over time.',
     ],
@@ -284,11 +304,22 @@ export const TASK_INFO_MAP = {
       'Plate and eat immediately. No rice, no bread, no roti.',
     ],
   },
+  bathing_completed: {
+    title: '🚿 Bath & Get Ready',
+    desc: 'A proper shower resets body temperature, improves alertness, and sets a clean mental state for the day.',
+    steps: [
+      'Shower with comfortably warm water.',
+      'Finish the last 30–60 seconds with cold water — this boosts circulation and sharpens alertness.',
+      'After shower: moisturise if needed, get fully dressed and groomed.',
+      'Weekday: be out the door by 9:30 AM to reach office for your 10 AM meeting.',
+      'Weekend: no rush — take your time and ease into the day.',
+    ],
+  },
   ashwagandha_taken: {
-    title: '🌿 Ashwagandha AF-43 (600 mg)',
+    title: '🌿 Kapiva Ashwagandha Gold (1 capsule)',
     desc: 'Take immediately after finishing dinner — fat and protein in the meal improve absorption and prevent stomach upset.',
     steps: [
-      'Take 1 capsule of Ashwagandha AF-43 600 mg immediately after your last bite of dinner.',
+      'Take 1 capsule of Kapiva Ashwagandha Gold immediately after your last bite of dinner.',
       'Swallow with a full glass of water.',
       'Why with dinner: Ashwagandha is fat-soluble — the fat and protein in your meal significantly improve bioavailability compared to taking it on an empty stomach.',
       'Why evening: Ashwagandha lowers cortisol and has a mild calming effect. Taking it at night supports your night meditation, improves sleep quality, and maximises overnight recovery.',

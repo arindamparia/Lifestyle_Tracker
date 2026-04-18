@@ -7,6 +7,7 @@ const HABIT_LABELS = {
   shilajit_taken:               { label: 'Shilajit',            emoji: '🧪' },
   isabgul_taken:                { label: 'Isabgul Husk',        emoji: '🌾' },
   breakfast_logged:             { label: 'Breakfast',           emoji: '🍳' },
+  bathing_completed:            { label: 'Bath & Ready',        emoji: '🚿' },
   rule_50_10_followed:          { label: '50/10 Desk Rule',     emoji: '🪑' },
   kegels_completed:             { label: 'Kegels',              emoji: '💪' },
   acv_taken:                    { label: 'ACV Pre-Lunch',       emoji: '🥤' },

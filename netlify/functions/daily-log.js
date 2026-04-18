@@ -75,6 +75,7 @@ export const handler = async (event) => {
     await sql`ALTER TABLE daily_recomposition_log ADD COLUMN IF NOT EXISTS book_finished BOOLEAN DEFAULT FALSE`;
     await sql`ALTER TABLE daily_recomposition_log ADD COLUMN IF NOT EXISTS ashwagandha_taken BOOLEAN DEFAULT FALSE`;
     await sql`ALTER TABLE daily_recomposition_log ADD COLUMN IF NOT EXISTS weight_kg DECIMAL(4,1) DEFAULT NULL`;
+    await sql`ALTER TABLE daily_recomposition_log ADD COLUMN IF NOT EXISTS bathing_completed BOOLEAN DEFAULT FALSE`;
     await sql`
       CREATE TABLE IF NOT EXISTS books (
         id            SERIAL PRIMARY KEY,
@@ -165,7 +166,7 @@ export const handler = async (event) => {
           kegels_completed, glute_bridges_completed, morning_meditation_completed, night_meditation_completed,
           doorway_stretches_done, rule_50_10_followed,
           hydration_cutoff_followed, screen_curfew_followed, sleep_logged,
-          book_name, book_finished, ashwagandha_taken, weight_kg
+          book_name, book_finished, ashwagandha_taken, weight_kg, bathing_completed
         ) VALUES (
           COALESCE(${d.log_date || null}::date, CURRENT_DATE), ${d.water_liters || 0}, ${d.shilajit_taken || false}, ${d.creatine_taken || false},
           ${d.isabgul_taken || false}, ${d.acv_taken || false}, ${d.multivitamin_taken || false},
@@ -177,7 +178,7 @@ export const handler = async (event) => {
           ${d.doorway_stretches_done || false}, ${d.rule_50_10_followed || false},
           ${d.hydration_cutoff_followed || false}, ${d.screen_curfew_followed || false}, ${d.sleep_logged || false},
           ${d.book_name || null}, ${d.book_finished || false}, ${d.ashwagandha_taken || false},
-          ${d.weight_kg ?? null}
+          ${d.weight_kg ?? null}, ${d.bathing_completed || false}
         )
         ON CONFLICT (log_date) DO UPDATE SET
           water_liters = EXCLUDED.water_liters, shilajit_taken = EXCLUDED.shilajit_taken,
@@ -199,7 +200,8 @@ export const handler = async (event) => {
           book_name = EXCLUDED.book_name,
           book_finished = EXCLUDED.book_finished,
           ashwagandha_taken = EXCLUDED.ashwagandha_taken,
-          weight_kg = EXCLUDED.weight_kg
+          weight_kg = EXCLUDED.weight_kg,
+          bathing_completed = EXCLUDED.bathing_completed
         RETURNING *;
       `;
       // Sync books table
