@@ -22,8 +22,8 @@ export default defineConfig({
       includeAssets: ['icon.svg'],
 
       manifest: {
-        name: 'LifeStyle Tracker',
-        short_name: 'Tracker',
+        name: 'DailyAlign',
+        short_name: 'DailyAlign',
         description: 'Daily habit, workout, nutrition and hydration tracker',
         theme_color: '#0a0b0f',
         background_color: '#0a0b0f',

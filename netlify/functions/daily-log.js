@@ -165,7 +165,7 @@ export const handler = async (event) => {
             cluster: process.env.PUSHER_CLUSTER,
             useTLS: true
           });
-          await pusher.trigger('lifestyle-tracker-channel', 'grocery_updated', {
+          await pusher.trigger('dailyalign-channel', 'grocery_updated', {
             week_start: d.grocery_week,
             checked_items: d.grocery_checked
           });
@@ -250,7 +250,7 @@ export const handler = async (event) => {
           cluster: process.env.PUSHER_CLUSTER,
           useTLS: true
         });
-        await pusher.trigger('lifestyle-tracker-channel', 'daily_log_updated', {
+        await pusher.trigger('dailyalign-channel', 'daily_log_updated', {
           row: result[0]
         });
         console.log(`[Pusher] Broadcasted 'daily_log_updated' event for date: ${result[0].log_date}`);

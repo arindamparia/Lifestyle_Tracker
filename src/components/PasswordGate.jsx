@@ -36,7 +36,7 @@ export default function PasswordGate({ onAuth }) {
     <div className="password-gate">
       <div className="password-gate-card">
         <div className="password-gate-icon">🔒</div>
-        <h2 className="password-gate-title">LifeStyle Tracker</h2>
+        <h2 className="password-gate-title">DailyAlign</h2>
         <form onSubmit={handleSubmit} className="password-gate-form">
           <input type="text" name="username" autoComplete="username" style={{ display: 'none' }} readOnly />
           <input

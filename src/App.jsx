@@ -185,7 +185,7 @@ function App() {
           console.error('[Pusher] Connection error:', err);
         });
         
-        channel = pusher.subscribe('lifestyle-tracker-channel');
+        channel = pusher.subscribe('dailyalign-channel');
         
         channel.bind('daily_log_updated', (data) => {
           console.log('[Pusher] Received daily_log_updated:', data);

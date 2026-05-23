@@ -69,7 +69,7 @@ function buildBanner(platform) {
   el.innerHTML = `
     <div class="pwa-banner__icon">${APP_ICON}</div>
     <div class="pwa-banner__text">
-      <div class="pwa-banner__title">Install LifeStyle Tracker</div>
+      <div class="pwa-banner__title">Install DailyAlign</div>
       <div class="pwa-banner__sub">${SUBTITLES[platform]}</div>
       <div class="pwa-banner__actions">
         <button class="pwa-banner__install">Install</button>

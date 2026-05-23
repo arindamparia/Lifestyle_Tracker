@@ -1,5 +1,5 @@
 /**
- * Service Worker — LifeStyle Tracker
+ * Service Worker — DailyAlign
  *
  * Strategy: injectManifest (vite-plugin-pwa)
  * - self.__WB_MANIFEST is replaced at build time with the precache asset list

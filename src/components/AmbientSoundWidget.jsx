@@ -162,7 +162,7 @@ export default function AmbientSoundWidget() {
 
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track?.label || 'Ambient Sound',
-      artist: 'LifeStyle Tracker',
+      artist: 'DailyAlign',
       album: 'Calm Background Sounds',
     });
 
