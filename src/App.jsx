@@ -9,9 +9,11 @@ import AmbientSoundWidget from './components/AmbientSoundWidget';
 import PasswordGate from './components/PasswordGate';
 import { ClassicBackground, MeshBackground, SkyBackground } from './components/Backgrounds';
 import { getToken } from './auth';
-import { clearAllCache } from './cache';
+import { clearAllCache, mergeHistoryRows, setTodayLog, getEffectiveDate } from './cache';
+import PeTreatmentPlan from './components/PeTreatmentPlan';
+import Pusher from 'pusher-js';
 
-const TABS = ['tracker', 'schedule', 'workout', 'nutrition', 'history'];
+const TABS = ['tracker', 'schedule', 'workout', 'nutrition', 'history', 'peplan'];
 const SWIPE_EASE = 'transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -160,6 +162,64 @@ function App() {
     setSyncKey(k => k + 1);
   };
 
+  // ── Pusher Real-Time Sync ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!authed) return;
+    
+    let pusher = null;
+    let channel = null;
+
+    fetch('/.netlify/functions/pusher-config')
+      .then(res => res.json())
+      .then(config => {
+        if (!config.pusherKey) return;
+        
+        pusher = new Pusher(config.pusherKey, {
+          cluster: config.pusherCluster
+        });
+
+        pusher.connection.bind('connected', () => {
+          console.log('[Pusher] Frontend successfully connected to Pusher!');
+        });
+        pusher.connection.bind('error', (err) => {
+          console.error('[Pusher] Connection error:', err);
+        });
+        
+        channel = pusher.subscribe('lifestyle-tracker-channel');
+        
+        channel.bind('daily_log_updated', (data) => {
+          console.log('[Pusher] Received daily_log_updated:', data);
+          if (data && data.row) {
+            mergeHistoryRows([data.row]);
+            
+            const d = data.row.log_date ? new Date(data.row.log_date) : null;
+            if (d && !isNaN(d)) {
+              const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              if (key === getEffectiveDate()) {
+                setTodayLog({ ...data.row, log_date: key });
+              }
+            }
+            
+            setSyncKey(k => k + 1);
+          }
+        });
+
+        channel.bind('grocery_updated', (data) => {
+          console.log('[Pusher] Received grocery_updated:', data);
+          if (data && data.week_start && data.checked_items) {
+            // Tell NutritionPrep to update via a custom event
+            window.dispatchEvent(new CustomEvent('grocery_sync', { detail: data }));
+          }
+        });
+      })
+      .catch(err => console.error('Pusher config fetch error:', err));
+
+    return () => {
+      if (channel) channel.unbind_all();
+      if (pusher) pusher.disconnect();
+    };
+  }, [authed]);
+
   if (!authed) return <PasswordGate onAuth={() => setAuthed(true)} />;
 
   return (
@@ -186,6 +246,9 @@ function App() {
             <button className={navTab === 'history' ? 'active' : ''} onClick={() => { setActiveTab('history'); setNavTab('history'); }}>
               Profile
             </button>
+            <button className={navTab === 'peplan' ? 'active' : ''} onClick={() => { setActiveTab('peplan'); setNavTab('peplan'); }}>
+              PE Plan
+            </button>
           </div>
         </nav>
         <div className="tab-spacer" />
@@ -202,6 +265,7 @@ function App() {
           {activeTab === 'workout'   && <WorkoutPlan />}
           {activeTab === 'nutrition' && <NutritionPrep />}
           {activeTab === 'history'   && <HistoryLog syncKey={syncKey} bgPref={bgPref} setBgPref={handleBgPrefChange} />}
+          {activeTab === 'peplan'   && <PeTreatmentPlan />}
         </main>
       </div>
 

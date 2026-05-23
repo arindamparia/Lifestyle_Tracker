@@ -40,7 +40,7 @@ import SituationCard from './DailyTracker/SituationCard';
 import WaterCard from './DailyTracker/WaterCard';
 import ReadingCard from './DailyTracker/ReadingCard';
 
-export default function DailyTracker({ onSync }) {
+export default function DailyTracker({ onSync, syncKey }) {
   const todayWorkout = getTodayWorkout();
 
   const BLANK_LOG = {
@@ -124,6 +124,14 @@ export default function DailyTracker({ onSync }) {
     return () => controller.abort();
   }, [fetchKey]);
 
+  // Listen for background Pusher updates
+  useEffect(() => {
+    const cached = getTodayLog();
+    if (cached) {
+      setLog(cached);
+    }
+  }, [syncKey]);
+
   // Show a "Sync failed" toast for 5 seconds
   const showSyncFail = () => {
     setSyncFailed(true);
@@ -147,15 +155,23 @@ export default function DailyTracker({ onSync }) {
     }
   };
 
-  // Debounce water saves — only flush to DB 1 s after the last tap
   const flushWater = (latestLog) => {
     clearTimeout(waterSyncTimer.current);
-    waterSyncTimer.current = setTimeout(() => {
-      fetch('/.netlify/functions/daily-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-        body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
-      }).catch(() => showSyncFail());
+    waterSyncTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch('/.netlify/functions/daily-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
+        });
+        if (!res.ok) {
+          console.error("Water sync failed with status:", res.status);
+          showSyncFail();
+        }
+      } catch (e) {
+        console.error("Water sync fetch error:", e);
+        showSyncFail();
+      }
     }, 1000);
   };
 

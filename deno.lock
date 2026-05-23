@@ -11,11 +11,15 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@neondatabase/serverless@0.9",
-        "npm:@vitejs/plugin-react@^4.2.1",
-        "npm:react-dom@^18.2.0",
-        "npm:react@^18.2.0",
-        "npm:vite@5"
+        "npm:@neondatabase/serverless@^1.0.2",
+        "npm:@vitejs/plugin-react@^6.0.1",
+        "npm:crypto-js@^4.2.0",
+        "npm:react-dom@^19.2.4",
+        "npm:react-is@^19.2.4",
+        "npm:react@^19.2.4",
+        "npm:recharts@^3.8.1",
+        "npm:vite-plugin-pwa@^1.2.0",
+        "npm:vite@^8.0.3"
       ]
     }
   }

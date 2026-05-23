@@ -33,8 +33,9 @@ if (existsSync(envFile)) {
 
 // ── Function registry: add more functions here if needed ─────────────────────
 const FUNCTIONS = {
-  'daily-log': resolve(ROOT, 'netlify/functions/daily-log.js'),
-  'auth':      resolve(ROOT, 'netlify/functions/auth.js'),
+  'daily-log':     resolve(ROOT, 'netlify/functions/daily-log.js'),
+  'auth':          resolve(ROOT, 'netlify/functions/auth.js'),
+  'pusher-config': resolve(ROOT, 'netlify/functions/pusher-config.js'),
 };
 
 // ── HTTP server ──────────────────────────────────────────────────────────────

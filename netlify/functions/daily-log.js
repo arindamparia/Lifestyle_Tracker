@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import crypto from 'crypto';
+import Pusher from 'pusher';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -155,6 +156,22 @@ export const handler = async (event) => {
           SET checked_items = EXCLUDED.checked_items,
               updated_at    = NOW()
         `;
+        
+        if (process.env.PUSHER_APP_ID) {
+          const pusher = new Pusher({
+            appId: process.env.PUSHER_APP_ID,
+            key: process.env.PUSHER_KEY,
+            secret: process.env.PUSHER_SECRET,
+            cluster: process.env.PUSHER_CLUSTER,
+            useTLS: true
+          });
+          await pusher.trigger('lifestyle-tracker-channel', 'grocery_updated', {
+            week_start: d.grocery_week,
+            checked_items: d.grocery_checked
+          });
+          console.log(`[Pusher] Broadcasted 'grocery_updated' event for week: ${d.grocery_week}`);
+        }
+
         return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true }) };
       }
 
@@ -223,6 +240,20 @@ export const handler = async (event) => {
         } else {
           await sql`UPDATE books SET finished_date = NULL WHERE title = ${title}`;
         }
+      }
+
+      if (process.env.PUSHER_APP_ID) {
+        const pusher = new Pusher({
+          appId: process.env.PUSHER_APP_ID,
+          key: process.env.PUSHER_KEY,
+          secret: process.env.PUSHER_SECRET,
+          cluster: process.env.PUSHER_CLUSTER,
+          useTLS: true
+        });
+        await pusher.trigger('lifestyle-tracker-channel', 'daily_log_updated', {
+          row: result[0]
+        });
+        console.log(`[Pusher] Broadcasted 'daily_log_updated' event for date: ${result[0].log_date}`);
       }
 
       return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify(result[0]) };

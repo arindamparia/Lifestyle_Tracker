@@ -67,6 +67,19 @@ export default function NutritionPrep() {
       .finally(() => setDbLoading(false));
   }, [weekKey]);
 
+  // ── Listen for real-time grocery updates ─────────────────────────────────
+  useEffect(() => {
+    const handleSync = (e) => {
+      if (e.detail.week_start === weekKey) {
+        const freshSet = new Set(e.detail.checked_items);
+        setChecked(freshSet);
+        saveLocal(weekKey, freshSet);
+      }
+    };
+    window.addEventListener('grocery_sync', handleSync);
+    return () => window.removeEventListener('grocery_sync', handleSync);
+  }, [weekKey]);
+
   // ── Debounced DB save (500 ms after last toggle) ─────────────────────────
   const flushToDb = (nextSet) => {
     clearTimeout(syncTimer.current);
