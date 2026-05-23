@@ -72,6 +72,8 @@ const server = http.createServer(async (req, res) => {
     await new Promise(ok => { req.on('data', c => (body += c)); req.on('end', ok); });
   }
 
+  console.log(`[${req.method}] ${url.pathname} - body:`, body ? body : '<empty>');
+
   // Build event object identical to what Netlify passes
   const event = {
     httpMethod: req.method,

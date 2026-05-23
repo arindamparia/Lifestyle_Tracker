@@ -61,7 +61,10 @@ export default function DailyTracker({ onSync, syncKey }) {
   const [syncCooldown, setSyncCooldown] = useState(false);
   const syncCooldownTimer = useRef(null);
   const [syncFailed, setSyncFailed] = useState(false);
+  const syncFailTimer = useRef(null);
 
+  // Prevent late GET requests from overwriting user changes
+  const isDirty = useRef(false);
   
   // Collapse toggle states with localStorage persistence
   const [weightOpen, setWeightOpen] = useState(() => {
@@ -79,7 +82,6 @@ export default function DailyTracker({ onSync, syncKey }) {
   // Bump to re-trigger the fetch effect (e.g. at 5 AM day boundary)
   const [fetchKey, setFetchKey] = useState(0);
   const waterSyncTimer = useRef(null);
-  const syncFailTimer = useRef(null);
   const loadedForDate = useRef(getTodayLog() ? getEffectiveDate() : null);
   useEffect(() => {
     const t = setInterval(() => {
@@ -111,10 +113,12 @@ export default function DailyTracker({ onSync, syncKey }) {
     fetch(`/.netlify/functions/daily-log?date=${effectiveDate}`, { signal: controller.signal, headers: getAuthHeader() })
       .then(safeJson)
       .then(data => {
-        loadedForDate.current = effectiveDate;
-        if (data && Object.keys(data).length > 0) {
-          setTodayLog(data);
-          setLog(data);
+        if (!controller.signal.aborted && data && Object.keys(data).length > 0) {
+          if (!isDirty.current) {
+            loadedForDate.current = effectiveDate;
+            setTodayLog(data);
+            setLog(data);
+          }
         }
       })
       .catch(err => {
@@ -127,7 +131,7 @@ export default function DailyTracker({ onSync, syncKey }) {
   // Listen for background Pusher updates
   useEffect(() => {
     const cached = getTodayLog();
-    if (cached) {
+    if (cached && !isDirty.current) {
       setLog(cached);
     }
   }, [syncKey]);
@@ -138,57 +142,64 @@ export default function DailyTracker({ onSync, syncKey }) {
     clearTimeout(syncFailTimer.current);
     syncFailTimer.current = setTimeout(() => setSyncFailed(false), 5000);
   };
+  
+  // Unified debounce timer for ALL updates
+  const syncTimer = useRef(null);
 
-  const handleToggle = async (field) => {
-    const updatedLog = { ...log, [field]: !log[field] };
-    setLog(updatedLog);
-    setTodayLog(updatedLog);
-    try {
-      const res = await fetch('/.netlify/functions/daily-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-        body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),
-      });
-      if (!res.ok) showSyncFail();
-    } catch {
-      showSyncFail();
-    }
-  };
-
-  const flushWater = (latestLog) => {
-    clearTimeout(waterSyncTimer.current);
-    waterSyncTimer.current = setTimeout(async () => {
+  const flushSync = () => {
+    clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(async () => {
+      const payload = getTodayLog();
+      if (!payload) return;
       try {
         const res = await fetch('/.netlify/functions/daily-log', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-          body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
+          body: JSON.stringify({ ...payload, log_date: getEffectiveDate() }),
         });
         if (!res.ok) {
-          console.error("Water sync failed with status:", res.status);
+          console.error("Sync failed with status:", res.status);
           showSyncFail();
+          return;
+        }
+        const serverLog = await res.json();
+        if (serverLog) {
+          setLog(serverLog);
+          setTodayLog(serverLog);
+          isDirty.current = false;
         }
       } catch (e) {
-        console.error("Water sync fetch error:", e);
+        console.error("Sync fetch error:", e);
         showSyncFail();
+        isDirty.current = false;
       }
     }, 1000);
   };
 
+  const handleToggle = (field) => {
+    isDirty.current = true;
+    const updatedLog = { ...log, [field]: !log[field] };
+    setLog(updatedLog);
+    setTodayLog(updatedLog);
+    flushSync();
+  };
+
   const addWater = () => {
+    isDirty.current = true;
     const newVal = Math.min(parseFloat(((log.water_liters || 0) * 10 + 10) / 10).toFixed(1), 4.0);
     const updatedLog = { ...log, water_liters: newVal };
     setLog(updatedLog);
     setTodayLog(updatedLog);
-    flushWater(updatedLog);
+    flushSync();
   };
 
   const removeWater = () => {
-    const newVal = Math.max(parseFloat(((log.water_liters || 0) * 10 - 10) / 10).toFixed(1), 0);
+    isDirty.current = true;
+    const newVal = Math.max(parseFloat(((log.water_liters || 0) * 10 - 10) / 10).toFixed(1), 0.0);
     const updatedLog = { ...log, water_liters: newVal };
     setLog(updatedLog);
     setTodayLog(updatedLog);
-    flushWater(updatedLog);
+    flushSync();
   };
 
 
