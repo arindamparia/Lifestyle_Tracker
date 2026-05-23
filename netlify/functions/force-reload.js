@@ -27,15 +27,31 @@ export const handler = async (event) => {
     return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
   }
 
-  if (event.httpMethod !== 'POST') {
+  if (event.httpMethod !== 'POST' && event.httpMethod !== 'GET') {
     return { statusCode: 405, headers: CORS_HEADERS, body: 'Method Not Allowed' };
   }
 
   // Verify auth
-  const authHeader = event.headers.authorization || '';
-  const token = authHeader.replace('Bearer ', '');
-  if (!token || !verifyToken(token)) {
-    return { statusCode: 401, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Unauthorized' }) };
+  let authorized = false;
+  if (event.httpMethod === 'GET') {
+    const pwd = event.queryStringParameters?.pwd;
+    if (pwd && pwd === process.env.APP_PASSWORD) {
+      authorized = true;
+    }
+  } else {
+    const authHeader = event.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '');
+    if (token && verifyToken(token)) {
+      authorized = true;
+    }
+  }
+
+  if (!authorized) {
+    return { 
+      statusCode: 401, 
+      headers: CORS_HEADERS, 
+      body: JSON.stringify({ error: 'Unauthorized. If using the browser URL bar, append ?pwd=YOUR_PASSWORD to the URL.' }) 
+    };
   }
 
   if (!process.env.PUSHER_APP_ID || !process.env.PUSHER_KEY || !process.env.PUSHER_SECRET || !process.env.PUSHER_CLUSTER) {

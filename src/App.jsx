@@ -234,8 +234,18 @@ function App() {
           clearAllCache();
           try {
             localStorage.clear();
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(regs => {
+                for (let reg of regs) {
+                  reg.unregister();
+                }
+              });
+            }
           } catch {}
-          window.location.reload(true);
+          
+          setTimeout(() => {
+            window.location.reload(true);
+          }, 500); // Small delay to let unregister happen
         });
       })
       .catch(err => console.error('Pusher config fetch error:', err));
