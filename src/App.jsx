@@ -211,6 +211,16 @@ function App() {
             window.dispatchEvent(new CustomEvent('grocery_sync', { detail: data }));
           }
         });
+
+        // Remote command to forcefully clear cache and reload all clients (e.g. after a deployment)
+        channel.bind('app_update', () => {
+          console.log('[Pusher] Received app_update command! Clearing cache and reloading...');
+          clearAllCache();
+          try {
+            localStorage.clear();
+          } catch {}
+          window.location.reload(true);
+        });
       })
       .catch(err => console.error('Pusher config fetch error:', err));
 

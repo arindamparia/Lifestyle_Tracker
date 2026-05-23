@@ -36,6 +36,7 @@ const FUNCTIONS = {
   'daily-log':     resolve(ROOT, 'netlify/functions/daily-log.js'),
   'auth':          resolve(ROOT, 'netlify/functions/auth.js'),
   'pusher-config': resolve(ROOT, 'netlify/functions/pusher-config.js'),
+  'force-reload':  resolve(ROOT, 'netlify/functions/force-reload.js'),
 };
 
 // ── HTTP server ──────────────────────────────────────────────────────────────

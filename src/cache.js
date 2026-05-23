@@ -16,6 +16,9 @@ function clearLocalStorageCache() {
     localStorage.removeItem('lt_books');
     localStorage.removeItem('lst_grocery_v2');
     localStorage.removeItem('lt_cache_date');
+    localStorage.removeItem('lt_history_v3');
+    localStorage.removeItem('lt_daily_v3');
+    localStorage.removeItem('lt_cache_date_v3');
   } catch {}
 }
 
@@ -47,10 +50,10 @@ export function getEffectiveDate() {
 
 const _todayKey = getEffectiveDate; // alias for internal use
 
-// localStorage keys
-const LS_HISTORY    = 'lt_history';
-const LS_DAILY      = 'lt_daily';
-const LS_CACHE_DATE = 'lt_cache_date';
+// localStorage keys (bumped to v3 to force wipe stale caches)
+const LS_HISTORY    = 'lt_history_v3';
+const LS_DAILY      = 'lt_daily_v3';
+const LS_CACHE_DATE = 'lt_cache_date_v3';
 
 const DAILY_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
