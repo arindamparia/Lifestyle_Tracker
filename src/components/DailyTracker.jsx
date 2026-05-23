@@ -178,7 +178,8 @@ export default function DailyTracker({ onSync, syncKey }) {
 
   const handleToggle = (field) => {
     isDirty.current = true;
-    const updatedLog = { ...log, [field]: !log[field] };
+    const current = { ...BLANK_LOG, ...(getTodayLog() || {}) };
+    const updatedLog = { ...current, [field]: !current[field] };
     setLog(updatedLog);
     setTodayLog(updatedLog);
     flushSync();
@@ -186,8 +187,9 @@ export default function DailyTracker({ onSync, syncKey }) {
 
   const addWater = () => {
     isDirty.current = true;
-    const newVal = Math.min(parseFloat(((log.water_liters || 0) * 10 + 10) / 10).toFixed(1), 4.0);
-    const updatedLog = { ...log, water_liters: newVal };
+    const current = { ...BLANK_LOG, ...(getTodayLog() || {}) };
+    const newVal = Math.min(parseFloat(((current.water_liters || 0) * 10 + 10) / 10).toFixed(1), 4.0);
+    const updatedLog = { ...current, water_liters: newVal };
     setLog(updatedLog);
     setTodayLog(updatedLog);
     flushSync();
@@ -195,8 +197,9 @@ export default function DailyTracker({ onSync, syncKey }) {
 
   const removeWater = () => {
     isDirty.current = true;
-    const newVal = Math.max(parseFloat(((log.water_liters || 0) * 10 - 10) / 10).toFixed(1), 0.0);
-    const updatedLog = { ...log, water_liters: newVal };
+    const current = { ...BLANK_LOG, ...(getTodayLog() || {}) };
+    const newVal = Math.max(parseFloat(((current.water_liters || 0) * 10 - 10) / 10).toFixed(1), 0.0);
+    const updatedLog = { ...current, water_liters: newVal };
     setLog(updatedLog);
     setTodayLog(updatedLog);
     flushSync();
