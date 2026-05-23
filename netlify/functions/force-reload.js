@@ -1,5 +1,5 @@
-import Pusher from 'pusher';
-import { verifySignature } from './auth.js';
+const Pusher = require('pusher');
+const { verifySignature } = require('./auth.js');
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +7,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'OPTIONS, POST'
 };
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: CORS_HEADERS, body: '' };
   }
