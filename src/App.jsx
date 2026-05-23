@@ -200,8 +200,13 @@ function App() {
                 const current = getTodayLog();
                 if (current) {
                   // Check if identical to prevent echo bounces
+                  // Postgres returns NUMERIC as string ("1.0"), so use loose equality and Number() parsing
                   const keys = Object.keys(data.row);
-                  const isSame = keys.every(k => data.row[k] === current[k]);
+                  const isSame = keys.every(k => {
+                    if (data.row[k] == current[k]) return true;
+                    if (!isNaN(data.row[k]) && !isNaN(current[k]) && Number(data.row[k]) === Number(current[k])) return true;
+                    return false;
+                  });
                   if (isSame) {
                     console.log('[Pusher] Event data is identical to local cache. Skipping update.');
                     return;

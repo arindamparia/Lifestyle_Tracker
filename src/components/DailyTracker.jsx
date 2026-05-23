@@ -60,6 +60,7 @@ export default function DailyTracker({ onSync, syncKey }) {
   const [syncing, setSyncing] = useState(false);
   const [syncCooldown, setSyncCooldown] = useState(false);
   const syncCooldownTimer = useRef(null);
+  const syncSequence = useRef(0); // Add sequence tracker for fetches
   const [syncFailed, setSyncFailed] = useState(false);
   const syncFailTimer = useRef(null);
 
@@ -154,6 +155,7 @@ export default function DailyTracker({ onSync, syncKey }) {
 
       // Mark clean BEFORE fetch. If user clicks while fetching, this becomes true again.
       isDirty.current = false;
+      const currentSeq = ++syncSequence.current;
 
       const headers = { 'Content-Type': 'application/json', ...getAuthHeader() };
       if (window.pusherSocketId) {
@@ -173,8 +175,8 @@ export default function DailyTracker({ onSync, syncKey }) {
         }
         const serverLog = await res.json();
         
-        // ONLY apply if the user hasn't clicked anything else while this fetch was in-flight!
-        if (serverLog && !isDirty.current) {
+        // ONLY apply if this is the MOST RECENT fetch we started, AND user hasn't clicked again.
+        if (serverLog && currentSeq === syncSequence.current && !isDirty.current) {
           setLog(serverLog);
           setTodayLog(serverLog);
         }
