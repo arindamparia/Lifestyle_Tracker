@@ -42,6 +42,8 @@ export default function NutritionPrep() {
   });
   const [dbLoading, setDbLoading] = useState(true);
   const syncTimer = useRef(null);
+  const syncSequence = useRef(0);
+  const isDirty = useRef(false);
 
   // ── Load from DB on mount — skip if cache is fresh (< 5 min old) ────────
   useEffect(() => {
@@ -70,10 +72,20 @@ export default function NutritionPrep() {
   // ── Listen for real-time grocery updates ─────────────────────────────────
   useEffect(() => {
     const handleSync = (e) => {
+      // Ignore if this client is currently mid-interaction
+      if (isDirty.current) return;
+      
       if (e.detail.week_start === weekKey) {
-        const freshSet = new Set(e.detail.checked_items);
-        setChecked(freshSet);
-        saveLocal(weekKey, freshSet);
+        // Compare arrays to prevent identical state updates
+        const freshItems = e.detail.checked_items || [];
+        setChecked(prev => {
+          if (prev.size === freshItems.length && freshItems.every(i => prev.has(i))) {
+            return prev; // unchanged
+          }
+          const freshSet = new Set(freshItems);
+          saveLocal(weekKey, freshSet);
+          return freshSet;
+        });
       }
     };
     window.addEventListener('grocery_sync', handleSync);
@@ -83,16 +95,25 @@ export default function NutritionPrep() {
   // ── Debounced DB save (500 ms after last toggle) ─────────────────────────
   const flushToDb = (nextSet) => {
     clearTimeout(syncTimer.current);
+    const currentSeq = ++syncSequence.current;
+    
     syncTimer.current = setTimeout(() => {
+      isDirty.current = false;
+      const headers = { 'Content-Type': 'application/json', ...getAuthHeader() };
+      if (window.pusherSocketId) {
+        headers['X-Socket-ID'] = window.pusherSocketId;
+      }
+      
       fetch('/.netlify/functions/daily-log', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        headers,
         body: JSON.stringify({ grocery_week: weekKey, grocery_checked: [...nextSet] }),
       }).catch(() => {});
     }, 500);
   };
 
   const toggleItem = (key) => {
+    isDirty.current = true;
     setChecked(prev => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
@@ -104,6 +125,7 @@ export default function NutritionPrep() {
   };
 
   const resetList = () => {
+    isDirty.current = true;
     const empty = new Set();
     setChecked(empty);
     saveLocal(weekKey, empty);

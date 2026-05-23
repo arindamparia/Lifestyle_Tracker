@@ -165,10 +165,16 @@ export const handler = async (event) => {
             cluster: process.env.PUSHER_CLUSTER,
             useTLS: true
           });
-          await pusher.trigger('dailyalign-channel', 'grocery_updated', {
-            week_start: d.grocery_week,
-            checked_items: d.grocery_checked
-          });
+          const socketId = event.headers['x-socket-id'] || null;
+          await pusher.trigger(
+            'dailyalign-channel', 
+            'grocery_updated', 
+            {
+              week_start: d.grocery_week,
+              checked_items: d.grocery_checked
+            },
+            socketId ? { socket_id: socketId } : undefined
+          );
           console.log(`[Pusher] Broadcasted 'grocery_updated' event for week: ${d.grocery_week}`);
         }
 
