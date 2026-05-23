@@ -9,7 +9,7 @@ import AmbientSoundWidget from './components/AmbientSoundWidget';
 import PasswordGate from './components/PasswordGate';
 import { ClassicBackground, MeshBackground, SkyBackground } from './components/Backgrounds';
 import { getToken } from './auth';
-import { clearAllCache, mergeHistoryRows, setTodayLog, getEffectiveDate } from './cache';
+import { clearAllCache, mergeHistoryRows, setTodayLog, getEffectiveDate, getTodayLog } from './cache';
 import PeTreatmentPlan from './components/PeTreatmentPlan';
 import Pusher from 'pusher-js';
 
@@ -180,6 +180,7 @@ function App() {
 
         pusher.connection.bind('connected', () => {
           console.log('[Pusher] Frontend successfully connected to Pusher!');
+          window.pusherSocketId = pusher.connection.socket_id;
         });
         pusher.connection.bind('error', (err) => {
           console.error('[Pusher] Connection error:', err);
@@ -196,6 +197,16 @@ function App() {
             if (d && !isNaN(d)) {
               const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
               if (key === getEffectiveDate()) {
+                const current = getTodayLog();
+                if (current) {
+                  // Check if identical to prevent echo bounces
+                  const keys = Object.keys(data.row);
+                  const isSame = keys.every(k => data.row[k] === current[k]);
+                  if (isSame) {
+                    console.log('[Pusher] Event data is identical to local cache. Skipping update.');
+                    return;
+                  }
+                }
                 setTodayLog({ ...data.row, log_date: key });
               }
             }

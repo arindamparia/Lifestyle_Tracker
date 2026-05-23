@@ -243,6 +243,7 @@ export const handler = async (event) => {
       }
 
       if (process.env.PUSHER_APP_ID) {
+        const Pusher = require('pusher');
         const pusher = new Pusher({
           appId: process.env.PUSHER_APP_ID,
           key: process.env.PUSHER_KEY,
@@ -250,9 +251,15 @@ export const handler = async (event) => {
           cluster: process.env.PUSHER_CLUSTER,
           useTLS: true
         });
-        await pusher.trigger('dailyalign-channel', 'daily_log_updated', {
-          row: result[0]
-        });
+
+        const socketId = event.headers['x-socket-id'] || null;
+        
+        await pusher.trigger(
+          'dailyalign-channel',
+          'daily_log_updated',
+          { row: result[0] },
+          socketId ? { socket_id: socketId } : undefined
+        );
         console.log(`[Pusher] Broadcasted 'daily_log_updated' event for date: ${result[0].log_date}`);
       }
 

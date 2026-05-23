@@ -151,10 +151,19 @@ export default function DailyTracker({ onSync, syncKey }) {
     syncTimer.current = setTimeout(async () => {
       const payload = getTodayLog();
       if (!payload) return;
+
+      // Mark clean BEFORE fetch. If user clicks while fetching, this becomes true again.
+      isDirty.current = false;
+
+      const headers = { 'Content-Type': 'application/json', ...getAuthHeader() };
+      if (window.pusherSocketId) {
+        headers['X-Socket-ID'] = window.pusherSocketId;
+      }
+
       try {
         const res = await fetch('/.netlify/functions/daily-log', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          headers,
           body: JSON.stringify({ ...payload, log_date: getEffectiveDate() }),
         });
         if (!res.ok) {
@@ -163,15 +172,15 @@ export default function DailyTracker({ onSync, syncKey }) {
           return;
         }
         const serverLog = await res.json();
-        if (serverLog) {
+        
+        // ONLY apply if the user hasn't clicked anything else while this fetch was in-flight!
+        if (serverLog && !isDirty.current) {
           setLog(serverLog);
           setTodayLog(serverLog);
-          isDirty.current = false;
         }
       } catch (e) {
         console.error("Sync fetch error:", e);
         showSyncFail();
-        isDirty.current = false;
       }
     }, 1000);
   };
