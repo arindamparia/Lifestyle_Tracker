@@ -214,9 +214,16 @@ export default function NutritionPrep() {
     <div className="section-container">
       <h2>Meal Preparation</h2>
 
-      {/* ── Weekend Stocking ───────────────────────────── */}
-      <div className="prep-section">
-        <div className="grocery-header">
+      {dbLoading ? (
+        <div className="global-loading-screen" style={{ marginTop: '40px' }}>
+          <div className="spinner"></div>
+          <p>Loading grocery list...</p>
+        </div>
+      ) : (
+        <>
+          {/* ── Weekend Stocking ───────────────────────────── */}
+          <div className="prep-section">
+            <div className="grocery-header">
           <div>
             <h3>🛒 Weekend Stocking List</h3>
             <p className="subtitle">
@@ -287,7 +294,8 @@ export default function NutritionPrep() {
           ))}
         </div>
       </div>
-
+      </>
+      )}
     </div>
   );
 }

@@ -798,6 +798,43 @@ h4 {
   flex-shrink: 0;
 }
 .update-banner-close:hover { color: var(--text-primary); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Global Loading Screen
+   ═══════════════════════════════════════════════════════════════════════════ */
+.global-loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  width: 100%;
+  gap: 16px;
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+  animation-delay: 0.2s; /* Don't flash immediately on fast loads */
+}
+
+.global-loading-screen .spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(108, 92, 231, 0.15);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.global-loading-screen p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 @media (max-width: 600px) {
   #update-banner {
     left: 12px;

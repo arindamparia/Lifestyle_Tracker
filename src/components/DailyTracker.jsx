@@ -57,6 +57,10 @@ export default function DailyTracker({ onSync, syncKey }) {
   const [log, setLog] = useState(() => getTodayLog() || BLANK_LOG);
   const [activeDetail, setActiveDetail] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [dbLoading, setDbLoading] = useState(() => {
+    const cached = getTodayLog();
+    return !(cached && isTodayLogFresh());
+  });
   const [syncing, setSyncing] = useState(false);
   const [syncCooldown, setSyncCooldown] = useState(false);
   const syncCooldownTimer = useRef(null);
@@ -124,6 +128,11 @@ export default function DailyTracker({ onSync, syncKey }) {
       })
       .catch(err => {
         if (err.name !== 'AbortError') console.error("Failed to load today's log", err);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setDbLoading(false);
+        }
       });
 
     return () => controller.abort();
