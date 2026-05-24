@@ -265,6 +265,17 @@ export default function DailyTracker({ onSync, syncKey }) {
   const dtDate    = _now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const dtTime    = _now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
+  if (dbLoading) {
+    return (
+      <div className="section-container">
+        <div className="global-loading-screen">
+          <div className="spinner"></div>
+          <p>Loading your log...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="section-container">
 
