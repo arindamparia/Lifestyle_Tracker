@@ -140,10 +140,12 @@ export async function onRequest(context) {
 
   const db = env.DB;
   if (!db) {
-    return new Response(JSON.stringify({ error: 'D1 Database binding (env.DB) not configured' }), {
-      status: 500,
-      headers: CORS_HEADERS,
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Cloudflare D1 Database binding (env.DB) is missing. Please go to Cloudflare Dashboard > Workers & Pages > dailyalign > Settings > Functions > D1 database bindings and bind "DB" to "dailyalign-db", then redeploy.',
+      }),
+      { status: 500, headers: CORS_HEADERS }
+    );
   }
 
   await ensureDb(db);
@@ -204,7 +206,7 @@ export async function onRequest(context) {
 
   if (method === 'POST') {
     try {
-      const d = await request.json();
+      const d = await request.json().catch(() => ({}));
 
       // ── Grocery checklist upsert ──────────────────────────────────────────
       if (d.grocery_week && Array.isArray(d.grocery_checked)) {
@@ -218,23 +220,27 @@ export async function onRequest(context) {
         `).bind(d.grocery_week, jsonChecked).run();
 
         if (env.PUSHER_APP_ID && env.PUSHER_KEY && env.PUSHER_SECRET && env.PUSHER_CLUSTER) {
-          const pusher = new Pusher({
-            appId: env.PUSHER_APP_ID,
-            key: env.PUSHER_KEY,
-            secret: env.PUSHER_SECRET,
-            cluster: env.PUSHER_CLUSTER,
-            useTLS: true,
-          });
-          const socketId = request.headers.get('x-socket-id') || null;
-          await pusher.trigger(
-            'dailyalign-channel',
-            'grocery_updated',
-            {
-              week_start: d.grocery_week,
-              checked_items: d.grocery_checked,
-            },
-            socketId ? { socket_id: socketId } : undefined
-          );
+          try {
+            const pusher = new Pusher({
+              appId: env.PUSHER_APP_ID,
+              key: env.PUSHER_KEY,
+              secret: env.PUSHER_SECRET,
+              cluster: env.PUSHER_CLUSTER,
+              useTLS: true,
+            });
+            const socketId = request.headers.get('x-socket-id') || null;
+            await pusher.trigger(
+              'dailyalign-channel',
+              'grocery_updated',
+              {
+                week_start: d.grocery_week,
+                checked_items: d.grocery_checked,
+              },
+              socketId ? { socket_id: socketId } : undefined
+            );
+          } catch (pErr) {
+            console.error('Pusher trigger error (grocery):', pErr);
+          }
         }
 
         return new Response(JSON.stringify({ ok: true }), { status: 200, headers: CORS_HEADERS });
@@ -321,7 +327,10 @@ export async function onRequest(context) {
         d.bathing_completed ? 1 : 0
       );
 
-      const savedRow = await upsertStmt.first();
+      let savedRow = await upsertStmt.first();
+      if (!savedRow) {
+        savedRow = await db.prepare("SELECT * FROM daily_recomposition_log WHERE log_date = ?").bind(logDate).first();
+      }
 
       // Sync books table
       if (d.book_name && d.book_name.trim()) {
@@ -347,22 +356,26 @@ export async function onRequest(context) {
       const formatted = formatLogRow(savedRow);
 
       if (env.PUSHER_APP_ID && env.PUSHER_KEY && env.PUSHER_SECRET && env.PUSHER_CLUSTER) {
-        const pusher = new Pusher({
-          appId: env.PUSHER_APP_ID,
-          key: env.PUSHER_KEY,
-          secret: env.PUSHER_SECRET,
-          cluster: env.PUSHER_CLUSTER,
-          useTLS: true,
-        });
+        try {
+          const pusher = new Pusher({
+            appId: env.PUSHER_APP_ID,
+            key: env.PUSHER_KEY,
+            secret: env.PUSHER_SECRET,
+            cluster: env.PUSHER_CLUSTER,
+            useTLS: true,
+          });
 
-        const socketId = request.headers.get('x-socket-id') || null;
+          const socketId = request.headers.get('x-socket-id') || null;
 
-        await pusher.trigger(
-          'dailyalign-channel',
-          'daily_log_updated',
-          { row: formatted },
-          socketId ? { socket_id: socketId } : undefined
-        );
+          await pusher.trigger(
+            'dailyalign-channel',
+            'daily_log_updated',
+            { row: formatted },
+            socketId ? { socket_id: socketId } : undefined
+          );
+        } catch (pErr) {
+          console.error('Pusher trigger error (daily-log):', pErr);
+        }
       }
 
       return new Response(JSON.stringify(formatted), { status: 200, headers: CORS_HEADERS });

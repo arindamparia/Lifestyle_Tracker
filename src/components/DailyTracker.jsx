@@ -178,7 +178,8 @@ export default function DailyTracker({ onSync, syncKey }) {
           body: JSON.stringify({ ...payload, log_date: getEffectiveDate() }),
         });
         if (!res.ok) {
-          console.error("Sync failed with status:", res.status);
+          const errData = await res.json().catch(() => ({}));
+          console.error("Sync failed with status:", res.status, errData);
           showSyncFail();
           return;
         }
