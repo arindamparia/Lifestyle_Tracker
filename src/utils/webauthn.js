@@ -1,5 +1,26 @@
 // Utility functions for WebAuthn (Passkey) client-side authentication and registration
 
+/**
+ * Safely parse a fetch response as JSON.
+ * If the server returns an HTML error page (e.g. Vite SPA fallback when the
+ * local backend isn't running), this throws a meaningful message instead of
+ * the cryptic "Unexpected token '<'" crash.
+ */
+async function safeJson(res) {
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await res.text();
+    // HTML response = backend server unreachable or crashed
+    if (text.trimStart().startsWith('<')) {
+      throw new Error(
+        'Backend server is unreachable. Make sure the dev server (npm start) is running and try again.'
+      );
+    }
+    throw new Error(`Unexpected response from server (status ${res.status}): ${text.slice(0, 200)}`);
+  }
+  return res.json();
+}
+
 export function isPasskeySupported() {
   return typeof window !== 'undefined' &&
     !!window.PublicKeyCredential &&
@@ -83,7 +104,7 @@ export async function registerPasskey(authToken, deviceName = '') {
     },
   });
 
-  const options = await optRes.json();
+  const options = await safeJson(optRes);
   if (!optRes.ok) {
     throw new Error(options.error || 'Failed to get Passkey registration options');
   }
@@ -155,7 +176,7 @@ export async function registerPasskey(authToken, deviceName = '') {
     body: JSON.stringify(payload),
   });
 
-  const verifyData = await verifyRes.json();
+  const verifyData = await safeJson(verifyRes);
   if (!verifyRes.ok) {
     throw new Error(verifyData.error || 'Failed to verify passkey registration');
   }
@@ -178,7 +199,7 @@ export async function authenticateWithPasskey() {
     headers: { 'Content-Type': 'application/json' },
   });
 
-  const options = await optRes.json();
+  const options = await safeJson(optRes);
   if (!optRes.ok) {
     throw new Error(options.error || 'Failed to initialize Passkey login');
   }
@@ -222,7 +243,7 @@ export async function authenticateWithPasskey() {
     body: JSON.stringify(payload),
   });
 
-  const verifyData = await verifyRes.json();
+  const verifyData = await safeJson(verifyRes);
   if (!verifyRes.ok) {
     throw new Error(verifyData.error || 'Passkey verification failed');
   }
@@ -239,8 +260,9 @@ export async function listPasskeys(authToken) {
       'Authorization': `Bearer ${authToken}`,
     },
   });
-  if (!res.ok) throw new Error('Failed to fetch passkeys');
-  return res.json();
+  const data = await safeJson(res);
+  if (!res.ok) throw new Error(data?.error || 'Failed to fetch passkeys');
+  return data;
 }
 
 /**
@@ -253,7 +275,7 @@ export async function deletePasskey(authToken, passkeyId) {
       'Authorization': `Bearer ${authToken}`,
     },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to remove passkey');
+  const data = await safeJson(res);
+  if (!res.ok) throw new Error(data?.error || 'Failed to remove passkey');
   return data;
 }

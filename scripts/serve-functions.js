@@ -79,7 +79,7 @@ const server = http.createServer(async (req, res) => {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-socket-id');
-  res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
+  res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, DELETE');
   res.setHeader('Content-Type', 'application/json');
 
   if (req.method === 'OPTIONS') {
@@ -103,7 +103,7 @@ const server = http.createServer(async (req, res) => {
 
   // Read body
   let body = '';
-  if (req.method === 'POST') {
+  if (req.method === 'POST' || req.method === 'DELETE' || req.method === 'PUT' || req.method === 'PATCH') {
     await new Promise(ok => { req.on('data', c => (body += c)); req.on('end', ok); });
   }
 

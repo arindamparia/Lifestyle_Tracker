@@ -324,7 +324,13 @@ export async function onRequest(context) {
       // Load stored public key object
       const publicKey = loadPublicKey(passkey.public_key);
 
-      const isValid = crypto.verify('sha256', signedData, publicKey, signature);
+      // Use createVerify for ECDSA P-256 (alg -7) and RSA (alg -257).
+      // crypto.verify('sha256', ...) only works for RSA — for ECDSA
+      // the digest must be set via createVerify('SHA256').update().verify().
+      const verifier = crypto.createVerify('SHA256');
+      verifier.update(signedData);
+      const isValid = verifier.verify(publicKey, signature);
+
       if (!isValid) {
         return new Response(JSON.stringify({ error: 'Passkey biometric signature verification failed' }), { status: 401, headers: CORS_HEADERS });
       }
