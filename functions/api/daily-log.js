@@ -221,7 +221,7 @@ export async function onRequest(context) {
 
         if (env.PUSHER_APP_ID && env.PUSHER_KEY && env.PUSHER_SECRET && env.PUSHER_CLUSTER) {
           const socketId = request.headers.get('x-socket-id') || request.headers.get('X-Socket-ID') || null;
-          await triggerPusherEvent({
+          const pusherPromise = triggerPusherEvent({
             appId: env.PUSHER_APP_ID,
             key: env.PUSHER_KEY,
             secret: env.PUSHER_SECRET,
@@ -234,6 +234,12 @@ export async function onRequest(context) {
             },
             socketId,
           });
+
+          if (context.waitUntil) {
+            context.waitUntil(pusherPromise);
+          } else {
+            await pusherPromise;
+          }
         }
 
         return new Response(JSON.stringify({ ok: true }), { status: 200, headers: CORS_HEADERS });
@@ -350,7 +356,7 @@ export async function onRequest(context) {
 
       if (env.PUSHER_APP_ID && env.PUSHER_KEY && env.PUSHER_SECRET && env.PUSHER_CLUSTER) {
         const socketId = request.headers.get('x-socket-id') || request.headers.get('X-Socket-ID') || null;
-        await triggerPusherEvent({
+        const pusherPromise = triggerPusherEvent({
           appId: env.PUSHER_APP_ID,
           key: env.PUSHER_KEY,
           secret: env.PUSHER_SECRET,
@@ -360,6 +366,12 @@ export async function onRequest(context) {
           data: { row: formatted },
           socketId,
         });
+
+        if (context.waitUntil) {
+          context.waitUntil(pusherPromise);
+        } else {
+          await pusherPromise;
+        }
       }
 
       return new Response(JSON.stringify(formatted), { status: 200, headers: CORS_HEADERS });
