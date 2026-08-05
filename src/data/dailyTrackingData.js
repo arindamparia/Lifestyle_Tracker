@@ -72,10 +72,32 @@ export const getTodayWorkout = () => {
   return { day, ...(WORKOUT_ROTATION[day] || WORKOUT_ROTATION.Sunday) };
 };
 
-// ── Smart suggestion schedule ─────────────────────────────────────────────
-// Weekday (Mon–Fri): compressed morning to leave by 9:30 AM for 10 AM office.
-// Weekend (Sat–Sun): relaxed 30-min-later start, bath after breakfast.
-const _isWeekend = () => { const d = new Date().getDay(); return d === 0 || d === 6; };
+// ── Holiday & Weekend State Helpers ─────────────────────────────────────────
+export const isHolidayToday = () => {
+  try {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    return localStorage.getItem('lt_holiday_' + todayKey) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+export const setHolidayToday = (val) => {
+  try {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    if (val) {
+      localStorage.setItem('lt_holiday_' + todayKey, 'true');
+    } else {
+      localStorage.removeItem('lt_holiday_' + todayKey);
+    }
+  } catch {}
+};
+
+export const getIsWeekendOrHoliday = () => {
+  const d = new Date().getDay();
+  if (d === 0 || d === 6) return true;
+  return isHolidayToday();
+};
 
 const _WEEKDAY_MORNING = [
   { time: 420,  field: 'shilajit_taken',              emoji: '🧪', label: '7:00 AM — Shilajit (empty stomach)' },
@@ -110,23 +132,26 @@ const _MIDDAY_EVENING = [
   { time: 1440, field: 'screen_curfew_followed',       emoji: '📴', label: '12:00 AM — Screen Curfew' },
 ];
 
-export const TASK_SCHEDULE = [
-  ...(_isWeekend() ? _WEEKEND_MORNING : _WEEKDAY_MORNING),
+export const getTaskSchedule = (isWeekend = getIsWeekendOrHoliday()) => [
+  ...(isWeekend ? _WEEKEND_MORNING : _WEEKDAY_MORNING),
   ..._MIDDAY_EVENING,
 ];
 
-// Returns the TASK_SCHEDULE entry that is currently active (start time passed,
+export const TASK_SCHEDULE = getTaskSchedule();
+
+// Returns the schedule entry that is currently active (start time passed,
 // next task hasn't started yet). Used to render the "Now" pill in the header.
-export const getActiveTask = () => {
+export const getActiveTask = (isWeekend = getIsWeekendOrHoliday()) => {
+  const schedule = getTaskSchedule(isWeekend);
   const now = new Date();
   const raw = now.getHours() * 60 + now.getMinutes();
   const t = raw < 90 ? raw + 1440 : raw; // shift past-midnight times
-  for (let i = 0; i < TASK_SCHEDULE.length; i++) {
-    const itemMins = TASK_SCHEDULE[i].time < 90 ? TASK_SCHEDULE[i].time + 1440 : TASK_SCHEDULE[i].time;
-    const nextMins = i + 1 < TASK_SCHEDULE.length
-      ? (TASK_SCHEDULE[i + 1].time < 90 ? TASK_SCHEDULE[i + 1].time + 1440 : TASK_SCHEDULE[i + 1].time)
+  for (let i = 0; i < schedule.length; i++) {
+    const itemMins = schedule[i].time < 90 ? schedule[i].time + 1440 : schedule[i].time;
+    const nextMins = i + 1 < schedule.length
+      ? (schedule[i + 1].time < 90 ? schedule[i + 1].time + 1440 : schedule[i + 1].time)
       : 1440 + 90;
-    if (t >= itemMins && t < nextMins) return TASK_SCHEDULE[i];
+    if (t >= itemMins && t < nextMins) return schedule[i];
   }
   return null;
 };
@@ -135,14 +160,15 @@ export const getActiveTask = () => {
 //   • any task whose scheduled time falls within ±30 min of now (done or not)
 //   • any task that was scheduled 30–240 min ago and is still NOT done (overdue)
 // Returns [] when nothing qualifies (panel is hidden entirely).
-export const getSuggestions = (log) => {
+export const getSuggestions = (log, isWeekend = getIsWeekendOrHoliday()) => {
+  const schedule = getTaskSchedule(isWeekend);
   const now = new Date();
   const raw = now.getHours() * 60 + now.getMinutes();
   // Shift past-midnight times so late-night tasks (≥1440) compare correctly
   const t = raw < 90 ? raw + 1440 : raw;
 
   const results = [];
-  for (const task of TASK_SCHEDULE) {
+  for (const task of schedule) {
     const diff = task.time - t; // negative = past, positive = future
     if (diff >= -30 && diff <= 30) {
       // Within the ±30 min window — show regardless of completion

@@ -69,6 +69,7 @@ const FUNCTIONS = {
   'auth':          resolve(ROOT, 'functions/api/auth.js'),
   'pusher-config': resolve(ROOT, 'functions/api/pusher-config.js'),
   'force-reload':  resolve(ROOT, 'functions/api/force-reload.js'),
+  'passkey':       resolve(ROOT, 'functions/api/passkey.js'),
 };
 
 // ── HTTP server ──────────────────────────────────────────────────────────────

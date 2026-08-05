@@ -1,49 +1,57 @@
 /* ── Atmosphere Toggle ──────────────────────────────── */
 .theme-toggle-group {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 8px;
   background: rgba(0, 0, 0, 0.4);
-  padding: 6px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .theme-toggle-btn {
-  flex: 1;
-  padding: 8px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  padding: 10px 12px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: var(--text-secondary) !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: none !important;
+  min-height: 38px !important;
 }
 .theme-toggle-btn:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  transform: translateY(-1px) !important;
 }
 .theme-toggle-btn.active {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.4);
+  background: linear-gradient(135deg, var(--primary), #8b5cf6) !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 14px var(--primary-glow) !important;
 }
 
-/* ── Mesh Background ───────────────────────────────── */
+/* ── 1. Living Aurora (Mesh Background) ────────────── */
 .mesh-bg-container {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  background-color: #030408; /* Fallback deep void */
+  background-color: #030408;
 }
 .mesh-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(140px); /* Massive volumetric glow */
-  opacity: 0.8; /* Richly saturated */
-  mix-blend-mode: screen; /* Authentic color blooming where orbs intersect */
+  filter: blur(140px);
+  opacity: 0.8;
+  mix-blend-mode: screen;
   will-change: transform;
   transform: translate3d(0,0,0);
 }
@@ -62,12 +70,11 @@
   top: 35%; left: 25%;
   animation: float-3 35s ease-in-out infinite alternate;
 }
-/* A slight dark tint to preserve text contrast over glowing nodes */
 .mesh-bg-overlay {
   position: absolute;
   inset: 0;
   background: rgba(3, 4, 8, 0.45); 
-  backdrop-filter: blur(40px); /* Authentic iOS-style frosted glass depth */
+  backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
   z-index: 1;
 }
@@ -85,11 +92,276 @@
   100% { transform: translate(20vw, -5vh) scale(1.15); } 
 }
 
-/* ── Sky Background ────────────────────────────────── */
+/* ── 2. Obsidian Cosmos ────────────────────────────── */
+.cosmos-bg-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #020206;
+}
+
+.cosmos-nebula {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(130px);
+  opacity: 0.65;
+  mix-blend-mode: screen;
+}
+
+.nebula-purple {
+  width: 80vmax; height: 80vmax;
+  top: -20%; right: -10%;
+  background: radial-gradient(circle, #6c5ce7 0%, #3b1d77 70%, transparent 100%);
+  animation: cosmos-drift-1 28s ease-in-out infinite alternate;
+}
+
+.nebula-cyan {
+  width: 70vmax; height: 70vmax;
+  bottom: -15%; left: -10%;
+  background: radial-gradient(circle, #0984e3 0%, #00cec9 60%, transparent 100%);
+  animation: cosmos-drift-2 32s ease-in-out infinite alternate;
+}
+
+.nebula-gold {
+  width: 50vmax; height: 50vmax;
+  top: 40%; left: 30%;
+  background: radial-gradient(circle, #fdcb6e 0%, #e17055 60%, transparent 100%);
+  opacity: 0.25;
+  animation: cosmos-drift-3 40s ease-in-out infinite alternate;
+}
+
+.cosmos-stars {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 100px 150px, #c7d2fe, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 240px 80px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 320px 220px, #e0e7ff, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 450px 350px, #ffffff, rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 550px 550px;
+  opacity: 0.55;
+  animation: star-shimmer 8s ease-in-out infinite alternate;
+}
+
+.cosmos-stars-dense {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(1px 1px at 50px 120px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 180px 240px, #93c5fd, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 390px 70px, #ffffff, rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 400px 400px;
+  opacity: 0.35;
+}
+
+.cosmos-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 2, 6, 0.4);
+  backdrop-filter: blur(20px);
+}
+
+@keyframes cosmos-drift-1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-12vw, 15vh) scale(1.1); }
+}
+@keyframes cosmos-drift-2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(15vw, -10vh) scale(1.08); }
+}
+@keyframes cosmos-drift-3 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-8vw, -8vh) scale(0.9); }
+}
+@keyframes star-shimmer {
+  0% { opacity: 0.4; }
+  100% { opacity: 0.75; }
+}
+
+/* ── 3. Cyberpunk Neon ─────────────────────────────── */
+.cyberpunk-bg-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #07030f;
+}
+
+.cyber-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  mix-blend-mode: screen;
+}
+
+.cyber-magenta {
+  width: 75vmax; height: 75vmax;
+  top: -15%; left: -10%;
+  background: radial-gradient(circle, #e056fd 0%, #be2edd 60%, transparent 100%);
+  opacity: 0.55;
+  animation: float-1 20s ease-in-out infinite alternate;
+}
+
+.cyber-cyan {
+  width: 75vmax; height: 75vmax;
+  bottom: -20%; right: -10%;
+  background: radial-gradient(circle, #00d2d3 0%, #01a3a4 60%, transparent 100%);
+  opacity: 0.5;
+  animation: float-2 22s ease-in-out infinite alternate;
+}
+
+.cyber-violet {
+  width: 60vmax; height: 60vmax;
+  top: 30%; right: 20%;
+  background: radial-gradient(circle, #686de0 0%, #4834d4 70%, transparent 100%);
+  opacity: 0.45;
+  animation: float-3 26s ease-in-out infinite alternate;
+}
+
+.cyber-grid-plane {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(224, 86, 253, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 210, 211, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.6;
+}
+
+.cyber-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 3, 15, 0.5);
+  backdrop-filter: blur(32px);
+}
+
+/* ── 4. Emerald Zen ────────────────────────────────── */
+.emerald-bg-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #020d09;
+}
+
+.emerald-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(130px);
+  mix-blend-mode: screen;
+}
+
+.emerald-orb-1 {
+  width: 80vmax; height: 80vmax;
+  top: -20%; left: -10%;
+  background: radial-gradient(circle, #10b981 0%, #047857 60%, transparent 100%);
+  opacity: 0.5;
+  animation: float-1 25s ease-in-out infinite alternate;
+}
+
+.emerald-orb-2 {
+  width: 75vmax; height: 75vmax;
+  bottom: -20%; right: -15%;
+  background: radial-gradient(circle, #059669 0%, #064e3b 70%, transparent 100%);
+  opacity: 0.6;
+  animation: float-2 28s ease-in-out infinite alternate;
+}
+
+.emerald-orb-3 {
+  width: 60vmax; height: 60vmax;
+  top: 35%; right: 25%;
+  background: radial-gradient(circle, #34d399 0%, #0d9488 60%, transparent 100%);
+  opacity: 0.35;
+  animation: float-3 30s ease-in-out infinite alternate;
+}
+
+.emerald-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 13, 9, 0.45);
+  backdrop-filter: blur(36px);
+}
+
+/* ── 5. Solar Sunset ───────────────────────────────── */
+.solar-bg-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #0e0504;
+}
+
+.solar-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(130px);
+  mix-blend-mode: screen;
+}
+
+.solar-orb-1 {
+  width: 80vmax; height: 80vmax;
+  top: -15%; right: -10%;
+  background: radial-gradient(circle, #f59e0b 0%, #d97706 60%, transparent 100%);
+  opacity: 0.55;
+  animation: float-1 24s ease-in-out infinite alternate;
+}
+
+.solar-orb-2 {
+  width: 75vmax; height: 75vmax;
+  bottom: -20%; left: -10%;
+  background: radial-gradient(circle, #f43f5e 0%, #e11d48 60%, transparent 100%);
+  opacity: 0.45;
+  animation: float-2 28s ease-in-out infinite alternate;
+}
+
+.solar-orb-3 {
+  width: 60vmax; height: 60vmax;
+  top: 40%; left: 30%;
+  background: radial-gradient(circle, #fbbf24 0%, #ea580c 60%, transparent 100%);
+  opacity: 0.35;
+  animation: float-3 32s ease-in-out infinite alternate;
+}
+
+.solar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 5, 4, 0.45);
+  backdrop-filter: blur(36px);
+}
+
+/* ── 6. OLED Pure ──────────────────────────────────── */
+.oled-bg-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: #000000;
+}
+
+.oled-accent-glow {
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90vw;
+  height: 30vh;
+  background: radial-gradient(ellipse at 50% 0%, rgba(108, 92, 231, 0.08) 0%, transparent 70%);
+}
+
+/* ── 7. Sky Background ─────────────────────────────── */
 .sky-bg-container {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  transition: background 1s linear; /* smooth lerps */
+  transition: background 1s linear;
 }
+

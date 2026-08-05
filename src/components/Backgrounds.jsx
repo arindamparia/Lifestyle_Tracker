@@ -45,7 +45,6 @@ export function useTimeColors() {
   const [colors, setColors] = useState(getColorsForTime);
 
   useEffect(() => {
-    // Re-check every minute
     const t = setInterval(() => {
       setColors(getColorsForTime());
     }, 60000);
@@ -55,6 +54,7 @@ export function useTimeColors() {
   return colors;
 }
 
+// ── 1. Living Aurora (Dynamic Chrono Mesh) ──────────────────────────────
 export function MeshBackground() {
   const { c1, c2, c3 } = useTimeColors();
   
@@ -78,6 +78,117 @@ export function MeshBackground() {
   );
 }
 
+// ── 2. Obsidian Cosmos (Deep Space & Starlight Nebula) ───────────────────
+export function CosmosBackground() {
+  useEffect(() => {
+    const originalBodyBg = document.body.style.backgroundColor;
+    document.documentElement.style.backgroundColor = '#020206';
+    document.body.style.backgroundColor = 'transparent';
+    return () => {
+      document.documentElement.style.backgroundColor = '';
+      document.body.style.backgroundColor = originalBodyBg;
+    };
+  }, []);
+
+  return (
+    <div className="cosmos-bg-container">
+      <div className="cosmos-nebula nebula-purple" />
+      <div className="cosmos-nebula nebula-cyan" />
+      <div className="cosmos-nebula nebula-gold" />
+      <div className="cosmos-stars" />
+      <div className="cosmos-stars-dense" />
+      <div className="cosmos-overlay" />
+    </div>
+  );
+}
+
+// ── 3. Cyberpunk Neon (Tokyo Synthwave) ──────────────────────────────────
+export function CyberpunkBackground() {
+  useEffect(() => {
+    const originalBodyBg = document.body.style.backgroundColor;
+    document.documentElement.style.backgroundColor = '#06030c';
+    document.body.style.backgroundColor = 'transparent';
+    return () => {
+      document.documentElement.style.backgroundColor = '';
+      document.body.style.backgroundColor = originalBodyBg;
+    };
+  }, []);
+
+  return (
+    <div className="cyberpunk-bg-container">
+      <div className="cyber-glow cyber-magenta" />
+      <div className="cyber-glow cyber-cyan" />
+      <div className="cyber-glow cyber-violet" />
+      <div className="cyber-grid-plane" />
+      <div className="cyber-overlay" />
+    </div>
+  );
+}
+
+// ── 4. Emerald Zen (Bioluminescent Pine Forest) ─────────────────────────
+export function EmeraldBackground() {
+  useEffect(() => {
+    const originalBodyBg = document.body.style.backgroundColor;
+    document.documentElement.style.backgroundColor = '#020b08';
+    document.body.style.backgroundColor = 'transparent';
+    return () => {
+      document.documentElement.style.backgroundColor = '';
+      document.body.style.backgroundColor = originalBodyBg;
+    };
+  }, []);
+
+  return (
+    <div className="emerald-bg-container">
+      <div className="emerald-orb emerald-orb-1" />
+      <div className="emerald-orb emerald-orb-2" />
+      <div className="emerald-orb emerald-orb-3" />
+      <div className="emerald-overlay" />
+    </div>
+  );
+}
+
+// ── 5. Solar Sunset (Golden Hour & Twilight Amber) ──────────────────────
+export function SolarBackground() {
+  useEffect(() => {
+    const originalBodyBg = document.body.style.backgroundColor;
+    document.documentElement.style.backgroundColor = '#0c0504';
+    document.body.style.backgroundColor = 'transparent';
+    return () => {
+      document.documentElement.style.backgroundColor = '';
+      document.body.style.backgroundColor = originalBodyBg;
+    };
+  }, []);
+
+  return (
+    <div className="solar-bg-container">
+      <div className="solar-orb solar-orb-1" />
+      <div className="solar-orb solar-orb-2" />
+      <div className="solar-orb solar-orb-3" />
+      <div className="solar-overlay" />
+    </div>
+  );
+}
+
+// ── 6. OLED Pure (True Black & Crisp Glass) ─────────────────────────────
+export function OledBackground() {
+  useEffect(() => {
+    const originalBodyBg = document.body.style.backgroundColor;
+    document.documentElement.style.backgroundColor = '#000000';
+    document.body.style.backgroundColor = '#000000';
+    return () => {
+      document.documentElement.style.backgroundColor = '';
+      document.body.style.backgroundColor = originalBodyBg;
+    };
+  }, []);
+
+  return (
+    <div className="oled-bg-container">
+      <div className="oled-accent-glow" />
+    </div>
+  );
+}
+
+// ── 7. Ethereal Sky (Daylight / Twilight Lerp) ───────────────────────────
 export function SkyBackground() {
   const { c1, c2, c3 } = useTimeColors();
   
@@ -103,6 +214,7 @@ export function SkyBackground() {
   );
 }
 
+// ── 8. Classic Minimal ──────────────────────────────────────────────────
 export function ClassicBackground() {
   useEffect(() => {
     const updateTheme = () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getEffectiveDate, setTodayLog, encryptData, decryptData } from '../../cache';
 import { getAuthHeader, handleUnauthorized } from '../../auth';
 
@@ -36,11 +36,16 @@ const fuzzyFilter = (books, query) => {
 };
 
 export default function ReadingCard({ log, setLog }) {
-  const [readingOpen, setReadingOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [bookSaved, setBookSaved] = useState(false);
   const [bookSuggestions, setBookSuggestions] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
   const [showBookDropdown, setShowBookDropdown] = useState(false);
+  
+  // Temporary form state while editing in modal
+  const [tempBookName, setTempBookName] = useState('');
+  const [tempFinished, setTempFinished] = useState(false);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -67,7 +72,34 @@ export default function ReadingCard({ log, setLog }) {
       .catch(() => {});
   }, []);
 
-  const saveBook = (latestLog) => {
+  // Close modal on Escape + lock body scroll
+  useEffect(() => {
+    if (!modalOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setModalOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [modalOpen]);
+
+  // Open modal and initialize form state
+  const handleOpenModal = () => {
+    setTempBookName(log.book_name || '');
+    setTempFinished(!!log.book_finished);
+    setFilteredBooks(bookSuggestions);
+    setShowBookDropdown(false);
+    setModalOpen(true);
+    setTimeout(() => {
+      if (inputRef.current) inputRef.current.focus();
+    }, 100);
+  };
+
+  const saveBookToServer = (latestLog) => {
     fetch('/api/daily-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
@@ -87,8 +119,7 @@ export default function ReadingCard({ log, setLog }) {
   };
 
   const handleBookChange = (value) => {
-    const updatedLog = { ...log, book_name: value };
-    setLog(updatedLog);
+    setTempBookName(value);
     if (value.trim()) {
       setFilteredBooks(fuzzyFilter(bookSuggestions, value));
       setShowBookDropdown(true);
@@ -98,82 +129,144 @@ export default function ReadingCard({ log, setLog }) {
     }
   };
 
-  const handleBookSave = () => {
-    if (bookSaved) return;
-    const updatedLog = { ...log };
+  const handleBookSelect = (name) => {
+    setTempBookName(name);
+    setShowBookDropdown(false);
+  };
+
+  const handleSaveModal = () => {
+    const updatedLog = {
+      ...log,
+      book_name: tempBookName.trim(),
+      book_finished: tempFinished,
+    };
+    setLog(updatedLog);
     setTodayLog(updatedLog);
-    saveBook(updatedLog);
+    saveBookToServer(updatedLog);
+    setModalOpen(false);
     setShowBookDropdown(false);
     setBookSaved(true);
     setTimeout(() => setBookSaved(false), 2500);
   };
 
-  const handleBookSelect = (name) => {
-    const updatedLog = { ...log, book_name: name };
-    setLog(updatedLog);
-    setTodayLog(updatedLog);
-    saveBook(updatedLog);
-    setShowBookDropdown(false);
-  };
-
-  const handleBookFinished = () => {
-    const updatedLog = { ...log, book_finished: !log.book_finished };
-    setLog(updatedLog);
-    setTodayLog(updatedLog);
-    fetch('/api/daily-log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-      body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),
-    }).catch(() => {});
-  };
+  const hasBook = Boolean(log.book_name && log.book_name.trim());
 
   return (
     <>
-      {bookSaved && <div className="book-toast">📚 Book saved!</div>}
-      <div className="card reading-card">
-        <div className="reading-header" onClick={() => setReadingOpen(o => !o)} style={{ cursor: 'pointer' }}>
-          <span>📚</span>
-          <h3>Reading Today?</h3>
-          <span className="reading-toggle">{readingOpen ? '▲' : '▼'}</span>
-        </div>
-        {readingOpen && (
-          <>
-            <div className="reading-input-wrap">
-              <input
-                type="text"
-                className="reading-input"
-                placeholder="Enter book title…"
-                value={log.book_name || ''}
-                autoComplete="off"
-                onChange={e => handleBookChange(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleBookSave(); } }}
-                onFocus={() => {
-                  const val = (log.book_name || '').trim();
-                  setFilteredBooks(val ? fuzzyFilter(bookSuggestions, val) : bookSuggestions);
-                  setShowBookDropdown(bookSuggestions.length > 0);
-                }}
-                onBlur={() => setTimeout(() => setShowBookDropdown(false), 150)}
-              />
-              <button className="book-save-btn" onMouseDown={handleBookSave} disabled={bookSaved} title="Save book">✓</button>
-              {showBookDropdown && filteredBooks.length > 0 && (
-                <ul className="book-dropdown">
-                  {filteredBooks.map((b, i) => (
-                    <li key={i} onMouseDown={() => handleBookSelect(b)}>{b}</li>
-                  ))}
-                </ul>
+      {bookSaved && <div className="book-toast">📚 Reading saved!</div>}
+
+      {/* ── Sleek Trigger Card / Button on Dashboard ── */}
+      <div className="card reading-card" onClick={handleOpenModal} role="button" tabIndex={0}>
+        <div className="reading-card-left">
+          <span className="reading-card-icon">📚</span>
+          <div className="reading-card-text">
+            <div className="reading-card-title">
+              {hasBook ? log.book_name : 'Reading Today?'}
+            </div>
+            <div className="reading-card-sub">
+              {hasBook ? (
+                log.book_finished ? (
+                  <span className="book-finished-badge">✓ Finished Today</span>
+                ) : (
+                  'Currently reading'
+                )
+              ) : (
+                'Tap to log current book'
               )}
             </div>
-            <label className="reading-finished">
+          </div>
+        </div>
+        <div className="reading-action-pill">
+          {hasBook ? '✎ Edit' : '+ Log Book'}
+        </div>
+      </div>
+
+      {/* ── Dedicated Reading Modal Dialog ── */}
+      {modalOpen && (
+        <div
+          className="reading-modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}
+        >
+          <div className="reading-modal-box" role="dialog" aria-modal="true">
+            <div className="reading-modal-header">
+              <div className="reading-modal-title-group">
+                <h3><span>📚</span> Reading Journal</h3>
+                <div className="reading-modal-subtitle">Log your daily book and reading progress</div>
+              </div>
+              <button
+                type="button"
+                className="reading-modal-close"
+                onClick={() => setModalOpen(false)}
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="reading-modal-field">
+              <label className="reading-modal-label">Book Title</label>
+              <div className="reading-input-wrap">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  className="reading-input"
+                  placeholder="e.g. Atomic Habits, Deep Work…"
+                  value={tempBookName}
+                  autoComplete="off"
+                  onChange={e => handleBookChange(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSaveModal();
+                    }
+                  }}
+                  onFocus={() => {
+                    const val = tempBookName.trim();
+                    setFilteredBooks(val ? fuzzyFilter(bookSuggestions, val) : bookSuggestions);
+                    setShowBookDropdown(bookSuggestions.length > 0);
+                  }}
+                  onBlur={() => setTimeout(() => setShowBookDropdown(false), 180)}
+                />
+                {showBookDropdown && filteredBooks.length > 0 && (
+                  <ul className="book-dropdown">
+                    {filteredBooks.map((b, i) => (
+                      <li key={i} onMouseDown={() => handleBookSelect(b)}>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <label className="reading-modal-checkbox-row">
               <input
                 type="checkbox"
-                checked={!!log.book_finished}
-                onChange={handleBookFinished}
+                checked={tempFinished}
+                onChange={e => setTempFinished(e.target.checked)}
               />
-              <span>Finished this book today</span>
+              <span>Finished this book today 🏆</span>
             </label>
-          </>
-        )}
-      </div>
+
+            <div className="reading-modal-actions">
+              <button
+                type="button"
+                className="reading-modal-cancel-btn"
+                onClick={() => setModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="reading-modal-save-btn"
+                onClick={handleSaveModal}
+              >
+                Save Reading Log ✓
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

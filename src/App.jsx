@@ -7,8 +7,18 @@ import './styles/Navigation.css';
 import HistoryLog from './components/HistoryLog';
 import AmbientSoundWidget from './components/AmbientSoundWidget';
 import PasswordGate from './components/PasswordGate';
-import { ClassicBackground, MeshBackground, SkyBackground } from './components/Backgrounds';
-import { getToken } from './auth';
+import SettingsModal from './components/SettingsModal';
+import { 
+  ClassicBackground, 
+  MeshBackground, 
+  SkyBackground,
+  CosmosBackground,
+  CyberpunkBackground,
+  EmeraldBackground,
+  SolarBackground,
+  OledBackground
+} from './components/Backgrounds';
+import { getToken, clearToken } from './auth';
 import { clearAllCache, mergeHistoryRows, setTodayLog, getEffectiveDate, getTodayLog } from './cache';
 import PeTreatmentPlan from './components/PeTreatmentPlan';
 import Pusher from 'pusher-js';
@@ -23,11 +33,19 @@ function App() {
   const [navTab, setNavTab]           = useState('tracker'); // updates immediately on swipe; activeTab waits for animation
   const [syncKey, setSyncKey]         = useState(0);
   const [bgPref, setBgPref]           = useState(() => localStorage.getItem('lt_bg_pref') || 'mesh');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleBgPrefChange = (mode) => {
     setBgPref(mode);
     localStorage.setItem('lt_bg_pref', mode);
   };
+
+  const handleLogout = () => {
+    clearToken();
+    setAuthed(false);
+    setIsSettingsOpen(false);
+  };
+
 
   const contentRef   = useRef(null);   // ref on <main> for direct DOM translate
   const tabInnerRef  = useRef(null);   // ref on .tab-inner for auto-scroll
@@ -51,8 +69,23 @@ function App() {
 
   // ── Swipe gesture — stable callbacks use refs, not closed-over state ────────
 
+  const isIgnoredSwipeTarget = (target) => {
+    if (!target) return false;
+    const el = target instanceof Element ? target : target.parentElement;
+    if (!el) return false;
+    // Only ignore touches originating strictly inside horizontal scrollbars or form controls/modals
+    return !!el.closest(
+      '.dt-section-filter-bar, .pe-sessions-table-wrap, .settings-overlay, .detailed-info-overlay, .modal-overlay, input, textarea, select, [data-no-swipe]'
+    );
+  };
+
   const handleTouchStart = useCallback((e) => {
     if (isAnimating.current) return;
+    if (isIgnoredSwipeTarget(e.target)) {
+      touchStartX.current = null;
+      touchStartY.current = null;
+      return;
+    }
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isDragging.current  = false;
@@ -243,6 +276,11 @@ function App() {
   return (
     <>
       {bgPref === 'mesh' && <MeshBackground />}
+      {bgPref === 'cosmos' && <CosmosBackground />}
+      {bgPref === 'cyberpunk' && <CyberpunkBackground />}
+      {bgPref === 'emerald' && <EmeraldBackground />}
+      {bgPref === 'solar' && <SolarBackground />}
+      {bgPref === 'oled' && <OledBackground />}
       {bgPref === 'sky' && <SkyBackground />}
       {bgPref === 'classic' && <ClassicBackground />}
       
@@ -267,6 +305,22 @@ function App() {
             <button className={navTab === 'peplan' ? 'active' : ''} onClick={() => { setActiveTab('peplan'); setNavTab('peplan'); }}>
               PE Plan
             </button>
+            <button
+              className="nav-action-trigger lock-nav-trigger"
+              onClick={handleLogout}
+              aria-label="Lock App"
+              title="Lock & Log out"
+            >
+              🔒
+            </button>
+            <button
+              className="nav-action-trigger settings-nav-trigger"
+              onClick={() => setIsSettingsOpen(true)}
+              aria-label="Settings"
+              title="Settings & Passkeys"
+            >
+              ⚙️
+            </button>
           </div>
         </nav>
         <div className="tab-spacer" />
@@ -282,12 +336,21 @@ function App() {
           {activeTab === 'schedule'  && <MasterSchedule />}
           {activeTab === 'workout'   && <WorkoutPlan />}
           {activeTab === 'nutrition' && <NutritionPrep />}
-          {activeTab === 'history'   && <HistoryLog syncKey={syncKey} bgPref={bgPref} setBgPref={handleBgPrefChange} />}
+          {activeTab === 'history'   && <HistoryLog syncKey={syncKey} bgPref={bgPref} setBgPref={handleBgPrefChange} onLogout={handleLogout} />}
           {activeTab === 'peplan'   && <PeTreatmentPlan />}
         </main>
       </div>
 
       <AmbientSoundWidget />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        bgPref={bgPref}
+        setBgPref={handleBgPrefChange}
+        onForceSync={handleGlobalSync}
+        onLogout={handleLogout}
+      />
     </>
   );
 }

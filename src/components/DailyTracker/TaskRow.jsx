@@ -2,10 +2,10 @@ import React from 'react';
 import '../../styles/TaskRow.css';
 
 const TaskRow = ({ id, label, checked, onChange, onInfoClick, isInfoActive }) => (
-  <div className="task-row">
+  <div className={`task-row ${checked ? 'task-done' : ''}`}>
     <div className="task-header">
       <label className="task-label">
-        <input type="checkbox" checked={checked} onChange={() => onChange(id)} />
+        <input type="checkbox" checked={!!checked} onChange={() => onChange(id)} />
         <span className="task-title-text">{label}</span>
       </label>
       <button

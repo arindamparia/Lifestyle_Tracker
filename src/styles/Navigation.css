@@ -20,39 +20,46 @@
 
 /* Inner container — matches content column width, buttons fill equally */
 .tab-inner {
-  max-width: 800px;
+  max-width: 860px;
   margin: 0 auto;
-  padding: 10px 20px;
+  padding: 8px 16px;
   display: flex;
   align-items: center;
   gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tab-inner::-webkit-scrollbar {
+  display: none;
 }
 
 /* Spacer */
 .tab-spacer {
-  height: 64px;
+  height: 60px;
   flex-shrink: 0;
 }
 
 /* All tab buttons — flex: 1 so they share space equally */
-.tab-navigation button {
+.tab-navigation button:not(.settings-nav-trigger) {
   flex: 1;
   position: relative;
   white-space: nowrap;
   background: transparent !important;
-  color: rgba(161, 167, 179, 0.8) !important;
+  color: rgba(161, 167, 179, 0.85) !important;
   box-shadow: none !important;
   border: none !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   font-weight: 500 !important;
-  padding: 8px 12px !important;
-  font-size: 0.88rem;
+  padding: 7px 12px !important;
+  font-size: 0.85rem;
   letter-spacing: 0.01em;
-  transition: color 0.2s ease !important;
+  transition: color 0.2s ease, background 0.2s ease !important;
   min-height: 36px !important;
   text-align: center !important;
   outline: none !important;
   -webkit-tap-highlight-color: transparent !important;
+  flex-shrink: 0;
 }
 
 /* Explicitly block global button:hover and button:active styles from bleeding into the nav tabs */
@@ -65,10 +72,9 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .tab-navigation button:hover {
-    color: rgba(248, 248, 252, 0.9) !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    transition: color 0.2s ease, background 0.2s ease !important;
+  .tab-navigation button:not(.settings-nav-trigger):hover {
+    color: rgba(248, 248, 252, 0.95) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
   }
 }
 
@@ -81,14 +87,14 @@
 .tab-navigation button.active::after {
   content: '';
   position: absolute;
-  bottom: 3px;
+  bottom: 2px;
   left: 50%;
   transform: translateX(-50%);
   width: 18px;
-  height: 2px;
+  height: 2.5px;
   border-radius: 2px;
-  background: var(--primary);
-  box-shadow: 0 0 8px rgba(108, 92, 231, 0.6);
+  background: var(--primary, #6c5ce7);
+  box-shadow: 0 0 10px rgba(108, 92, 231, 0.8);
 }
 
 /* ★ Daily Tracker — solid purple pill */
@@ -96,7 +102,7 @@
   background: linear-gradient(135deg, #6c5ce7, #7c6af7) !important;
   color: #fff !important;
   border: none !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   font-weight: 700 !important;
   letter-spacing: 0.02em !important;
   box-shadow:
@@ -113,3 +119,63 @@
   color: #fff !important;
 }
 
+/* Navigation Action Triggers (Settings & Lock) */
+.nav-action-trigger,
+.settings-nav-trigger,
+.lock-nav-trigger {
+  flex-shrink: 0 !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+  color: #cbd5e1 !important;
+  font-size: 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  margin-left: 2px;
+  box-shadow: none !important;
+}
+
+.lock-nav-trigger:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  transform: scale(1.06) !important;
+}
+
+.settings-nav-trigger:hover {
+  background: rgba(108, 92, 231, 0.25) !important;
+  border-color: rgba(108, 92, 231, 0.5) !important;
+  color: #fff !important;
+  transform: rotate(20deg) scale(1.06) !important;
+}
+
+.nav-action-trigger:active,
+.settings-nav-trigger:active,
+.lock-nav-trigger:active {
+  transform: scale(0.92) !important;
+}
+
+@media (max-width: 640px) {
+  .tab-inner {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+  .tab-navigation button:not(.nav-action-trigger) {
+    font-size: 0.8rem;
+    padding: 6px 8px !important;
+  }
+  .nav-action-trigger,
+  .settings-nav-trigger,
+  .lock-nav-trigger {
+    width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    font-size: 0.9rem !important;
+  }
+}

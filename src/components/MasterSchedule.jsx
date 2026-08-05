@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/MasterSchedule.css';
+import { isHolidayToday } from '../data/dailyTrackingData';
 
 // Parse a time string like "7:30 AM" or "9:00 AM - 1:00 PM" → minutes from midnight
 const parseTimeToMins = (timeStr) => {
@@ -28,7 +29,13 @@ export default function MasterSchedule() {
   }, []);
 
   const day = new Date().getDay();
-  const isWeekend = day === 0 || day === 6;
+  const isNaturalWeekend = day === 0 || day === 6;
+  const isHoliday = isHolidayToday();
+  const todayIsWeekendOrHoliday = isNaturalWeekend || isHoliday;
+
+  // Allows user to view either schedule while defaulting to today's active schedule
+  const [viewMode, setViewMode] = useState(todayIsWeekendOrHoliday ? 'weekend' : 'weekday');
+  const isViewingWeekend = viewMode === 'weekend';
 
   const eveningBlock = {
     period: "Evening Workouts & Wind-Down (7:00 PM – 12:30 AM)",
@@ -85,7 +92,7 @@ export default function MasterSchedule() {
     eveningBlock,
   ];
 
-  const scheduleData = isWeekend ? weekendSchedule : weekdaySchedule;
+  const scheduleData = isViewingWeekend ? weekendSchedule : weekdaySchedule;
 
   // Flatten all items with their parsed start times for finding the active one
   const allItems = scheduleData.flatMap(block =>
@@ -95,6 +102,8 @@ export default function MasterSchedule() {
   // Active item = the last item whose start time has passed but next hasn't started yet
   // Handle late-night (midnight+) by shifting times
   const getActiveTitle = () => {
+    // Only mark live active task if the currently viewed schedule matches today's actual schedule
+    if (isViewingWeekend !== todayIsWeekendOrHoliday) return null;
     const t = nowMins < 90 ? nowMins + 1440 : nowMins; // handle past midnight
     let active = null;
     for (let i = 0; i < allItems.length; i++) {
@@ -114,8 +123,34 @@ export default function MasterSchedule() {
 
   return (
     <div className="section-container">
-      <h2>Master Schedule</h2>
-      <p className="subtitle">{isWeekend ? 'Weekend — relaxed start, same evening routine.' : 'Weekday — compressed morning to leave by 9:30 AM for your 10 AM office meeting.'} Timing is designed to maximise supplement absorption and fat loss.</p>
+      <div className="schedule-header-row">
+        <div>
+          <h2>Master Schedule</h2>
+          <p className="subtitle">
+            {isViewingWeekend ? 'Weekend / Holiday — relaxed start, same evening routine.' : 'Weekday — compressed morning to leave by 9:30 AM for your 10 AM office meeting.'} Timing is designed to maximise supplement absorption and fat loss.
+          </p>
+        </div>
+
+        {/* Schedule Mode Switcher */}
+        <div className="schedule-view-switcher">
+          <button
+            type="button"
+            className={`schedule-switch-pill ${viewMode === 'weekday' ? 'active' : ''}`}
+            onClick={() => setViewMode('weekday')}
+          >
+            💼 Weekday
+            {!isNaturalWeekend && !isHoliday && <span className="today-dot" title="Active today" />}
+          </button>
+          <button
+            type="button"
+            className={`schedule-switch-pill ${viewMode === 'weekend' ? 'active' : ''}`}
+            onClick={() => setViewMode('weekend')}
+          >
+            🏖️ Weekend / Holiday
+            {todayIsWeekendOrHoliday && <span className="today-dot" title="Active today" />}
+          </button>
+        </div>
+      </div>
 
       {scheduleData.map((block, idx) => (
         <div key={idx} className="schedule-block">

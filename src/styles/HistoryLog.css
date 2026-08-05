@@ -1,5 +1,5 @@
 /* === HISTORY & CALENDAR LOG === */
-.logout-btn {
+.history-logout-btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -17,12 +17,12 @@
   flex-shrink: 0;
   margin-top: 4px;
 }
-.logout-btn svg {
+.history-logout-btn svg {
   width: 16px;
   height: 16px;
   display: block;
 }
-.logout-btn:hover {
+.history-logout-btn:hover {
   background: rgba(255, 99, 99, 0.10) !important;
   border-color: rgba(255, 99, 99, 0.30) !important;
   color: #ff8080 !important;

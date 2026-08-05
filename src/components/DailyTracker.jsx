@@ -12,7 +12,9 @@ import {
   getActiveTask, 
   getSuggestions, 
   TASK_INFO_MAP, 
-  getInfoForField 
+  getInfoForField,
+  isHolidayToday,
+  setHolidayToday
 } from '../data/dailyTrackingData';
 
 // Returns parsed JSON only when the response is actually JSON.
@@ -266,6 +268,57 @@ export default function DailyTracker({ onSync, syncKey }) {
   const dtDate    = _now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const dtTime    = _now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
+  // Natural calendar weekend detection (Saturday = 6, Sunday = 0)
+  const isNaturalWeekend = _now.getDay() === 0 || _now.getDay() === 6;
+
+  // Custom Holiday State (for weekdays where user wants weekend/holiday routine)
+  const [isHoliday, setIsHoliday] = useState(() => isHolidayToday());
+
+  const handleToggleHoliday = () => {
+    const nextVal = !isHoliday;
+    setIsHoliday(nextVal);
+    setHolidayToday(nextVal);
+  };
+
+  // Effective routine mode: if natural weekend or holiday is marked, use weekend schedule
+  const isWeekend = isNaturalWeekend || isHoliday;
+
+  // Section filter for mobile & desktop decluttering ('all' | 'morning' | 'work' | 'evening' | 'night')
+  const [sectionFilter, setSectionFilter] = useState('all');
+
+  // Calculate daily completion progress
+  const TRACKED_FIELDS = [
+    'shilajit_taken', 'morning_meditation_completed', 'isabgul_taken', 'breakfast_logged', 'bathing_completed',
+    'rule_50_10_followed', 'kegels_completed', 'acv_taken', 'lunch_logged', 'multivitamin_taken', 'afternoon_snack_logged',
+    'scheduled_workout_completed', 'whey_protein_taken', 'dinner_logged', 'ashwagandha_taken', 'post_dinner_walk_completed',
+    'hydration_cutoff_followed', 'screen_curfew_followed'
+  ];
+  const completedCount = TRACKED_FIELDS.filter(f => !!log[f]).length;
+  const progressPercent = Math.round((completedCount / TRACKED_FIELDS.length) * 100);
+
+  // Lock body scroll when task detail modal is open
+  useEffect(() => {
+    if (!activeDetail) return;
+    const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setActiveDetail(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [activeDetail]);
+
   if (dbLoading) {
     return (
       <div className="section-container">
@@ -280,25 +333,63 @@ export default function DailyTracker({ onSync, syncKey }) {
   return (
     <div className="section-container">
 
-      {/* ── Date / Time Header ──────────────────────────── */}
+      {/* ── Date / Time Header & Progress ──────────────────────────── */}
       <div className="dt-header">
-        <div className="dt-left">
-          <span className="dt-weekday">{dtWeekday}</span>
-          <span className="dt-date">{dtDate}</span>
+        <div className="dt-header-top">
+          <div className="dt-left">
+            <div className="dt-date-row">
+              <span className="dt-weekday">{dtWeekday}</span>
+              <span className="dt-date">{dtDate}</span>
+            </div>
+            <div className="dt-progress-badge">
+              <div className="dt-progress-bar-wrap">
+                <div className="dt-progress-bar-fill" style={{ width: `${progressPercent}%` }} />
+              </div>
+              <span className="dt-progress-text">{completedCount}/{TRACKED_FIELDS.length} Done ({progressPercent}%)</span>
+            </div>
+          </div>
+
+          <div className="dt-right">
+            <div className="dt-time-row">
+              <span className="dt-time">{dtTime}</span>
+              {_isLateNight && <span className="dt-late-tag">Logging for yesterday</span>}
+              <button className="sync-btn" onClick={handleSync} title="Sync with database" disabled={syncing || syncCooldown}>
+                <span className={syncing ? 'sync-spinning' : ''}>↻</span>
+                {syncing ? 'Syncing…' : syncCooldown ? 'Synced ✓' : 'Sync'}
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="dt-right">
-          <span className="dt-time">{dtTime}</span>
-          {_isLateNight && <span className="dt-late-tag">Logging for yesterday</span>}
-          <button className="sync-btn" onClick={handleSync} title="Sync with database" disabled={syncing || syncCooldown}>
-            <span className={syncing ? 'sync-spinning' : ''}>↻</span>
-            {syncing ? 'Syncing…' : syncCooldown ? 'Synced ✓' : 'Sync'}
-          </button>
+
+        {/* ── Routine & Holiday Controller (Dedicated Line) ────────── */}
+        <div className="dt-routine-row">
+          {isNaturalWeekend ? (
+            <div className="routine-status-pill natural-weekend" title="Saturday/Sunday — Relaxed weekend routine active">
+              <span className="routine-dot weekend-dot" />
+              <span className="routine-pill-label">🏖️ Weekend Routine</span>
+            </div>
+          ) : (
+            <div className={`routine-status-pill ${isHoliday ? 'holiday-mode' : 'workday-mode'}`}>
+              <div className="routine-badge-info">
+                <span className={`routine-dot ${isHoliday ? 'holiday-dot' : 'workday-dot'}`} />
+                <span className="routine-pill-label">{isHoliday ? '🏖️ Holiday Mode' : '💼 Workday'}</span>
+              </div>
+              <button
+                type="button"
+                className="holiday-action-btn"
+                onClick={handleToggleHoliday}
+                title={isHoliday ? 'Switch back to standard workday routine' : 'Follow relaxed weekend routine today'}
+              >
+                {isHoliday ? '↩️ Workday' : '🌴 Day Off / Holiday'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── Now Pill ────────────────────────────────────── */}
       {(() => {
-        const task = getActiveTask();
+        const task = getActiveTask(isWeekend);
         if (!task) return null;
         const name = task.label.includes('—') ? task.label.split('—').pop().trim() : task.label;
         return (
@@ -309,23 +400,27 @@ export default function DailyTracker({ onSync, syncKey }) {
         );
       })()}
 
-      {/* ── Current Situation (Weight Status) ───────────── */}
-      <SituationCard log={log} weightOpen={weightOpen} toggleWeight={toggleWeight} />
-
-      {/* ── Water Card ──────────────────────────────────── */}
-      <WaterCard log={log} waterOpen={waterOpen} toggleWater={toggleWater} addWater={addWater} removeWater={removeWater} />
+      {/* ── Responsive Top Dashboard (Side-by-Side on Desktop, Compact on Mobile) ── */}
+      <div className="dt-dashboard-grid">
+        <div className="dt-dashboard-col">
+          {/* Water Card */}
+          <WaterCard log={log} waterOpen={waterOpen} toggleWater={toggleWater} addWater={addWater} removeWater={removeWater} />
+        </div>
+        <div className="dt-dashboard-col">
+          {/* Situation & Reading Cards */}
+          <SituationCard log={log} weightOpen={weightOpen} toggleWeight={toggleWeight} />
+          <ReadingCard log={log} setLog={setLog} />
+        </div>
+      </div>
 
       {/* ── Sync failed toast ───────────────────────────── */}
       {syncFailed && (
         <div className="sync-fail-toast">⚠️ Sync failed — check your connection</div>
       )}
 
-      {/* ── Reading Today Card ──────────────────────────── */}
-      <ReadingCard log={log} setLog={setLog} />
-
       {/* ── Smart Suggestions Panel ─────────────────────── */}
       {(() => {
-        const suggestions = getSuggestions(log);
+        const suggestions = getSuggestions(log, isWeekend);
         if (suggestions.length === 0) return null;
         return (
           <div className="suggestions-panel">
@@ -378,283 +473,333 @@ export default function DailyTracker({ onSync, syncKey }) {
         );
       })()}
 
+      {/* ── Time-of-Day Quick Filter Tabs (Declutters Mobile View) ── */}
+      <div className="dt-section-filter-bar">
+        <button
+          className={`filter-tab-pill ${sectionFilter === 'all' ? 'active' : ''}`}
+          onClick={() => setSectionFilter('all')}
+        >
+          All Tasks ({completedCount}/18)
+        </button>
+        <button
+          className={`filter-tab-pill ${sectionFilter === 'morning' ? 'active' : ''}`}
+          onClick={() => setSectionFilter('morning')}
+        >
+          🌅 Morning
+        </button>
+        <button
+          className={`filter-tab-pill ${sectionFilter === 'work' ? 'active' : ''}`}
+          onClick={() => setSectionFilter('work')}
+        >
+          🖥️ Mid-Day
+        </button>
+        <button
+          className={`filter-tab-pill ${sectionFilter === 'evening' ? 'active' : ''}`}
+          onClick={() => setSectionFilter('evening')}
+        >
+          🏋️ Evening
+        </button>
+        <button
+          className={`filter-tab-pill ${sectionFilter === 'night' ? 'active' : ''}`}
+          onClick={() => setSectionFilter('night')}
+        >
+          🌙 Night
+        </button>
+      </div>
+
       <div className="grid-stack">
 
         {/* ── Morning ─────────────────────────────────── */}
-        {(() => {
-          const d = new Date().getDay();
-          const wknd = d === 0 || d === 6;
-          return <h3>🌅 Morning Launch {wknd ? '(7:30 AM – 10:00 AM)' : '(7:00 AM – leave by 9:30 AM)'}</h3>;
-        })()}
+        {(sectionFilter === 'all' || sectionFilter === 'morning') && (
+          <div className="dt-period-group">
+            <h3 className="period-title">
+              🌅 Morning Launch {isWeekend ? '(7:30 AM – 10:00 AM • Relaxed)' : '(7:00 AM – leave by 9:30 AM)'}
+            </h3>
 
-        <TaskRow
-          id="shilajit_taken" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'shilajit_taken'); return t ? `${t.emoji} ${t.label}` : '🧪 Shilajit'; })()}
-          checked={log.shilajit_taken} onChange={handleToggle}
-          onInfoClick={() => showInfo('shilajit_taken', '🧪 Shilajit',
-            'Take on a completely empty stomach in the morning before food or coffee.',
-            [
-              'Pour 250 ml of warm (not boiling) water into a glass.',
-              'Dissolve a pea-sized piece of Shilajit resin by stirring for 30 seconds.',
-              'Drink immediately — before food or coffee. Wait 20 minutes before eating.',
-              'Why warm water: it dissolves the resin fully and improves bioavailability.',
-              'Why morning: Shilajit boosts mitochondrial energy and sets a positive metabolic tone for the day.',
-              'Note: Creatine is now taken post-workout at 8 PM (with Whey Protein) for better muscle uptake.',
-            ])}
-          isInfoActive={activeDetail?.id === 'shilajit_taken'}
-        />
+            <TaskRow
+              id="shilajit_taken" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'shilajit_taken'); return t ? `${t.emoji} ${t.label}` : '🧪 Shilajit'; })()}
+              checked={log.shilajit_taken} onChange={handleToggle}
+              onInfoClick={() => showInfo('shilajit_taken', '🧪 Shilajit',
+                'Take on a completely empty stomach in the morning before food or coffee.',
+                [
+                  'Pour 250 ml of warm (not boiling) water into a glass.',
+                  'Dissolve a pea-sized piece of Shilajit resin by stirring for 30 seconds.',
+                  'Drink immediately — before food or coffee. Wait 20 minutes before eating.',
+                  'Why warm water: it dissolves the resin fully and improves bioavailability.',
+                  'Why morning: Shilajit boosts mitochondrial energy and sets a positive metabolic tone for the day.',
+                  'Note: Creatine is now taken post-workout at 8 PM (with Whey Protein) for better muscle uptake.',
+                ])}
+              isInfoActive={activeDetail?.id === 'shilajit_taken'}
+            />
 
-        <TaskRow
-          id="morning_meditation_completed" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'morning_meditation_completed'); return t ? `${t.emoji} ${t.label}` : '🧘 Meditation'; })()}
-          checked={log.morning_meditation_completed} onChange={handleToggle}
-          onInfoClick={() => showInfo('morning_meditation_completed', '🧘 Morning Meditation',
-            'This 20-minute window lets the Shilajit absorb before you eat.',
-            [
-              'Find a quiet, comfortable sitting position — chair or floor, spine upright.',
-              'Set a timer for 20 minutes. Place your phone face-down.',
-              'Close your eyes. Breathe in slowly through your nose for 4 counts.',
-              'Hold for 2 counts, then exhale through your mouth for 6 counts.',
-              'When thoughts arise, acknowledge them and gently return to your breath. No judgment.',
-              'When the timer ends, take one deep breath before opening your eyes.',
-            ])}
-          isInfoActive={activeDetail?.id === 'morning_meditation_completed'}
-        />
+            <TaskRow
+              id="morning_meditation_completed" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'morning_meditation_completed'); return t ? `${t.emoji} ${t.label}` : '🧘 Meditation'; })()}
+              checked={log.morning_meditation_completed} onChange={handleToggle}
+              onInfoClick={() => showInfo('morning_meditation_completed', '🧘 Morning Meditation',
+                'This 20-minute window lets the Shilajit absorb before you eat.',
+                [
+                  'Find a quiet, comfortable sitting position — chair or floor, spine upright.',
+                  'Set a timer for 20 minutes. Place your phone face-down.',
+                  'Close your eyes. Breathe in slowly through your nose for 4 counts.',
+                  'Hold for 2 counts, then exhale through your mouth for 6 counts.',
+                  'When thoughts arise, acknowledge them and gently return to your breath. No judgment.',
+                  'When the timer ends, take one deep breath before opening your eyes.',
+                ])}
+              isInfoActive={activeDetail?.id === 'morning_meditation_completed'}
+            />
 
-        <TaskRow
-          id="isabgul_taken" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'isabgul_taken'); return t ? `${t.emoji} ${t.label}` : '🌾 Isabgul Husk'; })()}
-          checked={log.isabgul_taken} onChange={handleToggle}
-          onInfoClick={() => showInfo('isabgul_taken', '🌾 Isabgul (Psyllium Husk)',
-            'A soluble fibre that slows glucose absorption and keeps you full through the morning.',
-            [
-              'Measure 1 heaped teaspoon (about 5 g) of Isabgul husk.',
-              'Add to a full glass (250 ml) of room-temperature water.',
-              'Stir for 5 seconds, then drink it IMMEDIATELY — it turns into a thick gel within 60 seconds.',
-              'Follow with another half-glass of plain water.',
-              'Why: Do not let it sit — a thick gel is harder to swallow and less effective.',
-            ])}
-          isInfoActive={activeDetail?.id === 'isabgul_taken'}
-        />
+            <TaskRow
+              id="isabgul_taken" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'isabgul_taken'); return t ? `${t.emoji} ${t.label}` : '🌾 Isabgul Husk'; })()}
+              checked={log.isabgul_taken} onChange={handleToggle}
+              onInfoClick={() => showInfo('isabgul_taken', '🌾 Isabgul (Psyllium Husk)',
+                'A soluble fibre that slows glucose absorption and keeps you full through the morning.',
+                [
+                  'Measure 1 heaped teaspoon (about 5 g) of Isabgul husk.',
+                  'Add to a full glass (250 ml) of room-temperature water.',
+                  'Stir for 5 seconds, then drink it IMMEDIATELY — it turns into a thick gel within 60 seconds.',
+                  'Follow with another half-glass of plain water.',
+                  'Why: Do not let it sit — a thick gel is harder to swallow and less effective.',
+                ])}
+              isInfoActive={activeDetail?.id === 'isabgul_taken'}
+            />
 
-        <TaskRow
-          id="breakfast_logged" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'breakfast_logged'); return t ? `${t.emoji} ${t.label} — 3 Boiled Eggs & Fruit` : '🍳 Breakfast'; })()}
-          checked={log.breakfast_logged} onChange={handleToggle}
-          onInfoClick={() => showInfo('breakfast_logged', '🍳 Breakfast — Boiled Eggs & Fruit',
-            'High-protein, low-effort breakfast. Takes about 12 minutes to make fresh.',
-            [
-              'Fill a small pot with enough cold water to fully cover 3 eggs.',
-              'Bring to a rolling boil on high heat.',
-              'Gently lower 3 whole eggs into the boiling water using a spoon.',
-              'Set a timer for exactly 9 minutes for firm, fully set yolks.',
-              'Transfer eggs immediately to cold tap water for 2 minutes (stops overcooking and makes peeling easier).',
-              'Peel and eat with a pinch of salt.',
-              'Eat alongside 1 apple (sliced) or 1 banana.',
-            ])}
-          isInfoActive={activeDetail?.id === 'breakfast_logged'}
-        />
+            <TaskRow
+              id="breakfast_logged" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'breakfast_logged'); return t ? `${t.emoji} ${t.label} — 3 Boiled Eggs & Fruit` : '🍳 Breakfast'; })()}
+              checked={log.breakfast_logged} onChange={handleToggle}
+              onInfoClick={() => showInfo('breakfast_logged', '🍳 Breakfast — Boiled Eggs & Fruit',
+                'High-protein, low-effort breakfast. Takes about 12 minutes to make fresh.',
+                [
+                  'Fill a small pot with enough cold water to fully cover 3 eggs.',
+                  'Bring to a rolling boil on high heat.',
+                  'Gently lower 3 whole eggs into the boiling water using a spoon.',
+                  'Set a timer for exactly 9 minutes for firm, fully set yolks.',
+                  'Transfer eggs immediately to cold tap water for 2 minutes (stops overcooking and makes peeling easier).',
+                  'Peel and eat with a pinch of salt.',
+                  'Eat alongside 1 apple (sliced) or 1 banana.',
+                ])}
+              isInfoActive={activeDetail?.id === 'breakfast_logged'}
+            />
 
-        <TaskRow
-          id="bathing_completed" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'bathing_completed'); return t ? `${t.emoji} ${t.label}` : '🚿 Bath & Get Ready'; })()}
-          checked={log.bathing_completed} onChange={handleToggle}
-          onInfoClick={() => showInfo('bathing_completed', '🚿 Bath & Get Ready',
-            'A proper shower resets body temperature, improves alertness, and sets a clean mental state for the day.',
-            TASK_INFO_MAP.bathing_completed.steps)}
-          isInfoActive={activeDetail?.id === 'bathing_completed'}
-        />
+            <TaskRow
+              id="bathing_completed" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'bathing_completed'); return t ? `${t.emoji} ${t.label}` : '🚿 Bath & Get Ready'; })()}
+              checked={log.bathing_completed} onChange={handleToggle}
+              onInfoClick={() => showInfo('bathing_completed', '🚿 Bath & Get Ready',
+                'A proper shower resets body temperature, improves alertness, and sets a clean mental state for the day.',
+                TASK_INFO_MAP.bathing_completed.steps)}
+              isInfoActive={activeDetail?.id === 'bathing_completed'}
+            />
+          </div>
+        )}
 
         {/* ── Mid-Day ─────────────────────────────────── */}
-        <h3>🖥️ Work & Mid-Day (10:00 AM – 4:00 PM)</h3>
+        {(sectionFilter === 'all' || sectionFilter === 'work') && (
+          <div className="dt-period-group">
+            <h3 className="period-title">
+              🖥️ Work & Mid-Day {isWeekend ? '(10:00 AM – 4:00 PM • Focus / Hobbies)' : '(10:00 AM – 4:00 PM)'}
+            </h3>
 
-        <TaskRow
-          id="rule_50_10_followed" label="🪑 Desk Habit — 50/10 Rule & Posture"
-          checked={log.rule_50_10_followed} onChange={handleToggle}
-          onInfoClick={() => showInfo('rule_50_10_followed', '🪑 50/10 Rule & Posture',
-            'Sitting for 50+ minutes raises cortisol and compresses the spine. This breaks the damage.',
-            [
-              'Set a repeating timer on your phone for every 50 minutes.',
-              'When it goes off: stand up, walk out of the room, pace for 10 full minutes.',
-              'Each time you stand up: step into a doorway, place your hands on the frame at shoulder height, and lean forward gently until you feel your chest open. Hold for 30 seconds.',
-              'While sitting: feet flat on the floor, screen at eye level, lower back supported.',
-              'Keep your 1-litre water bottle on the desk — refill it every time you return from a break.',
-            ])}
-          isInfoActive={activeDetail?.id === 'rule_50_10_followed'}
-        />
+            <TaskRow
+              id="rule_50_10_followed" label="🪑 Desk Habit — 50/10 Rule & Posture"
+              checked={log.rule_50_10_followed} onChange={handleToggle}
+              onInfoClick={() => showInfo('rule_50_10_followed', '🪑 50/10 Rule & Posture',
+                'Sitting for 50+ minutes raises cortisol and compresses the spine. This breaks the damage.',
+                [
+                  'Set a repeating timer on your phone for every 50 minutes.',
+                  'When it goes off: stand up, walk out of the room, pace for 10 full minutes.',
+                  'Each time you stand up: step into a doorway, place your hands on the frame at shoulder height, and lean forward gently until you feel your chest open. Hold for 30 seconds.',
+                  'While sitting: feet flat on the floor, screen at eye level, lower back supported.',
+                  'Keep your 1-litre water bottle on the desk — refill it every time you return from a break.',
+                ])}
+              isInfoActive={activeDetail?.id === 'rule_50_10_followed'}
+            />
 
-        <TaskRow
-          id="kegels_completed" label="🔄 Desk Habit — Pelvic Floor (Kegels)"
-          checked={log.kegels_completed} onChange={handleToggle}
-          onInfoClick={() => showInfo('kegels_completed', '🔄 Pelvic Floor Exercises (Kegels)',
-            'Invisible exercise you can do sitting at your desk. 3 sets, anytime between 9 AM and 4 PM.',
-            [
-              'Sit normally in your chair. No one will know you are doing this.',
-              'Identify the muscles: imagine you are stopping yourself from urinating mid-stream. Those are your pelvic floor muscles.',
-              'Contract those muscles firmly. Hold for 5 seconds. Relax for 5 seconds. That is 1 rep.',
-              'Do 10–15 reps. Rest 60 seconds. Repeat for 3 sets.',
-              'Benefit: improves urinary control, core stability, and testosterone output over time.',
-            ])}
-          isInfoActive={activeDetail?.id === 'kegels_completed'}
-        />
+            <TaskRow
+              id="kegels_completed" label="🔄 Pelvic Floor (Kegels) — 3 Sets"
+              checked={log.kegels_completed} onChange={handleToggle}
+              onInfoClick={() => showInfo('kegels_completed', '🔄 Pelvic Floor Exercises (Kegels)',
+                'Invisible exercise you can do sitting at your desk. 3 sets, anytime between 9 AM and 4 PM.',
+                [
+                  'Sit normally in your chair. No one will know you are doing this.',
+                  'Identify the muscles: imagine you are stopping yourself from urinating mid-stream. Those are your pelvic floor muscles.',
+                  'Contract those muscles firmly. Hold for 5 seconds. Relax for 5 seconds. That is 1 rep.',
+                  'Do 10–15 reps. Rest 60 seconds. Repeat for 3 sets.',
+                  'Benefit: improves urinary control, core stability, and testosterone output over time.',
+                ])}
+              isInfoActive={activeDetail?.id === 'kegels_completed'}
+            />
 
-        <TaskRow
-          id="acv_taken" label="🥤 1:00 PM — ACV Pre-Lunch Drink"
-          checked={log.acv_taken} onChange={handleToggle}
-          onInfoClick={() => showInfo('acv_taken', '🥤 Apple Cider Vinegar (ACV) Drink',
-            'Taken 15 minutes before lunch, ACV blunts the blood sugar spike from rice.',
-            [
-              'Pour 250 ml of water into a glass.',
-              'Add exactly 1 tablespoon (15 ml) of Apple Cider Vinegar — use one with "the mother" (cloudy appearance).',
-              'Stir briefly. Drink through a straw to protect tooth enamel from the acid.',
-              'Do not drink undiluted ACV — it will damage your oesophagus and teeth.',
-              'Drink this 10–15 minutes before your meal for maximum effect on blood sugar.',
-            ])}
-          isInfoActive={activeDetail?.id === 'acv_taken'}
-        />
+            <TaskRow
+              id="acv_taken" label="🥤 1:00 PM — ACV Pre-Lunch Drink"
+              checked={log.acv_taken} onChange={handleToggle}
+              onInfoClick={() => showInfo('acv_taken', '🥤 Apple Cider Vinegar (ACV) Drink',
+                'Taken 15 minutes before lunch, ACV blunts the blood sugar spike from rice.',
+                [
+                  'Pour 250 ml of water into a glass.',
+                  'Add exactly 1 tablespoon (15 ml) of Apple Cider Vinegar — use one with "the mother" (cloudy appearance).',
+                  'Stir briefly. Drink through a straw to protect tooth enamel from the acid.',
+                  'Do not drink undiluted ACV — it will damage your oesophagus and teeth.',
+                  'Drink this 10–15 minutes before your meal for maximum effect on blood sugar.',
+                ])}
+              isInfoActive={activeDetail?.id === 'acv_taken'}
+            />
 
-        <TaskRow
-          id="lunch_logged" label="🍱 1:15 PM — Office Lunch (Rice, Dal & Protein)"
-          checked={log.lunch_logged} onChange={handleToggle}
-          onInfoClick={() => showInfo('lunch_logged', '🍱 Daily Lunch Preparation',
-            'Prepare fresh each morning before work. Total active time: ~30 minutes.',
-            [
-              'Rice: Rinse 100 g (1 small katori) of white rice under cold water until clear. Add 150 ml water, bring to a boil, reduce to lowest heat, cover, and simmer for 12–15 minutes until all water is absorbed.',
-              'Masoor Dal: Rinse ½ cup of red lentils (masoor dal) until water runs clear. Boil with 1 cup water, ½ tsp turmeric, and salt to taste for 15–18 minutes until a very thick paste forms. Tadka: heat 1 tsp mustard oil in a small pan, add 1 dried red chilli and 3 crushed garlic cloves for 15 seconds, then pour over the dal and mix.',
-              'Protein: Pat 150 g chicken breast or 2 fish pieces dry with a paper towel. Rub with salt, ¼ tsp turmeric, and a squeeze of lemon. Sear in a hot pan with 1 tsp oil — chicken: 6–7 min each side; fish: 4–5 min each side — until golden and cooked through.',
-              'Side: Slice 1 cucumber.',
-              'Pack rice, dal, protein, and cucumber into separate airtight lunch containers. Refrigerate until you leave for work.',
-            ])}
-          isInfoActive={activeDetail?.id === 'lunch_logged'}
-        />
+            <TaskRow
+              id="lunch_logged" label="🍱 1:15 PM — Lunch (Rice, Dal & Protein)"
+              checked={log.lunch_logged} onChange={handleToggle}
+              onInfoClick={() => showInfo('lunch_logged', '🍱 Daily Lunch Preparation',
+                'Prepare fresh each morning before work. Total active time: ~30 minutes.',
+                [
+                  'Rice: Rinse 100 g (1 small katori) of white rice under cold water until clear. Add 150 ml water, bring to a boil, reduce to lowest heat, cover, and simmer for 12–15 minutes until all water is absorbed.',
+                  'Masoor Dal: Rinse ½ cup of red lentils (masoor dal) until water runs clear. Boil with 1 cup water, ½ tsp turmeric, and salt to taste for 15–18 minutes until a very thick paste forms. Tadka: heat 1 tsp mustard oil in a small pan, add 1 dried red chilli and 3 crushed garlic cloves for 15 seconds, then pour over the dal and mix.',
+                  'Protein: Pat 150 g chicken breast or 2 fish pieces dry with a paper towel. Rub with salt, ¼ tsp turmeric, and a squeeze of lemon. Sear in a hot pan with 1 tsp oil — chicken: 6–7 min each side; fish: 4–5 min each side — until golden and cooked through.',
+                  'Side: Slice 1 cucumber.',
+                  'Pack rice, dal, protein, and cucumber into separate airtight lunch containers. Refrigerate until you leave for work.',
+                ])}
+              isInfoActive={activeDetail?.id === 'lunch_logged'}
+            />
 
-        <TaskRow
-          id="multivitamin_taken" label="💊 1:45 PM — MuscleBlaze Biozyme Multivitamin & Omega-3"
-          checked={log.multivitamin_taken} onChange={handleToggle}
-          onInfoClick={() => showInfo('multivitamin_taken', '💊 MuscleBlaze Biozyme Multivitamin & Omega-3',
-            'Take with the last bites of your meal — fat from food improves Omega-3 absorption.',
-            TASK_INFO_MAP.multivitamin_taken.steps)}
-          isInfoActive={activeDetail?.id === 'multivitamin_taken'}
-        />
+            <TaskRow
+              id="multivitamin_taken" label="💊 1:45 PM — Multivitamin & Omega-3"
+              checked={log.multivitamin_taken} onChange={handleToggle}
+              onInfoClick={() => showInfo('multivitamin_taken', '💊 MuscleBlaze Biozyme Multivitamin & Omega-3',
+                'Take with the last bites of your meal — fat from food improves Omega-3 absorption.',
+                TASK_INFO_MAP.multivitamin_taken.steps)}
+              isInfoActive={activeDetail?.id === 'multivitamin_taken'}
+            />
 
-        <TaskRow
-          id="afternoon_snack_logged" label="☕ 4:00 PM — Black Coffee & Almonds"
-          checked={log.afternoon_snack_logged} onChange={handleToggle}
-          onInfoClick={() => showInfo('afternoon_snack_logged', '☕ 4:00 PM Energy Snack',
-            'A clean pre-evening energy boost. Keep it minimal — this is not a meal.',
-            [
-              'Option A: Brew 1 cup of black coffee (no sugar, no milk). Drink within 20 minutes of brewing.',
-              'Option B: Squeeze half a lemon into 250 ml cold water with a pinch of salt (Lebur Jol). Sugar-free and refreshing.',
-              'Eat exactly 5–6 whole almonds or 4–5 walnuts alongside.',
-              'Do not eat more than this — the goal is to bridge the gap to dinner, not to have a full snack.',
-              'Avoid caffeine after 5:00 PM — it will compromise your sleep quality.',
-            ])}
-          isInfoActive={activeDetail?.id === 'afternoon_snack_logged'}
-        />
+            <TaskRow
+              id="afternoon_snack_logged" label="☕ 4:00 PM — Black Coffee & Almonds"
+              checked={log.afternoon_snack_logged} onChange={handleToggle}
+              onInfoClick={() => showInfo('afternoon_snack_logged', '☕ 4:00 PM Energy Snack',
+                'A clean pre-evening energy boost. Keep it minimal — this is not a meal.',
+                [
+                  'Option A: Brew 1 cup of black coffee (no sugar, no milk). Drink within 20 minutes of brewing.',
+                  'Option B: Squeeze half a lemon into 250 ml cold water with a pinch of salt (Lebur Jol). Sugar-free and refreshing.',
+                  'Eat exactly 5–6 whole almonds or 4–5 walnuts alongside.',
+                  'Do not eat more than this — the goal is to bridge the gap to dinner, not to have a full snack.',
+                  'Avoid caffeine after 5:00 PM — it will compromise your sleep quality.',
+                ])}
+              isInfoActive={activeDetail?.id === 'afternoon_snack_logged'}
+            />
+          </div>
+        )}
 
         {/* ── Evening ─────────────────────────────────── */}
-        <h3>🏋️ Evening Session (7:00 PM – 10:00 PM)</h3>
+        {(sectionFilter === 'all' || sectionFilter === 'evening') && (
+          <div className="dt-period-group">
+            <h3 className="period-title">🏋️ Evening Session (7:00 PM – 10:00 PM)</h3>
 
-        <TaskRow
-          id="scheduled_workout_completed"
-          label={`🏋️ 7:00 PM — ${todayWorkout.day === 'Sunday' ? 'Rest Day' : `Workout: ${todayWorkout.focus}`}`}
-          checked={log.scheduled_workout_completed}
-          onChange={handleToggle}
-          onInfoClick={() => showInfo(
-            'scheduled_workout_completed',
-            `🏋️ ${todayWorkout.day}: ${todayWorkout.focus}`,
-            todayWorkout.day === 'Sunday'
-              ? 'Today is your rest day. No training needed.'
-              : `Today is ${todayWorkout.day}. Follow the steps below in order.`,
-            todayWorkout.steps,
-          )}
-          isInfoActive={activeDetail?.id === 'scheduled_workout_completed'}
-        />
+            <TaskRow
+              id="scheduled_workout_completed"
+              label={`🏋️ 7:00 PM — ${todayWorkout.day === 'Sunday' ? 'Rest Day Recovery' : `Workout: ${todayWorkout.focus}`}`}
+              checked={log.scheduled_workout_completed}
+              onChange={handleToggle}
+              onInfoClick={() => showInfo(
+                'scheduled_workout_completed',
+                `🏋️ ${todayWorkout.day}: ${todayWorkout.focus}`,
+                todayWorkout.day === 'Sunday'
+                  ? 'Today is your rest day. No training needed. Focus on mobility and recovery.'
+                  : `Today is ${todayWorkout.day}. Follow the steps below in order.`,
+                todayWorkout.steps,
+              )}
+              isInfoActive={activeDetail?.id === 'scheduled_workout_completed'}
+            />
 
-        <TaskRow
-          id="whey_protein_taken" label="🥛 8:00 PM — Whey + Creatine (post-workout)"
-          checked={log.whey_protein_taken} onChange={handleToggle}
-          onInfoClick={() => showInfo('whey_protein_taken', '🥛 Post-Workout Whey + Creatine',
-            'Take both within 45 minutes of finishing your workout. Post-workout is the scientifically optimal window for creatine uptake — muscles are primed to absorb nutrients.',
-            [
-              'Measure 1 level scoop of Whey Protein Concentrate or Isolate.',
-              'Add 250–300 ml of cold water to a shaker bottle.',
-              'Add the protein powder AND exactly 5 g (1 level teaspoon) of Creatine Monohydrate.',
-              'Seal the shaker and shake vigorously for 10–15 seconds until fully dissolved.',
-              'Drink immediately. Do not let it sit — protein becomes lumpy and creatine loses potency.',
-              'Why post-workout creatine: insulin sensitivity is elevated post-exercise, driving creatine into muscle cells more efficiently than at any other time of day.',
-              "On Sunday (rest day): still take both — muscle protein synthesis peaks 24–48 hours after Saturday's burnout. Rest day protein and creatine are equally important.",
-            ])}
-          isInfoActive={activeDetail?.id === 'whey_protein_taken'}
-        />
+            <TaskRow
+              id="whey_protein_taken" label="🥛 8:00 PM — Whey + Creatine (post-workout)"
+              checked={log.whey_protein_taken} onChange={handleToggle}
+              onInfoClick={() => showInfo('whey_protein_taken', '🥛 Post-Workout Whey + Creatine',
+                'Take both within 45 minutes of finishing your workout. Post-workout is the scientifically optimal window for creatine uptake — muscles are primed to absorb nutrients.',
+                [
+                  'Measure 1 level scoop of Whey Protein Concentrate or Isolate.',
+                  'Add 250–300 ml of cold water to a shaker bottle.',
+                  'Add the protein powder AND exactly 5 g (1 level teaspoon) of Creatine Monohydrate.',
+                  'Seal the shaker and shake vigorously for 10–15 seconds until fully dissolved.',
+                  'Drink immediately. Do not let it sit — protein becomes lumpy and creatine loses potency.',
+                  'Why post-workout creatine: insulin sensitivity is elevated post-exercise, driving creatine into muscle cells more efficiently than at any other time of day.',
+                  "On Sunday (rest day): still take both — muscle protein synthesis peaks 24–48 hours after Saturday's burnout. Rest day protein and creatine are equally important.",
+                ])}
+              isInfoActive={activeDetail?.id === 'whey_protein_taken'}
+            />
 
-        <TaskRow
-          id="dinner_logged" label="🍽️ 8:30 PM — High-Protein Dinner"
-          checked={log.dinner_logged} onChange={handleToggle}
-          onInfoClick={() => showInfo('dinner_logged', '🍽️ High-Protein Dinner Preparation',
-            'Zero starchy carbs. High protein, high fibre from vegetables. Cook fresh nightly — takes 15 minutes.',
-            [
-              'Take 150 g chicken breast or 2 fish pieces from the fridge. Pat completely dry with a paper towel (moisture prevents browning).',
-              'Season both sides generously: salt, a pinch of black pepper, ¼ tsp turmeric, and a squeeze of lemon.',
-              'Heat a non-stick or cast-iron pan on HIGH heat for 90 seconds. Add 1 tsp oil — it should shimmer immediately.',
-              'Chicken: sear 6–7 minutes per side without moving it, until the top surface looks opaque. Fish: 4–5 minutes per side.',
-              'While protein cooks, steam vegetables: add broccoli florets, green beans, or spinach to a covered pot with 3 tbsp water. Steam on medium heat for 3–4 minutes until tender-crisp.',
-              'Plate and eat immediately. No rice, no bread, no roti.',
-            ])}
-          isInfoActive={activeDetail?.id === 'dinner_logged'}
-        />
+            <TaskRow
+              id="dinner_logged" label="🍽️ 8:30 PM — High-Protein Dinner (No Carbs)"
+              checked={log.dinner_logged} onChange={handleToggle}
+              onInfoClick={() => showInfo('dinner_logged', '🍽️ High-Protein Dinner Preparation',
+                'Zero starchy carbs. High protein, high fibre from vegetables. Cook fresh nightly — takes 15 minutes.',
+                [
+                  'Take 150 g chicken breast or 2 fish pieces from the fridge. Pat completely dry with a paper towel (moisture prevents browning).',
+                  'Season both sides generously: salt, a pinch of black pepper, ¼ tsp turmeric, and a squeeze of lemon.',
+                  'Heat a non-stick or cast-iron pan on HIGH heat for 90 seconds. Add 1 tsp oil — it should shimmer immediately.',
+                  'Chicken: sear 6–7 minutes per side without moving it, until the top surface looks opaque. Fish: 4–5 minutes per side.',
+                  'While protein cooks, steam vegetables: add broccoli florets, green beans, or spinach to a covered pot with 3 tbsp water. Steam on medium heat for 3–4 minutes until tender-crisp.',
+                  'Plate and eat immediately. No rice, no bread, no roti.',
+                ])}
+              isInfoActive={activeDetail?.id === 'dinner_logged'}
+            />
 
-        <TaskRow
-          id="ashwagandha_taken" label="🌿 8:35 PM — Kapiva Ashwagandha Gold"
-          checked={log.ashwagandha_taken} onChange={handleToggle}
-          onInfoClick={() => showInfo('ashwagandha_taken', '🌿 Kapiva Ashwagandha Gold',
-            'Take immediately after finishing dinner — fat and protein in the meal improve absorption and prevent stomach upset.',
-            TASK_INFO_MAP.ashwagandha_taken.steps)}
-          isInfoActive={activeDetail?.id === 'ashwagandha_taken'}
-        />
+            <TaskRow
+              id="ashwagandha_taken" label="🌿 8:35 PM — Kapiva Ashwagandha Gold"
+              checked={log.ashwagandha_taken} onChange={handleToggle}
+              onInfoClick={() => showInfo('ashwagandha_taken', '🌿 Kapiva Ashwagandha Gold',
+                'Take immediately after finishing dinner — fat and protein in the meal improve absorption and prevent stomach upset.',
+                TASK_INFO_MAP.ashwagandha_taken.steps)}
+              isInfoActive={activeDetail?.id === 'ashwagandha_taken'}
+            />
 
-        <TaskRow
-          id="post_dinner_walk_completed" label="🚶 9:15 PM — Post-Dinner Walk (30 min)"
-          checked={log.post_dinner_walk_completed} onChange={handleToggle}
-          onInfoClick={() => showInfo('post_dinner_walk_completed', '🚶 Post-Dinner Walk',
-            'Walking after a high-protein meal dramatically improves glucose clearance and digestion.',
-            [
-              'Head outside within 15 minutes of finishing dinner.',
-              'Walk at a brisk pace — arms should be swinging, breathing slightly elevated.',
-              'Target 30 minutes continuous walking (roughly 3,000 steps).',
-              'No phone scrolling while walking. Focus on your breath or the environment.',
-              'On bad weather days: march in place at home for 30 minutes or do 15 minutes of slow pacing indoors.',
-            ])}
-          isInfoActive={activeDetail?.id === 'post_dinner_walk_completed'}
-        />
+            <TaskRow
+              id="post_dinner_walk_completed" label="🚶 9:15 PM — Post-Dinner Walk (30 min)"
+              checked={log.post_dinner_walk_completed} onChange={handleToggle}
+              onInfoClick={() => showInfo('post_dinner_walk_completed', '🚶 Post-Dinner Walk',
+                'Walking after a high-protein meal dramatically improves glucose clearance and digestion.',
+                [
+                  'Head outside within 15 minutes of finishing dinner.',
+                  'Walk at a brisk pace — arms should be swinging, breathing slightly elevated.',
+                  'Target 30 minutes continuous walking (roughly 3,000 steps).',
+                  'No phone scrolling while walking. Focus on your breath or the environment.',
+                  'On bad weather days: march in place at home for 30 minutes or do 15 minutes of slow pacing indoors.',
+                ])}
+              isInfoActive={activeDetail?.id === 'post_dinner_walk_completed'}
+            />
+          </div>
+        )}
 
         {/* ── Night ───────────────────────────────────── */}
-        <h3>🌙 Wind-Down (11:30 PM – 12:30 AM)</h3>
+        {(sectionFilter === 'all' || sectionFilter === 'night') && (
+          <div className="dt-period-group">
+            <h3 className="period-title">🌙 Wind-Down (11:30 PM – 12:30 AM)</h3>
 
-        <TaskRow
-          id="hydration_cutoff_followed" label="💧 11:30 PM — Hydration Cut-off"
-          checked={log.hydration_cutoff_followed} onChange={handleToggle}
-          onInfoClick={() => showInfo('hydration_cutoff_followed', '💧 Hydration Cut-off',
-            'Stopping fluid intake 1 hour before sleep prevents you from waking up to urinate.',
-            [
-              'Finish your last glass of water by 11:30 PM.',
-              'Make sure your water goal (4 litres) is complete before this point.',
-              'A small sip to take supplements or pills is fine — not a full glass.',
-              'If you wake up in the night feeling thirsty, you are not drinking enough during the day.',
-            ])}
-          isInfoActive={activeDetail?.id === 'hydration_cutoff_followed'}
-        />
+            <TaskRow
+              id="hydration_cutoff_followed" label="💧 11:30 PM — Hydration Cut-off"
+              checked={log.hydration_cutoff_followed} onChange={handleToggle}
+              onInfoClick={() => showInfo('hydration_cutoff_followed', '💧 Hydration Cut-off',
+                'Stopping fluid intake 1 hour before sleep prevents you from waking up to urinate.',
+                [
+                  'Finish your last glass of water by 11:30 PM.',
+                  'Make sure your water goal (4 litres) is complete before this point.',
+                  'A small sip to take supplements or pills is fine — not a full glass.',
+                  'If you wake up in the night feeling thirsty, you are not drinking enough during the day.',
+                ])}
+              isInfoActive={activeDetail?.id === 'hydration_cutoff_followed'}
+            />
 
-        <TaskRow
-          id="screen_curfew_followed" label="📴 12:00 AM — Screen Curfew & Night Meditation"
-          checked={log.screen_curfew_followed} onChange={handleToggle}
-          onInfoClick={() => showInfo('screen_curfew_followed', '📴 Screen Curfew & Night Meditation',
-            'Blue light suppresses melatonin for up to 2 hours. Screens off by midnight for 12:30 AM sleep.',
-            [
-              'At 12:00 AM exactly: lock your phone, turn off your monitors.',
-              'Set your phone alarm for 7:30 AM and place it across the room (forces you out of bed).',
-              'Sit in a comfortable position in dim or no light.',
-              'Close your eyes. Do a body scan: mentally relax each part from feet upward — feet, calves, thighs, abdomen, chest, shoulders, neck, face.',
-              'Continue slow breathing for 15–20 minutes until you feel genuinely drowsy.',
-              'Lie down and sleep by 12:30 AM for a full 7-hour sleep cycle ending at 7:30 AM.',
-            ])}
-          isInfoActive={activeDetail?.id === 'screen_curfew_followed'}
-        />
+            <TaskRow
+              id="screen_curfew_followed" label="📴 12:00 AM — Screen Curfew & Night Meditation"
+              checked={log.screen_curfew_followed} onChange={handleToggle}
+              onInfoClick={() => showInfo('screen_curfew_followed', '📴 Screen Curfew & Night Meditation',
+                'Blue light suppresses melatonin for up to 2 hours. Screens off by midnight for 12:30 AM sleep.',
+                [
+                  'At 12:00 AM exactly: lock your phone, turn off your monitors.',
+                  'Set your phone alarm for 7:30 AM and place it across the room (forces you out of bed).',
+                  'Sit in a comfortable position in dim or no light.',
+                  'Close your eyes. Do a body scan: mentally relax each part from feet upward — feet, calves, thighs, abdomen, chest, shoulders, neck, face.',
+                  'Continue slow breathing for 15–20 minutes until you feel genuinely drowsy.',
+                  'Lie down and sleep by 12:30 AM for a full 7-hour sleep cycle ending at 7:30 AM.',
+                ])}
+              isInfoActive={activeDetail?.id === 'screen_curfew_followed'}
+            />
+          </div>
+        )}
 
       </div>
 
@@ -680,3 +825,4 @@ export default function DailyTracker({ onSync, syncKey }) {
     </div>
   );
 }
+

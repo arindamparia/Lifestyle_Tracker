@@ -52,3 +52,23 @@ CREATE TABLE IF NOT EXISTS weekly_grocery (
   checked_items  TEXT NOT NULL DEFAULT '[]',
   updated_at     TEXT DEFAULT (CURRENT_TIMESTAMP)
 );
+
+CREATE TABLE IF NOT EXISTS passkeys (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  credential_id TEXT UNIQUE NOT NULL,
+  public_key    TEXT NOT NULL,
+  algorithm     INTEGER NOT NULL DEFAULT -7,
+  counter       INTEGER NOT NULL DEFAULT 0,
+  device_name   TEXT DEFAULT 'Passkey Device',
+  created_at    TEXT DEFAULT (CURRENT_TIMESTAMP),
+  last_used_at  TEXT DEFAULT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_passkeys_cred ON passkeys(credential_id);
+
+CREATE TABLE IF NOT EXISTS passkey_challenges (
+  challenge   TEXT PRIMARY KEY,
+  type        TEXT NOT NULL,
+  expires_at  INTEGER NOT NULL
+);
+

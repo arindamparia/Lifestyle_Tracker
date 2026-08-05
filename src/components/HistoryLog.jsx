@@ -224,7 +224,7 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
           <p className="subtitle">Review your consistency and habit completion across previous days.</p>
         </div>
         <button
-          className="logout-btn"
+          className="history-logout-btn"
           onClick={() => { clearToken(); window.location.reload(); }}
           title="Log out"
           aria-label="Log out"

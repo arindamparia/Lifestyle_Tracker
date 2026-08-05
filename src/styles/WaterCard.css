@@ -1,4 +1,20 @@
 /* === WATER BOTTLE VISUAL === */
+.water-card {
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, rgba(22, 24, 33, 0.85), rgba(66, 90, 180, 0.12));
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background 0.6s ease, border-color 0.3s ease;
+}
+
+.water-card-full {
+  background: linear-gradient(135deg, rgba(22, 24, 33, 0.85), rgba(46, 213, 115, 0.1)) !important;
+  border-color: rgba(46, 213, 115, 0.3) !important;
+}
+
 .water-visual-row {
   display: flex;
   align-items: flex-start;
