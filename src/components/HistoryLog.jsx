@@ -8,6 +8,7 @@ const HABIT_LABELS = {
   isabgul_taken:                { label: 'Isabgul Husk',        emoji: '🌾' },
   breakfast_logged:             { label: 'Breakfast',           emoji: '🍳' },
   bathing_completed:            { label: 'Bath & Ready',        emoji: '🚿' },
+  skincare_am_completed:        { label: 'AM Skincare',         emoji: '✨' },
   rule_50_10_followed:          { label: '50/10 Desk Rule',     emoji: '🪑' },
   kegels_completed:             { label: 'Kegels',              emoji: '💪' },
   acv_taken:                    { label: 'ACV Pre-Lunch',       emoji: '🥤' },
@@ -20,6 +21,7 @@ const HABIT_LABELS = {
   dinner_logged:                { label: 'Dinner',              emoji: '🍽️' },
   ashwagandha_taken:            { label: 'Ashwagandha',         emoji: '🌿' },
   post_dinner_walk_completed:   { label: 'Evening Walk',        emoji: '🚶' },
+  skincare_pm_completed:        { label: 'PM Skincare',         emoji: '✨' },
   hydration_cutoff_followed:    { label: 'Hydration Cutoff',    emoji: '💧' },
   screen_curfew_followed:       { label: 'Screen Curfew',       emoji: '📴' },
 };
@@ -237,49 +239,6 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
         </button>
       </div>
 
-      {/* ── Theme Options ─────────────────────────────────── */}
-      <div className="card theme-card" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
-        <h3 style={{ margin: 0, fontSize: '1.05rem' }}>✨ Atmosphere</h3>
-        <select 
-          value={bgPref || 'mesh'}
-          onChange={(e) => setBgPref && setBgPref(e.target.value)}
-          style={{ background: 'rgba(255,255,255,0.05)', color: '#f8f8fc', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', outline: 'none', fontWeight: 500 }}
-        >
-          <option value="mesh" style={{ color: '#1c1c24' }}>Living Mesh</option>
-          <option value="sky" style={{ color: '#1c1c24' }}>Ethereal Sky</option>
-          <option value="classic" style={{ color: '#1c1c24' }}>Classic Fast</option>
-        </select>
-      </div>
-
-      {/* ── Weight Card ─────────────────────────────────── */}
-      <div className="card weight-card-inline">
-        <span className="weight-card-icon">⚖️</span>
-        <span className="weight-card-label">Log Weight</span>
-        <input
-          type="number"
-          className="weight-input"
-          placeholder="-- kg"
-          step="0.1"
-          min="30"
-          max="300"
-          value={weightInput}
-          onChange={e => {
-            const v = e.target.value;
-            if (v === '' || /^\d{0,3}(\.\d{0,1})?$/.test(v)) setWeightInput(v);
-          }}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleWeightSave(); } }}
-        />
-        <span className="weight-unit">kg</span>
-        <button
-          className="weight-submit-btn"
-          onClick={handleWeightSave}
-          disabled={weightSaved}
-          title="Save weight"
-        >
-          ✓
-        </button>
-      </div>
-      {weightSaved && <div className="book-toast">⚖️ Weight saved!</div>}
 
       {loading ? (
         <div className="history-grid">

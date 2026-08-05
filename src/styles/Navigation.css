@@ -21,14 +21,13 @@
 /* Inner container — matches content column width, buttons fill equally */
 .tab-inner {
   max-width: 860px;
+  width: 100%;
   margin: 0 auto;
-  padding: 8px 16px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  justify-content: space-between;
+  gap: 4px;
 }
 .tab-inner::-webkit-scrollbar {
   display: none;

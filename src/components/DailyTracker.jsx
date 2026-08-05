@@ -41,6 +41,9 @@ import TaskRow from './DailyTracker/TaskRow';
 import SituationCard from './DailyTracker/SituationCard';
 import WaterCard from './DailyTracker/WaterCard';
 import ReadingCard from './DailyTracker/ReadingCard';
+import WeightModal from './DailyTracker/WeightModal';
+import SkincareModal from './SkincareModal';
+import useLockBodyScroll from '../hooks/useLockBodyScroll';
 
 export default function DailyTracker({ onSync, syncKey }) {
   const todayWorkout = getTodayWorkout();
@@ -54,9 +57,14 @@ export default function DailyTracker({ onSync, syncKey }) {
     kegels_completed: false, scheduled_workout_completed: false,
     hydration_cutoff_followed: false, screen_curfew_followed: false,
     book_name: '', book_finished: false, weight_kg: null,
+    skincare_am_completed: false, skincare_pm_completed: false,
   };
 
   const [log, setLog] = useState(() => getTodayLog() || BLANK_LOG);
+
+
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const [skincareModalPeriod, setSkincareModalPeriod] = useState(null);
   const [activeDetail, setActiveDetail] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [dbLoading, setDbLoading] = useState(() => {
@@ -297,26 +305,15 @@ export default function DailyTracker({ onSync, syncKey }) {
   const progressPercent = Math.round((completedCount / TRACKED_FIELDS.length) * 100);
 
   // Lock body scroll when task detail modal is open
+  useLockBodyScroll(!!activeDetail);
+
   useEffect(() => {
     if (!activeDetail) return;
-    const originalOverflow = document.body.style.overflow;
-    const originalPaddingRight = document.body.style.paddingRight;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-    }
-    document.body.style.overflow = 'hidden';
-
     const onKeyDown = (e) => {
       if (e.key === 'Escape') setActiveDetail(null);
     };
     window.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      document.body.style.paddingRight = originalPaddingRight;
-      window.removeEventListener('keydown', onKeyDown);
-    };
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, [activeDetail]);
 
   if (dbLoading) {
@@ -387,18 +384,29 @@ export default function DailyTracker({ onSync, syncKey }) {
         </div>
       </div>
 
-      {/* ── Now Pill ────────────────────────────────────── */}
-      {(() => {
-        const task = getActiveTask(isWeekend);
-        if (!task) return null;
-        const name = task.label.includes('—') ? task.label.split('—').pop().trim() : task.label;
-        return (
-          <div className="schedule-now-pill">
-            <span className="schedule-now-dot" />
-            Now: <strong>{task.emoji} {name}</strong>
-          </div>
-        );
-      })()}
+      {/* ── Now Pill & Quick Actions Row ─────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', overscrollBehaviorX: 'contain' }}>
+        {(() => {
+          const task = getActiveTask(isWeekend);
+          if (!task) return null;
+          const name = task.label.includes('—') ? task.label.split('—').pop().trim() : task.label;
+          return (
+            <div className="schedule-now-pill" style={{ marginBottom: 0, flexShrink: 0 }}>
+              <span className="schedule-now-dot" />
+              Now: <strong>{task.emoji} {name}</strong>
+            </div>
+          );
+        })()}
+
+        <div className="dt-quick-actions-bar" style={{ marginBottom: 0, padding: 0 }}>
+          <button type="button" onClick={() => setShowWeightModal(true)} className="dt-action-pill">
+            ⚖️ Log Weight
+          </button>
+          <a href="https://inkwell-diary.pages.dev/" target="_blank" rel="noreferrer" className="dt-action-pill diary-pill">
+            📝 Write Diary
+          </a>
+        </div>
+      </div>
 
       {/* ── Responsive Top Dashboard (Side-by-Side on Desktop, Compact on Mobile) ── */}
       <div className="dt-dashboard-grid">
@@ -453,8 +461,14 @@ export default function DailyTracker({ onSync, syncKey }) {
                   className={`info-btn suggestion-info-btn${activeDetail?.id === s.field ? ' active-info' : ''}`}
                   onClick={(e) => {
                     e.preventDefault();
-                    const info = getInfoForField(s.field, todayWorkout);
-                    if (info) showInfo(s.field, info.title, info.desc, info.steps);
+                    if (s.field === 'skincare_am_completed') {
+                      setSkincareModalPeriod('AM');
+                    } else if (s.field === 'skincare_pm_completed') {
+                      setSkincareModalPeriod('PM');
+                    } else {
+                      const info = getInfoForField(s.field, todayWorkout);
+                      if (info) showInfo(s.field, info.title, info.desc, info.steps);
+                    }
                   }}
                   title="Show steps"
                 >
@@ -519,6 +533,7 @@ export default function DailyTracker({ onSync, syncKey }) {
             <TaskRow
               id="shilajit_taken" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'shilajit_taken'); return t ? `${t.emoji} ${t.label}` : '🧪 Shilajit'; })()}
               checked={log.shilajit_taken} onChange={handleToggle}
+              isCritical={true}
               onInfoClick={() => showInfo('shilajit_taken', '🧪 Shilajit',
                 'Take on a completely empty stomach in the morning before food or coffee.',
                 [
@@ -588,6 +603,14 @@ export default function DailyTracker({ onSync, syncKey }) {
                 TASK_INFO_MAP.bathing_completed.steps)}
               isInfoActive={activeDetail?.id === 'bathing_completed'}
             />
+
+            <TaskRow
+              id="skincare_am_completed" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'skincare_am_completed'); return t ? `${t.emoji} ${t.label}` : '✨ AM Skincare'; })()}
+              checked={log.skincare_am_completed} onChange={handleToggle}
+              isCritical={true}
+              onInfoClick={() => setSkincareModalPeriod('AM')}
+              isInfoActive={false}
+            />
           </div>
         )}
 
@@ -616,8 +639,8 @@ export default function DailyTracker({ onSync, syncKey }) {
             <TaskRow
               id="kegels_completed" label="🔄 Pelvic Floor (Kegels) — 3 Sets"
               checked={log.kegels_completed} onChange={handleToggle}
-              onInfoClick={() => showInfo('kegels_completed', '🔄 Pelvic Floor Exercises (Kegels)',
-                'Invisible exercise you can do sitting at your desk. 3 sets, anytime between 9 AM and 4 PM.',
+              isCritical={true}
+              onInfoClick={() => showInfo('kegels_completed', '🔄 Kegel Routine', 'Pelvic Floor Exercises (Kegels). Invisible exercise you can do sitting at your desk. 3 sets, anytime between 9 AM and 4 PM.',
                 [
                   'Sit normally in your chair. No one will know you are doing this.',
                   'Identify the muscles: imagine you are stopping yourself from urinating mid-stream. Those are your pelvic floor muscles.',
@@ -691,23 +714,27 @@ export default function DailyTracker({ onSync, syncKey }) {
 
             <TaskRow
               id="scheduled_workout_completed"
-              label={`🏋️ 7:00 PM — ${todayWorkout.day === 'Sunday' ? 'Rest Day Recovery' : `Workout: ${todayWorkout.focus}`}`}
+              label={`🏋️ 7:00 PM — ${todayWorkout.exercises?.length === 0 ? 'Rest Day Recovery' : `Workout: ${todayWorkout.focus}`}`}
               checked={log.scheduled_workout_completed}
               onChange={handleToggle}
-              onInfoClick={() => showInfo(
-                'scheduled_workout_completed',
-                `🏋️ ${todayWorkout.day}: ${todayWorkout.focus}`,
-                todayWorkout.day === 'Sunday'
-                  ? 'Today is your rest day. No training needed. Focus on mobility and recovery.'
-                  : `Today is ${todayWorkout.day}. Follow the steps below in order.`,
-                todayWorkout.steps,
-              )}
+              isCritical={true}
+              onInfoClick={() => {
+                showInfo(
+                  'scheduled_workout_completed',
+                  `🏋️ ${todayWorkout.day}: ${todayWorkout.focus}`,
+                  todayWorkout.exercises?.length === 0
+                    ? todayWorkout.restNote
+                    : 'Head over to the Workouts tab to see your full routine, view the 3D exercise guides, and track your sets!',
+                  []
+                );
+              }}
               isInfoActive={activeDetail?.id === 'scheduled_workout_completed'}
             />
 
             <TaskRow
               id="whey_protein_taken" label="🥛 8:00 PM — Whey + Creatine (post-workout)"
               checked={log.whey_protein_taken} onChange={handleToggle}
+              isCritical={true}
               onInfoClick={() => showInfo('whey_protein_taken', '🥛 Post-Workout Whey + Creatine',
                 'Take both within 45 minutes of finishing your workout. Post-workout is the scientifically optimal window for creatine uptake — muscles are primed to absorb nutrients.',
                 [
@@ -761,6 +788,14 @@ export default function DailyTracker({ onSync, syncKey }) {
                 ])}
               isInfoActive={activeDetail?.id === 'post_dinner_walk_completed'}
             />
+
+            <TaskRow
+              id="skincare_pm_completed" label={(() => { const t = TASK_SCHEDULE.find(s => s.field === 'skincare_pm_completed'); return t ? `${t.emoji} ${t.label}` : '✨ PM Skincare'; })()}
+              checked={log.skincare_pm_completed} onChange={handleToggle}
+              isCritical={true}
+              onInfoClick={() => setSkincareModalPeriod('PM')}
+              isInfoActive={false}
+            />
           </div>
         )}
 
@@ -786,6 +821,7 @@ export default function DailyTracker({ onSync, syncKey }) {
             <TaskRow
               id="screen_curfew_followed" label="📴 12:00 AM — Screen Curfew & Night Meditation"
               checked={log.screen_curfew_followed} onChange={handleToggle}
+              isCritical={true}
               onInfoClick={() => showInfo('screen_curfew_followed', '📴 Screen Curfew & Night Meditation',
                 'Blue light suppresses melatonin for up to 2 hours. Screens off by midnight for 12:30 AM sleep.',
                 [
@@ -822,7 +858,20 @@ export default function DailyTracker({ onSync, syncKey }) {
         </div>,
         document.body
       )}
+
+      {/* ── Modals ────────────────────────────────────────── */}
+      <WeightModal
+        log={log}
+        setLog={setLog}
+        isOpen={showWeightModal}
+        onClose={() => setShowWeightModal(false)}
+      />
+      
+      <SkincareModal
+        isOpen={!!skincareModalPeriod}
+        period={skincareModalPeriod}
+        onClose={() => setSkincareModalPeriod(null)}
+      />
     </div>
   );
 }
-

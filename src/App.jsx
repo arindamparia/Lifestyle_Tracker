@@ -18,12 +18,13 @@ import {
   SolarBackground,
   OledBackground
 } from './components/Backgrounds';
-import { getToken, clearToken } from './auth';
+import { getToken, setToken, clearToken, isTokenExpired, handleUnauthorized, getTimeUntilExpiry, getAuthHeader } from './auth';
 import { clearAllCache, mergeHistoryRows, setTodayLog, getEffectiveDate, getTodayLog } from './cache';
 import PeTreatmentPlan from './components/PeTreatmentPlan';
 import Pusher from 'pusher-js';
+import useLockBodyScroll from './hooks/useLockBodyScroll';
 
-const TABS = ['tracker', 'schedule', 'workout', 'nutrition', 'history', 'peplan'];
+const TABS = ['tracker', 'workout', 'nutrition'];
 const SWIPE_EASE = 'transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -34,6 +35,10 @@ function App() {
   const [syncKey, setSyncKey]         = useState(0);
   const [bgPref, setBgPref]           = useState(() => localStorage.getItem('lt_bg_pref') || 'mesh');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [modalView, setModalView]     = useState(null); // 'schedule' | 'history' | 'peplan'
+  const [showSessionWarning, setShowSessionWarning] = useState(false);
+
+  useLockBodyScroll(modalView !== null);
 
   const handleBgPrefChange = (mode) => {
     setBgPref(mode);
@@ -195,6 +200,44 @@ function App() {
     setSyncKey(k => k + 1);
   };
 
+  // ── Auto Lock Check ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!authed) return;
+    const interval = setInterval(() => {
+      if (isTokenExpired()) {
+        console.log('[AutoLock] Token expired. Locking app.');
+        setShowSessionWarning(false);
+        handleUnauthorized();
+      } else {
+        const timeRemaining = getTimeUntilExpiry();
+        if (timeRemaining <= 60000 && timeRemaining > 0) {
+          setShowSessionWarning(true);
+        } else {
+          setShowSessionWarning(false);
+        }
+      }
+    }, 10000); // Check every 10 seconds
+    return () => clearInterval(interval);
+  }, [authed]);
+
+  const extendSession = async () => {
+    try {
+      const res = await fetch('/api/passkey/extend', {
+        method: 'POST',
+        headers: getAuthHeader()
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToken(data.token);
+        setShowSessionWarning(false);
+      } else {
+        handleUnauthorized();
+      }
+    } catch (e) {
+      console.error('Failed to extend session', e);
+    }
+  };
+
   // ── Pusher Real-Time Sync ──────────────────────────────────────────────────
   useEffect(() => {
     if (!authed) return;
@@ -283,6 +326,29 @@ function App() {
       {bgPref === 'oled' && <OledBackground />}
       {bgPref === 'sky' && <SkyBackground />}
       {bgPref === 'classic' && <ClassicBackground />}
+      <AmbientSoundWidget isAnyModalOpen={modalView !== null || isSettingsOpen || showSessionWarning} />
+      
+      {showSessionWarning && (
+        <div className="modal-overlay" style={{ zIndex: 11000 }}>
+          <div className="modal-content" style={{ padding: '24px', textAlign: 'center' }}>
+            <h3 style={{ marginBottom: '16px', color: '#ff4d4f' }}>Session Expiring Soon</h3>
+            <p style={{ marginBottom: '24px', color: '#e0e0e0' }}>
+              Your session will automatically lock in less than a minute for security.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                onClick={extendSession}
+                style={{ 
+                  background: '#3b82f6', color: 'white', border: 'none', 
+                  padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold' 
+                }}
+              >
+                Extend 30 Mins
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="app-container">
         <nav className="tab-navigation">
@@ -290,29 +356,13 @@ function App() {
             <button className={`main-tab${navTab === 'tracker' ? ' active' : ''}`} onClick={() => { setActiveTab('tracker'); setNavTab('tracker'); }}>
               Daily Tracker
             </button>
-            <button className={navTab === 'schedule' ? 'active' : ''} onClick={() => { setActiveTab('schedule'); setNavTab('schedule'); }}>
-              Master Schedule
-            </button>
             <button className={navTab === 'workout' ? 'active' : ''} onClick={() => { setActiveTab('workout'); setNavTab('workout'); }}>
               Workouts
             </button>
             <button className={navTab === 'nutrition' ? 'active' : ''} onClick={() => { setActiveTab('nutrition'); setNavTab('nutrition'); }}>
               Preparation
             </button>
-            <button className={navTab === 'history' ? 'active' : ''} onClick={() => { setActiveTab('history'); setNavTab('history'); }}>
-              Profile
-            </button>
-            <button className={navTab === 'peplan' ? 'active' : ''} onClick={() => { setActiveTab('peplan'); setNavTab('peplan'); }}>
-              PE Plan
-            </button>
-            <button
-              className="nav-action-trigger lock-nav-trigger"
-              onClick={handleLogout}
-              aria-label="Lock App"
-              title="Lock & Log out"
-            >
-              🔒
-            </button>
+
             <button
               className="nav-action-trigger settings-nav-trigger"
               onClick={() => setIsSettingsOpen(true)}
@@ -333,15 +383,38 @@ function App() {
           onTouchCancel={handleTouchCancel}
         >
           {activeTab === 'tracker'   && <DailyTracker onSync={handleGlobalSync} syncKey={syncKey} />}
-          {activeTab === 'schedule'  && <MasterSchedule />}
           {activeTab === 'workout'   && <WorkoutPlan />}
           {activeTab === 'nutrition' && <NutritionPrep />}
-          {activeTab === 'history'   && <HistoryLog syncKey={syncKey} bgPref={bgPref} setBgPref={handleBgPrefChange} onLogout={handleLogout} />}
-          {activeTab === 'peplan'   && <PeTreatmentPlan />}
         </main>
       </div>
 
       <AmbientSoundWidget />
+
+      {/* ── Modals (Full Page Overlays) ── */}
+      {modalView === 'schedule' && (
+        <div className="modal-overlay" onClick={() => setModalView(null)}>
+          <div className="modal-content full-page-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setModalView(null)}>✕</button>
+            <MasterSchedule />
+          </div>
+        </div>
+      )}
+      {modalView === 'history' && (
+        <div className="modal-overlay" onClick={() => setModalView(null)}>
+          <div className="modal-content full-page-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setModalView(null)}>✕</button>
+            <HistoryLog syncKey={syncKey} bgPref={bgPref} setBgPref={handleBgPrefChange} onLogout={handleLogout} />
+          </div>
+        </div>
+      )}
+      {modalView === 'peplan' && (
+        <div className="modal-overlay" onClick={() => setModalView(null)}>
+          <div className="modal-content full-page-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setModalView(null)}>✕</button>
+            <PeTreatmentPlan />
+          </div>
+        </div>
+      )}
 
       <SettingsModal
         isOpen={isSettingsOpen}
@@ -350,6 +423,9 @@ function App() {
         setBgPref={handleBgPrefChange}
         onForceSync={handleGlobalSync}
         onLogout={handleLogout}
+        onNavigate={(tab) => {
+          setModalView(tab);
+        }}
       />
     </>
   );

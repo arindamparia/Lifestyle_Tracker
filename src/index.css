@@ -48,6 +48,28 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Custom Global Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Modal Content Smooth Scrolling */
+.modal-content, .sc-body, .reading-modal-box {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
 /* Note: background-color is handled by CSS classes on body, but gradients are anchored via ::before so they don't scroll away */
 body::before {
   content: '';
@@ -845,6 +867,78 @@ h4 {
   }
   #update-banner.update-banner-visible {
     transform: translateY(0);
+  }
+}
+
+/* ── Full Page Modals (History, PE Plan, Schedule) ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 16px;
+  overscroll-behavior: contain;
+  animation: overlay-fade-in 0.22s ease-out;
+}
+
+.full-page-modal {
+  background: rgba(18, 20, 29, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+  overscroll-behavior: contain;
+  animation: modal-pop 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 100;
+  transition: background 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Let the components inside the modal fill it, overriding their min-heights */
+.full-page-modal .section-container {
+  min-height: auto !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 48px 24px 32px 24px !important; /* Make room for the absolute close button and provide good side padding */
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+}
+
+@media (max-width: 600px) {
+  .full-page-modal .section-container {
+    padding: 56px 16px 24px 16px !important;
   }
 }
 

@@ -40,7 +40,9 @@ CREATE TABLE IF NOT EXISTS daily_recomposition_log (
   book_finished                 INTEGER DEFAULT 0,
   ashwagandha_taken             INTEGER DEFAULT 0,
   weight_kg                     REAL DEFAULT NULL,
-  bathing_completed             INTEGER DEFAULT 0
+  bathing_completed             INTEGER DEFAULT 0,
+  skincare_am_completed         INTEGER DEFAULT 0,
+  skincare_pm_completed         INTEGER DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS books (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -99,6 +101,8 @@ function formatLogRow(row) {
     book_finished: Boolean(row.book_finished),
     ashwagandha_taken: Boolean(row.ashwagandha_taken),
     bathing_completed: Boolean(row.bathing_completed),
+    skincare_am_completed: Boolean(row.skincare_am_completed),
+    skincare_pm_completed: Boolean(row.skincare_pm_completed),
     water_liters: row.water_liters != null ? Number(row.water_liters) : 0,
     weight_kg: row.weight_kg != null ? Number(row.weight_kg) : null,
   };
@@ -255,14 +259,15 @@ export async function onRequest(context) {
           afternoon_snack_logged, dinner_logged, scheduled_workout_completed, post_dinner_walk_completed,
           kegels_completed, glute_bridges_completed, morning_meditation_completed, night_meditation_completed,
           doorway_stretches_done, rule_50_10_followed, hydration_cutoff_followed, screen_curfew_followed,
-          sleep_logged, book_name, book_finished, ashwagandha_taken, weight_kg, bathing_completed
+          sleep_logged, book_name, book_finished, ashwagandha_taken, weight_kg, bathing_completed,
+          skincare_am_completed, skincare_pm_completed
         ) VALUES (
           ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?,
           ?, ?, ?, ?,
           ?, ?, ?, ?,
           ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?
+          ?, ?, ?, ?, ?, ?, ?, ?
         )
         ON CONFLICT(log_date) DO UPDATE SET
           water_liters = excluded.water_liters,
@@ -292,7 +297,9 @@ export async function onRequest(context) {
           book_finished = excluded.book_finished,
           ashwagandha_taken = excluded.ashwagandha_taken,
           weight_kg = excluded.weight_kg,
-          bathing_completed = excluded.bathing_completed
+          bathing_completed = excluded.bathing_completed,
+          skincare_am_completed = excluded.skincare_am_completed,
+          skincare_pm_completed = excluded.skincare_pm_completed
         RETURNING *;
       `).bind(
         logDate,
@@ -323,7 +330,9 @@ export async function onRequest(context) {
         d.book_finished ? 1 : 0,
         d.ashwagandha_taken ? 1 : 0,
         d.weight_kg != null ? Number(d.weight_kg) : null,
-        d.bathing_completed ? 1 : 0
+        d.bathing_completed ? 1 : 0,
+        d.skincare_am_completed ? 1 : 0,
+        d.skincare_pm_completed ? 1 : 0
       );
 
       let savedRow = await upsertStmt.first();

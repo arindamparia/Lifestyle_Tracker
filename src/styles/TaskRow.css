@@ -22,6 +22,38 @@
   border-color: rgba(16, 185, 129, 0.2);
 }
 
+@keyframes criticalPulse {
+  0% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.03); }
+  50% { box-shadow: 0 0 24px rgba(239, 68, 68, 0.35); border-color: rgba(239, 68, 68, 0.8); background: rgba(239, 68, 68, 0.08); }
+  100% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.03); }
+}
+
+.task-row.critical-task:not(.task-done) {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.05);
+  animation: criticalPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); color: #fff; background: rgba(239, 68, 68, 0.4); }
+}
+
+.critical-badge {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  font-size: 0.65rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  vertical-align: middle;
+  display: inline-block;
+  animation: badgePulse 2.5s infinite ease-in-out;
+}
+
 .task-row.task-done .task-title-text {
   color: var(--text-secondary);
   text-decoration: line-through;

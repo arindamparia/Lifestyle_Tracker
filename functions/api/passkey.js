@@ -13,31 +13,37 @@ const CORS_HEADERS = {
   'Content-Type': 'application/json',
 };
 
-const PASSKEY_SCHEMA_SQL = `
-CREATE TABLE IF NOT EXISTS passkeys (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  credential_id TEXT UNIQUE NOT NULL,
-  public_key    TEXT NOT NULL,
-  algorithm     INTEGER NOT NULL DEFAULT -7,
-  counter       INTEGER NOT NULL DEFAULT 0,
-  device_name   TEXT DEFAULT 'Passkey Device',
-  created_at    TEXT DEFAULT (CURRENT_TIMESTAMP),
-  last_used_at  TEXT DEFAULT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_passkeys_cred ON passkeys(credential_id);
-
-CREATE TABLE IF NOT EXISTS passkey_challenges (
-  challenge   TEXT PRIMARY KEY,
-  type        TEXT NOT NULL,
-  expires_at  INTEGER NOT NULL
-);
-`;
-
 let schemaInitialized = false;
 async function ensurePasskeySchema(db) {
   if (schemaInitialized || !db) return;
   try {
-    await db.exec(PASSKEY_SCHEMA_SQL);
+    // Cloudflare D1's db.exec() has known parsing issues with multi-line statements.
+    // Executing them individually via db.prepare().run() is much more reliable.
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS passkeys (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        credential_id TEXT UNIQUE NOT NULL,
+        public_key    TEXT NOT NULL,
+        algorithm     INTEGER NOT NULL DEFAULT -7,
+        counter       INTEGER NOT NULL DEFAULT 0,
+        device_name   TEXT DEFAULT 'Passkey Device',
+        created_at    TEXT DEFAULT (CURRENT_TIMESTAMP),
+        last_used_at  TEXT DEFAULT NULL
+      )
+    `).run();
+
+    await db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_passkeys_cred ON passkeys(credential_id)
+    `).run();
+
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS passkey_challenges (
+        challenge   TEXT PRIMARY KEY,
+        type        TEXT NOT NULL,
+        expires_at  INTEGER NOT NULL
+      )
+    `).run();
+
     schemaInitialized = true;
   } catch (err) {
     console.error('[Passkey] Schema initialization error:', err);
@@ -95,7 +101,7 @@ async function getHmacKey(secret) {
 
 async function createToken(secret) {
   const payload = bytesToB64u(new TextEncoder().encode(
-    JSON.stringify({ ts: Date.now(), exp: Date.now() + 30 * 24 * 60 * 60 * 1000 })
+    JSON.stringify({ ts: Date.now(), exp: Date.now() + 30 * 60 * 1000 })
   ));
   const key = await getHmacKey(secret);
   const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload)));
@@ -142,6 +148,34 @@ async function importPublicKey(spkiBase64Url, algorithm) {
   );
 }
 
+/**
+ * WebAuthn returns ECDSA signatures in ASN.1 DER format.
+ * Web Crypto API strictly requires the signature in raw format (r || s, 64 bytes).
+ */
+function extractRawEcdsaSignature(derBytes) {
+  let offset = 0;
+  if (derBytes[offset++] !== 0x30) throw new Error('Expected SEQUENCE');
+  const seqLen = derBytes[offset++];
+  if (seqLen > 0x7f) offset += (seqLen & 0x7f);
+
+  if (derBytes[offset++] !== 0x02) throw new Error('Expected INTEGER (r)');
+  const rLen = derBytes[offset++];
+  let r = derBytes.slice(offset, offset + rLen);
+  offset += rLen;
+
+  if (derBytes[offset++] !== 0x02) throw new Error('Expected INTEGER (s)');
+  const sLen = derBytes[offset++];
+  let s = derBytes.slice(offset, offset + sLen);
+
+  if (r.length === 33 && r[0] === 0x00) r = r.slice(1);
+  if (s.length === 33 && s[0] === 0x00) s = s.slice(1);
+
+  const raw = new Uint8Array(64);
+  raw.set(r, 32 - r.length);
+  raw.set(s, 64 - s.length);
+  return raw;
+}
+
 async function verifyPasskeySignature(publicKeyB64u, algorithm, signedData, signatureBytes) {
   const pubKey = await importPublicKey(publicKeyB64u, algorithm);
   if (algorithm === -257) {
@@ -150,10 +184,11 @@ async function verifyPasskeySignature(publicKeyB64u, algorithm, signedData, sign
       pubKey, signatureBytes, signedData
     );
   }
-  // ES256 — DER-encoded signature from WebAuthn
+  // ES256 (-7) — Convert DER-encoded signature from WebAuthn to raw 64 bytes
+  const rawSignature = extractRawEcdsaSignature(signatureBytes);
   return crypto.subtle.verify(
     { name: 'ECDSA', hash: 'SHA-256' },
-    pubKey, signatureBytes, signedData
+    pubKey, rawSignature, signedData
   );
 }
 
@@ -418,6 +453,17 @@ export async function onRequest(context) {
     }
 
     return new Response(JSON.stringify({ success: true, message: 'Passkey removed' }), { status: 200, headers: CORS_HEADERS });
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // extend — Extend session token (requires token)
+  // ──────────────────────────────────────────────────────────────────────────
+  if (action === 'extend' && request.method === 'POST') {
+    if (!await verifyToken(token, configuredSecret)) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS_HEADERS });
+    }
+    const newToken = await createToken(configuredSecret);
+    return new Response(JSON.stringify({ success: true, token: newToken }), { status: 200, headers: CORS_HEADERS });
   }
 
   return new Response(JSON.stringify({ error: 'Invalid action or method' }), { status: 400, headers: CORS_HEADERS });

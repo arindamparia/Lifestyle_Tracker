@@ -8,7 +8,7 @@ const CORS_HEADERS = {
 
 function createToken(secret) {
   const payload = Buffer.from(
-    JSON.stringify({ ts: Date.now(), exp: Date.now() + 30 * 24 * 60 * 60 * 1000 })
+    JSON.stringify({ ts: Date.now(), exp: Date.now() + 30 * 60 * 1000 })
   ).toString('base64url');
   const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
   return `${payload}.${sig}`;

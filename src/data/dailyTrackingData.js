@@ -1,70 +1,139 @@
 export const WORKOUT_ROTATION = {
   Monday: {
-    focus: "Chest & Core",
-    steps: [
-      "Standard Push-ups — 3 sets to failure: Place hands shoulder-width apart, body in a straight line. Lower chest 2–3 cm from floor, then push up explosively. Count every rep; stop only at true failure.",
-      "Incline Push-ups — 3 sets to failure: Place hands on the edge of your bed or a sturdy chair. Same straight-body form. This angle targets the upper chest.",
-      "Plank — 3 × 60 seconds: Forearms on the floor, elbows directly under shoulders. Brace your core, squeeze your glutes, breathe steadily. Do not let hips sag or rise.",
-      "Rest 90 seconds between each set.",
+    focus: "Simple Upper Body & Core",
+    exercises: [
+      {
+        name: "Knee Pushups",
+        sets: "3 sets of 10 reps",
+        imageKey: "knee_pushups_1785957695989.png",
+        setup: "Get down on the floor on all fours. Walk your hands forward until there is a perfectly straight line from the top of your head down to your knees. Place your hands flat on the floor, slightly wider than your shoulders. Cross your ankles in the air.",
+        execution: "Take a breath in and bend your elbows to lower your body. Keep your elbows angled back at a 45-degree angle (like an arrow), not flaring straight out to the sides (like a 'T'). Stop when your chest is about the size of a fist away from the floor. Breathe out and push the floor away from you to return to the top.",
+        pitfall: "Sticking your hips up in the air, or letting your hips sag and hit the floor before your chest does. Keep your core tight so your body moves as one solid piece."
+      },
+      {
+        name: "Superman Pulls",
+        sets: "3 sets of 12 reps",
+        imageKey: "superman_pulls_1785957704744.png",
+        setup: "Lie completely flat on your stomach on the floor. Extend your arms straight out in front of you (like Superman flying). Look straight down at the floor to keep your neck safe; do not look up.",
+        execution: "Squeeze your glutes (butt muscles) and lift your chest slightly off the floor. Pull both of your elbows down and back toward your ribs, pretending you are pulling a heavy bar down from the ceiling. Squeeze your upper back muscles hard for one second. Reach your arms back out straight in front of you and lower your chest to the floor to complete the rep.",
+        pitfall: "Jerking your head upward to look at the wall. Always keep your eyes on the floor."
+      },
+      {
+        name: "Forearm Plank",
+        sets: "3 sets of 20 to 30 seconds",
+        imageKey: "forearm_plank_1785957713888.png",
+        setup: "Lie on your stomach. Place your forearms flat on the floor with your elbows directly under your shoulders.",
+        execution: "Push up onto your toes and your forearms. (If this is too hard, push up onto your knees instead of your toes). Squeeze your stomach muscles tight, exactly as if someone were about to punch you in the gut. Breathe slowly and steadily while holding this straight line.",
+        pitfall: "Holding your breath. You must keep breathing while keeping the stomach tight."
+      }
     ],
+    restNote: "Take a 60-second rest after completing each set."
   },
   Tuesday: {
-    focus: "Cardio — Interval Run",
-    steps: [
-      "Warm-up (5 min): Walk at a brisk pace to raise heart rate and loosen joints.",
-      "Interval rounds × 6–7: Jog at a moderate effort for 3 minutes, then walk briskly for 1 minute. Repeat.",
-      "Effort check: You should be breathing hard during the jog but able to speak a few words.",
-      "Cool-down (5 min): Slow to a comfortable walk, then stretch quads, hamstrings, and calves — 30 seconds each.",
-      "Total session: 30–35 minutes.",
+    focus: "Simple Lower Body",
+    exercises: [
+      {
+        name: "Basic Bodyweight Squats",
+        sets: "3 sets of 15 reps",
+        imageKey: "bodyweight_squats_1785957724105.png",
+        setup: "Stand tall with your feet slightly wider than your shoulders. Point your toes outward just a tiny bit (like the 11 and 1 positions on a clock). Hold your arms straight out in front of you to help with balance.",
+        execution: "Initiate the movement by pushing your hips backward first, as if you are trying to close a car door with your backside. Bend your knees and lower yourself down slowly. Go as low as you can while keeping your feet totally flat on the floor. Push through your heels and stand back up, squeezing your glutes at the top.",
+        pitfall: "Letting your heels lift off the floor, or letting your knees cave inward toward each other as you stand up. Force your knees outward over your toes."
+      },
+      {
+        name: "Glute Bridges",
+        sets: "3 sets of 15 reps",
+        imageKey: "glute_bridges_1785957733737.png",
+        setup: "Lie flat on your back. Bend your knees and place your feet flat on the floor, about hip-width apart. Bring your heels close enough to your body that you can touch them with your fingertips. Rest your arms flat by your sides.",
+        execution: "Push through your heels and drive your hips straight up toward the ceiling. Stop when your body forms a straight line from your shoulders to your knees. Squeeze your glutes tightly at the top for 2 full seconds. Slowly lower your hips back down until they gently tap the floor.",
+        pitfall: "Pushing up too high and arching the lower back. The power should come entirely from your glutes, not your spine."
+      },
+      {
+        name: "Calf Raises",
+        sets: "3 sets of 20 reps",
+        imageKey: "calf_raises_1785957751149.png",
+        setup: "Stand up straight. Place your fingertips lightly against a wall or the back of a chair for balance.",
+        execution: "Push down through the balls of your feet and lift your heels as high off the floor as possible. Hold that tip-toe position for one second. Lower your heels back to the floor slowly.",
+        pitfall: "Bouncing up and down quickly. The muscle only grows if you control the movement on the way down."
+      }
     ],
+    restNote: "Take a 60-second rest after completing each set."
   },
   Wednesday: {
-    focus: "Active Recovery",
-    steps: [
-      "Walk (15 min): Relaxed outdoor walk at a comfortable pace. Leave your phone at home.",
-      "Neck & Shoulders (2 min): Slow neck rolls 10× each direction. Cross-body shoulder stretch — hold 30 seconds each arm.",
-      "Hip Flexors (2 min): Step into a lunge, lower back knee to the floor. Hold 30 seconds each leg. Feel the front of the hip stretch.",
-      "Hamstrings (2 min): Stand and reach for your toes, or sit with legs extended and reach for your feet. Hold 30 seconds each leg.",
-      "Spine (2 min): Cat-Cow — 10 slow rounds on all fours. Finish with Child's Pose held for 60 seconds.",
+    focus: "Active Recovery & Posture",
+    exercises: [
+      {
+        name: "Brisk Walking",
+        sets: "30-minute walk",
+        imageKey: "brisk_walking_1785957760305.png",
+        setup: "Take a 30-minute brisk walk.",
+        execution: "Doing this after dinner is an excellent way to aid digestion and keep your metabolism active. Keep a pace that elevates your heart rate but still allows you to hold a conversation.",
+        pitfall: "Walking too slowly or looking down at your phone the entire time."
+      },
+      {
+        name: "The Doorway Stretch",
+        sets: "3 times for 30 seconds",
+        imageKey: "doorway_stretch_1785957771864.png",
+        setup: "Stand in an open doorway. Raise your arms so your elbows are bent at 90 degrees and place your forearms flat against the doorframe.",
+        execution: "Gently step one foot forward through the doorway until you feel a deep stretch across your chest and the front of your shoulders. Hold for 30 seconds.",
+        pitfall: "Leaning your entire body weight into it or pushing past the point of a gentle stretch."
+      }
     ],
+    restNote: "Focus on mobility and active recovery."
   },
   Thursday: {
-    focus: "Legs, Back & Vitality",
-    steps: [
-      "Decline Push-ups — 3 sets to failure: Place feet on a chair, hands on the floor. Lower chest to the floor. This targets the lower chest and front delts.",
-      "Wide-Grip Push-ups — 3 sets to failure: Spread hands 1.5× shoulder-width. Elbows flare slightly outward. Go slow on the descent (2 counts down, 1 count up).",
-      "Hindu Squats — 4 × 20 reps: Stand feet hip-width. As you squat, let your heels naturally rise and sweep your arms back. As you rise, arms sweep forward. Keep a fluid, rhythmic motion.",
-      "Glute Bridges — 3 × 20 reps: Lie on your back, knees bent, feet flat. Drive hips up as high as possible, squeeze glutes hard at the top for 2 seconds. Lower slowly — do not let hips touch the floor between reps.",
-      "Rest 60–90 seconds between sets.",
+    focus: "Full Body Basics",
+    exercises: [
+      {
+        name: "Knee Pushups",
+        sets: "3 sets of 10 reps",
+        imageKey: "knee_pushups_1785957695989.png",
+        setup: "Get down on the floor on all fours. Walk your hands forward until there is a perfectly straight line from the top of your head down to your knees. Place your hands flat on the floor, slightly wider than your shoulders. Cross your ankles in the air.",
+        execution: "Take a breath in and bend your elbows to lower your body. Keep your elbows angled back at a 45-degree angle (like an arrow), not flaring straight out to the sides (like a 'T'). Stop when your chest is about the size of a fist away from the floor. Breathe out and push the floor away from you to return to the top.",
+        pitfall: "Sticking your hips up in the air, or letting your hips sag and hit the floor before your chest does. Keep your core tight so your body moves as one solid piece."
+      },
+      {
+        name: "Alternating Reverse Lunges",
+        sets: "3 sets of 10 reps per leg",
+        imageKey: "reverse_lunges_1785957781656.png",
+        setup: "Stand tall with your feet together. Place your hands on your hips, or hold lightly onto a wall next to you for balance.",
+        execution: "Take a large step backward with your right foot. Lower your hips straight down toward the floor by bending both knees. Stop when your back knee is hovering about an inch above the floor (your front knee should be bent at a 90-degree angle). Push off your front foot to stand back up and bring your right foot forward again. Repeat with the left leg.",
+        pitfall: "Slamming the back knee into the floor, or taking a step backward that is too small, which cramps the movement."
+      },
+      {
+        name: "Superman Pulls",
+        sets: "3 sets of 12 reps",
+        imageKey: "superman_pulls_1785957704744.png",
+        setup: "Lie completely flat on your stomach on the floor. Extend your arms straight out in front of you (like Superman flying). Look straight down at the floor to keep your neck safe; do not look up.",
+        execution: "Squeeze your glutes (butt muscles) and lift your chest slightly off the floor. Pull both of your elbows down and back toward your ribs, pretending you are pulling a heavy bar down from the ceiling. Squeeze your upper back muscles hard for one second. Reach your arms back out straight in front of you and lower your chest to the floor to complete the rep.",
+        pitfall: "Jerking your head upward to look at the wall. Always keep your eyes on the floor."
+      },
+      {
+        name: "Basic Crunches",
+        sets: "3 sets of 15 reps",
+        imageKey: "basic_crunches_1785957822737.png",
+        setup: "Lie on your back with your knees bent and feet flat on the floor. Cross your arms over your chest, or lightly place your fingertips behind your ears.",
+        execution: "Imagine sliding your ribs down toward your belly button. Use your stomach muscles to lift your head, neck, and shoulder blades off the floor. Hold for one second at the top, squeezing your abs. Slowly lower your shoulder blades back to the floor.",
+        pitfall: "Clasping your hands behind your head and aggressively pulling your neck forward. Your neck should stay relaxed; your abs should do all the lifting."
+      }
     ],
+    restNote: "Take a 60-second rest after completing each set."
   },
   Friday: {
-    focus: "Cardio — Steady Jog",
-    steps: [
-      "Warm-up (5 min): Brisk walk to prepare your joints and heart.",
-      "Jog (30–40 min): Maintain a steady, conversational pace — you should be able to say short sentences without gasping.",
-      "Target heart rate: 60–70% of your maximum. Do not sprint. Do not stop unless needed.",
-      "Cool-down (5 min): Slow to a walk for the final 5 minutes, then stretch your quads, calves, and IT band.",
-    ],
+    focus: "Rest & Consistency",
+    exercises: [],
+    restNote: "No strength exercises today. Stick to your daily walking habit to keep your step count up. Ensure you are drinking plenty of water and eating meals that are rich in protein with controlled portions."
   },
   Saturday: {
-    focus: "Burnout",
-    steps: [
-      "Standard Push-ups — 2 sets to absolute failure: No partial reps. Every set ends when you physically cannot push up even once more.",
-      "Rest 60 seconds. Incline Push-ups — 2 sets to absolute failure: Hands on a raised surface. Same total failure rule.",
-      "Rest 60 seconds. Decline Push-ups — 2 sets to absolute failure: Feet elevated. Push until zero reps are possible.",
-      "Burnout rule: These sets should hurt. That is the point. Your muscles should be shaking by the final set.",
-    ],
+    focus: "Rest & Consistency",
+    exercises: [],
+    restNote: "No strength exercises today. Stick to your daily walking habit to keep your step count up. Ensure you are drinking plenty of water and eating meals that are rich in protein with controlled portions."
   },
   Sunday: {
-    focus: "Rest Day",
-    steps: [
-      "No exercise today. Complete rest is a mandatory part of the program — it is when muscles actually grow.",
-      "Focus on quality sleep (7–8 hours), staying hydrated, and eating clean.",
-      "Light activity allowed: a slow walk or gentle stretching only — nothing that elevates heart rate.",
-      "Use this time to restock groceries and mentally prepare for the upcoming week.",
-    ],
-  },
+    focus: "Rest & Consistency",
+    exercises: [],
+    restNote: "No strength exercises today. Stick to your daily walking habit to keep your step count up. Ensure you are drinking plenty of water and eating meals that are rich in protein with controlled portions."
+  }
 };
 
 export const getTodayWorkout = () => {
@@ -105,6 +174,7 @@ const _WEEKDAY_MORNING = [
   { time: 460,  field: 'isabgul_taken',                emoji: '🌾', label: '7:40 AM — Isabgul Husk' },
   { time: 470,  field: 'breakfast_logged',             emoji: '🍳', label: '7:50 AM — Breakfast' },
   { time: 500,  field: 'bathing_completed',            emoji: '🚿', label: '8:20 AM — Bath & Get Ready' },
+  { time: 515,  field: 'skincare_am_completed',        emoji: '✨', label: '8:35 AM — AM Skincare' },
   { time: 600,  field: 'rule_50_10_followed',          emoji: '🪑', label: '10:00 AM — 50/10 Desk Rule (at office)' },
 ];
 
@@ -114,6 +184,7 @@ const _WEEKEND_MORNING = [
   { time: 495,  field: 'isabgul_taken',                emoji: '🌾', label: '8:15 AM — Isabgul Husk' },
   { time: 510,  field: 'breakfast_logged',             emoji: '🍳', label: '8:30 AM — Breakfast' },
   { time: 570,  field: 'bathing_completed',            emoji: '🚿', label: '9:30 AM — Bath (relaxed)' },
+  { time: 585,  field: 'skincare_am_completed',        emoji: '✨', label: '9:45 AM — AM Skincare' },
   { time: 600,  field: 'rule_50_10_followed',          emoji: '🪑', label: '10:00 AM — 50/10 Desk Rule' },
 ];
 
@@ -128,6 +199,7 @@ const _MIDDAY_EVENING = [
   { time: 1230, field: 'dinner_logged',                emoji: '🍽️', label: '8:30 PM — Dinner' },
   { time: 1235, field: 'ashwagandha_taken',            emoji: '🌿', label: '8:35 PM — Ashwagandha' },
   { time: 1275, field: 'post_dinner_walk_completed',   emoji: '🚶', label: '9:15 PM — Post-Dinner Walk' },
+  { time: 1320, field: 'skincare_pm_completed',        emoji: '✨', label: '10:00 PM — PM Skincare' },
   { time: 1410, field: 'hydration_cutoff_followed',    emoji: '💧', label: '11:30 PM — Hydration Cut-off' },
   { time: 1440, field: 'screen_curfew_followed',       emoji: '📴', label: '12:00 AM — Screen Curfew' },
 ];

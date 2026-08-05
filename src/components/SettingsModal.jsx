@@ -11,8 +11,11 @@ import {
   deletePasskey,
   authenticateWithPasskey
 } from '../utils/webauthn';
+import useLockBodyScroll from '../hooks/useLockBodyScroll';
 
-export default function SettingsModal({ isOpen, onClose, bgPref, setBgPref, onForceSync, onLogout }) {
+export default function SettingsModal({ isOpen, onClose, bgPref, setBgPref, onForceSync, onLogout, onNavigate }) {
+  useLockBodyScroll(isOpen);
+
   const [activeTab, setActiveTab] = useState('passkey'); // 'passkey' | 'atmosphere' | 'sync'
   const [passkeys, setPasskeys] = useState([]);
   const [loadingPasskeys, setLoadingPasskeys] = useState(false);
@@ -187,7 +190,7 @@ export default function SettingsModal({ isOpen, onClose, bgPref, setBgPref, onFo
             className={`settings-nav-btn ${activeTab === 'sync' ? 'active' : ''}`}
             onClick={() => setActiveTab('sync')}
           >
-            ☁️ Sync & Data
+            ☁️ App & Data
           </button>
         </div>
 
@@ -407,9 +410,25 @@ export default function SettingsModal({ isOpen, onClose, bgPref, setBgPref, onFo
             </div>
           )}
 
-          {/* ── SYNC & DATA TAB ── */}
+          {/* ── APP & DATA TAB ── */}
           {activeTab === 'sync' && (
             <div className="settings-section">
+              <div className="settings-card">
+                <h4>Additional Modules</h4>
+                <p className="card-desc">Access modules that have been moved from the main navigation.</p>
+                <div className="sync-actions-row" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+                  <button className="action-btn-secondary" onClick={() => onNavigate && onNavigate('schedule')}>
+                    🗓️ View Master Schedule
+                  </button>
+                  <button className="action-btn-secondary" onClick={() => onNavigate && onNavigate('history')}>
+                    📖 View History Profile
+                  </button>
+                  <button className="action-btn-secondary" onClick={() => onNavigate && onNavigate('peplan')}>
+                    📋 View PE Plan
+                  </button>
+                </div>
+              </div>
+
               <div className="settings-card">
                 <h4>Cloud & Sync Status</h4>
                 <div className="sync-status-grid">

@@ -190,9 +190,6 @@
   -ms-overflow-style: none;       /* IE/Edge */
   border-radius: 8px;
 }
-.ambient-tracks-scroll::-webkit-scrollbar {
-  display: none;                  /* Chrome / Safari / Opera */
-}
 
 /* 3-column track grid — fills panel width evenly */
 .ambient-tracks {

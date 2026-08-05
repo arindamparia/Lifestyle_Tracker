@@ -32,9 +32,10 @@ CREATE TABLE IF NOT EXISTS daily_recomposition_log (
   book_finished                 INTEGER DEFAULT 0,
   ashwagandha_taken             INTEGER DEFAULT 0,
   weight_kg                     REAL DEFAULT NULL,
-  bathing_completed             INTEGER DEFAULT 0
+  bathing_completed             INTEGER DEFAULT 0,
+  skincare_am_completed         INTEGER DEFAULT 0,
+  skincare_pm_completed         INTEGER DEFAULT 0
 );
-
 CREATE INDEX IF NOT EXISTS idx_daily_log_date ON daily_recomposition_log(log_date);
 
 CREATE TABLE IF NOT EXISTS books (
