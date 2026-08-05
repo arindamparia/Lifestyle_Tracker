@@ -93,7 +93,7 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
     setWeightSaved(true);
     setTimeout(() => setWeightSaved(false), 2500);
     try {
-      await fetch('/.netlify/functions/daily-log', {
+      await fetch('/api/daily-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
         body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),
@@ -111,7 +111,7 @@ export default function HistoryLog({ syncKey = 0, bgPref, setBgPref }) {
 
     const controller = new AbortController();
 
-    fetch('/.netlify/functions/daily-log?history=true', { signal: controller.signal, headers: getAuthHeader() })
+    fetch('/api/daily-log?history=true', { signal: controller.signal, headers: getAuthHeader() })
       .then(res => {
         if (res.status === 401) { handleUnauthorized(); return null; }
         if (!res.ok) return null;

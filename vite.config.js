@@ -6,6 +6,10 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
+      '/api': {
+        target: 'http://localhost:9888',
+        changeOrigin: true,
+      },
       '/.netlify/functions': {
         target: 'http://localhost:9888',
         changeOrigin: true,

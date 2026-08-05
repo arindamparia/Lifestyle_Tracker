@@ -13,7 +13,7 @@ export default function PasswordGate({ onAuth }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/.netlify/functions/auth', {
+      const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: pw }),

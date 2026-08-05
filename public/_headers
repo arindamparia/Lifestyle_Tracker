@@ -1,0 +1,15 @@
+/api/*
+  Cache-Control: no-store, no-cache, must-revalidate
+  Access-Control-Allow-Origin: *
+
+/index.html
+  Cache-Control: no-cache
+
+/version-check.js
+  Cache-Control: no-cache
+
+/sw.js
+  Cache-Control: no-cache
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

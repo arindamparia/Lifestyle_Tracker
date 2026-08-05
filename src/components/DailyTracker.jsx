@@ -115,7 +115,7 @@ export default function DailyTracker({ onSync, syncKey }) {
     }
 
     const controller = new AbortController();
-    fetch(`/.netlify/functions/daily-log?date=${effectiveDate}`, { signal: controller.signal, headers: getAuthHeader() })
+    fetch(`/api/daily-log?date=${effectiveDate}`, { signal: controller.signal, headers: getAuthHeader() })
       .then(safeJson)
       .then(data => {
         if (!controller.signal.aborted && data && Object.keys(data).length > 0) {
@@ -172,7 +172,7 @@ export default function DailyTracker({ onSync, syncKey }) {
       }
 
       try {
-        const res = await fetch('/.netlify/functions/daily-log', {
+        const res = await fetch('/api/daily-log', {
           method: 'POST',
           headers,
           body: JSON.stringify({ ...payload, log_date: getEffectiveDate() }),
@@ -232,7 +232,7 @@ export default function DailyTracker({ onSync, syncKey }) {
     setSyncing(true);
     setFetchKey(k => k + 1);
     // Re-fetch book suggestions from books table
-    fetch('/.netlify/functions/daily-log?books=true', { headers: getAuthHeader() })
+    fetch('/api/daily-log?books=true', { headers: getAuthHeader() })
       .then(safeJson)
       .then(data => {
         if (Array.isArray(data)) {

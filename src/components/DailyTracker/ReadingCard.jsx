@@ -56,7 +56,7 @@ export default function ReadingCard({ log, setLog }) {
         }
       }
     } catch {}
-    fetch('/.netlify/functions/daily-log?books=true', { headers: getAuthHeader() })
+    fetch('/api/daily-log?books=true', { headers: getAuthHeader() })
       .then(safeJson)
       .then(data => {
         if (Array.isArray(data)) {
@@ -68,13 +68,13 @@ export default function ReadingCard({ log, setLog }) {
   }, []);
 
   const saveBook = (latestLog) => {
-    fetch('/.netlify/functions/daily-log', {
+    fetch('/api/daily-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
       body: JSON.stringify({ ...latestLog, log_date: getEffectiveDate() }),
     }).then(() => {
       if (latestLog.book_name && latestLog.book_name.trim()) {
-        fetch('/.netlify/functions/daily-log?books=true', { headers: getAuthHeader() })
+        fetch('/api/daily-log?books=true', { headers: getAuthHeader() })
           .then(safeJson)
           .then(data => {
             if (Array.isArray(data)) {
@@ -120,7 +120,7 @@ export default function ReadingCard({ log, setLog }) {
     const updatedLog = { ...log, book_finished: !log.book_finished };
     setLog(updatedLog);
     setTodayLog(updatedLog);
-    fetch('/.netlify/functions/daily-log', {
+    fetch('/api/daily-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
       body: JSON.stringify({ ...updatedLog, log_date: getEffectiveDate() }),

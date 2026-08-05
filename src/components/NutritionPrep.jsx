@@ -54,7 +54,7 @@ export default function NutritionPrep() {
       return;
     }
 
-    fetch(`/.netlify/functions/daily-log?grocery=${weekKey}`, {
+    fetch(`/api/daily-log?grocery=${weekKey}`, {
       headers: getAuthHeader(),
     })
       .then(r => r.json())
@@ -104,7 +104,7 @@ export default function NutritionPrep() {
         headers['X-Socket-ID'] = window.pusherSocketId;
       }
       
-      fetch('/.netlify/functions/daily-log', {
+      fetch('/api/daily-log', {
         method: 'POST',
         headers,
         body: JSON.stringify({ grocery_week: weekKey, grocery_checked: [...nextSet] }),

@@ -169,7 +169,7 @@ function App() {
     let pusher = null;
     let channel = null;
 
-    fetch('/.netlify/functions/pusher-config')
+    fetch('/api/pusher-config')
       .then(res => res.json())
       .then(config => {
         if (!config.pusherKey) return;

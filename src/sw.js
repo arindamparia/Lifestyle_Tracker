@@ -51,9 +51,9 @@ registerRoute(
   })
 );
 
-// Netlify functions — NetworkFirst so fresh data wins, cache as offline fallback
+// API endpoints — NetworkFirst so fresh data wins, cache as offline fallback
 registerRoute(
-  ({ url }) => url.pathname.startsWith('/.netlify/functions/'),
+  ({ url }) => url.pathname.startsWith('/api/') || url.pathname.startsWith('/.netlify/functions/'),
   new NetworkFirst({
     cacheName: 'api-cache',
     networkTimeoutSeconds: 8,
