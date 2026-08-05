@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS weekly_grocery (
 );
 `;
 
-function verifyToken(token, secret) {
+function verifyToken(token, rawSecret) {
+  const secret = (rawSecret || '').replace(/^["']|["']$/g, '').trim();
   if (!token || !secret) return false;
   const parts = token.split('.');
   if (parts.length !== 2) return false;

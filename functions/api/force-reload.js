@@ -8,7 +8,8 @@ const CORS_HEADERS = {
   'Content-Type': 'application/json',
 };
 
-function verifyToken(token, secret) {
+function verifyToken(token, rawSecret) {
+  const secret = (rawSecret || '').replace(/^["']|["']$/g, '').trim();
   if (!token || !secret) return false;
   const parts = token.split('.');
   if (parts.length !== 2) return false;
@@ -42,16 +43,18 @@ export async function onRequest(context) {
 
   const url = new URL(request.url);
   let authorized = false;
+  const configuredPassword = (env.APP_PASSWORD || '').replace(/^["']|["']$/g, '').trim();
+  const configuredSecret = (env.APP_SECRET || '').replace(/^["']|["']$/g, '').trim();
 
   if (method === 'GET') {
-    const pwd = url.searchParams.get('pwd');
-    if (pwd && pwd === env.APP_PASSWORD) {
+    const pwd = (url.searchParams.get('pwd') || '').trim();
+    if (pwd && configuredPassword && pwd === configuredPassword) {
       authorized = true;
     }
   } else {
     const authHeader = request.headers.get('authorization') || request.headers.get('Authorization') || '';
     const token = authHeader.replace(/^Bearer\s+/i, '');
-    if (token && verifyToken(token, env.APP_SECRET)) {
+    if (token && configuredSecret && verifyToken(token, configuredSecret)) {
       authorized = true;
     }
   }
