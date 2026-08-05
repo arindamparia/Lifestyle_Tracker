@@ -2,7 +2,7 @@
  * Service Worker — DailyAlign
  *
  * Strategy: injectManifest (vite-plugin-pwa)
- * - self.__WB_MANIFEST is replaced at build time with the precache asset list
+ * - The manifest injection placeholder is replaced at build time with the precache asset list
  * - Runtime caching rules mirror what was previously in vite.config.js workbox block
  */
 
@@ -20,7 +20,7 @@ self.skipWaiting();
 clientsClaim();
 
 // ── Precache all build artifacts (JS, CSS, HTML, fonts, icons) ───────────────
-// self.__WB_MANIFEST is injected by vite-plugin-pwa at build time
+// The manifest placeholder is injected by vite-plugin-pwa at build time
 precacheAndRoute(self.__WB_MANIFEST);
 
 // Remove caches from old precache revisions to keep storage tidy
