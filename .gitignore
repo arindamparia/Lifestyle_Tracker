@@ -6,3 +6,11 @@ node_modules
 # Vite build outputs
 dist
 dev-dist
+
+# Cloudflare & Wrangler artifacts
+.wrangler
+worker-configuration.d.ts
+*.sqlite
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
