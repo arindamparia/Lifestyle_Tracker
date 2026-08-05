@@ -10,13 +10,15 @@ async function safeJson(res) {
   const contentType = res.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
     const text = await res.text();
-    // HTML response = backend server unreachable or crashed
     if (text.trimStart().startsWith('<')) {
-      throw new Error(
-        'Backend server is unreachable. Make sure the dev server (npm start) is running and try again.'
-      );
+      // Distinguish local dev vs. hosted environment
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const hint = isLocal
+        ? 'Make sure the dev server (npm start) is running.'
+        : 'The API function may have crashed — check Cloudflare Pages function logs.';
+      throw new Error(`Server returned an unexpected response. ${hint}`);
     }
-    throw new Error(`Unexpected response from server (status ${res.status}): ${text.slice(0, 200)}`);
+    throw new Error(`Unexpected server response (status ${res.status}): ${text.slice(0, 200)}`);
   }
   return res.json();
 }
