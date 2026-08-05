@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import Pusher from 'pusher';
+import { triggerPusherEvent } from './_pusher.js';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -220,27 +220,20 @@ export async function onRequest(context) {
         `).bind(d.grocery_week, jsonChecked).run();
 
         if (env.PUSHER_APP_ID && env.PUSHER_KEY && env.PUSHER_SECRET && env.PUSHER_CLUSTER) {
-          try {
-            const pusher = new Pusher({
-              appId: env.PUSHER_APP_ID,
-              key: env.PUSHER_KEY,
-              secret: env.PUSHER_SECRET,
-              cluster: env.PUSHER_CLUSTER,
-              useTLS: true,
-            });
-            const socketId = request.headers.get('x-socket-id') || null;
-            await pusher.trigger(
-              'dailyalign-channel',
-              'grocery_updated',
-              {
-                week_start: d.grocery_week,
-                checked_items: d.grocery_checked,
-              },
-              socketId ? { socket_id: socketId } : undefined
-            );
-          } catch (pErr) {
-            console.error('Pusher trigger error (grocery):', pErr);
-          }
+          const socketId = request.headers.get('x-socket-id') || request.headers.get('X-Socket-ID') || null;
+          await triggerPusherEvent({
+            appId: env.PUSHER_APP_ID,
+            key: env.PUSHER_KEY,
+            secret: env.PUSHER_SECRET,
+            cluster: env.PUSHER_CLUSTER,
+            channel: 'dailyalign-channel',
+            event: 'grocery_updated',
+            data: {
+              week_start: d.grocery_week,
+              checked_items: d.grocery_checked,
+            },
+            socketId,
+          });
         }
 
         return new Response(JSON.stringify({ ok: true }), { status: 200, headers: CORS_HEADERS });
@@ -356,26 +349,17 @@ export async function onRequest(context) {
       const formatted = formatLogRow(savedRow);
 
       if (env.PUSHER_APP_ID && env.PUSHER_KEY && env.PUSHER_SECRET && env.PUSHER_CLUSTER) {
-        try {
-          const pusher = new Pusher({
-            appId: env.PUSHER_APP_ID,
-            key: env.PUSHER_KEY,
-            secret: env.PUSHER_SECRET,
-            cluster: env.PUSHER_CLUSTER,
-            useTLS: true,
-          });
-
-          const socketId = request.headers.get('x-socket-id') || null;
-
-          await pusher.trigger(
-            'dailyalign-channel',
-            'daily_log_updated',
-            { row: formatted },
-            socketId ? { socket_id: socketId } : undefined
-          );
-        } catch (pErr) {
-          console.error('Pusher trigger error (daily-log):', pErr);
-        }
+        const socketId = request.headers.get('x-socket-id') || request.headers.get('X-Socket-ID') || null;
+        await triggerPusherEvent({
+          appId: env.PUSHER_APP_ID,
+          key: env.PUSHER_KEY,
+          secret: env.PUSHER_SECRET,
+          cluster: env.PUSHER_CLUSTER,
+          channel: 'dailyalign-channel',
+          event: 'daily_log_updated',
+          data: { row: formatted },
+          socketId,
+        });
       }
 
       return new Response(JSON.stringify(formatted), { status: 200, headers: CORS_HEADERS });

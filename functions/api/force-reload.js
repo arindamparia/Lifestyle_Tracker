@@ -1,4 +1,4 @@
-import Pusher from 'pusher';
+import { triggerPusherEvent } from './_pusher.js';
 import crypto from 'crypto';
 
 const CORS_HEADERS = {
@@ -69,31 +69,31 @@ export async function onRequest(context) {
   }
 
   if (!env.PUSHER_APP_ID || !env.PUSHER_KEY || !env.PUSHER_SECRET || !env.PUSHER_CLUSTER) {
-    return new Response(JSON.stringify({ error: 'Pusher not configured' }), {
+    return new Response(JSON.stringify({ error: 'Pusher credentials not configured in environment' }), {
       status: 500,
       headers: CORS_HEADERS,
     });
   }
 
-  try {
-    const pusher = new Pusher({
-      appId: env.PUSHER_APP_ID,
-      key: env.PUSHER_KEY,
-      secret: env.PUSHER_SECRET,
-      cluster: env.PUSHER_CLUSTER,
-      useTLS: true,
-    });
+  const sent = await triggerPusherEvent({
+    appId: env.PUSHER_APP_ID,
+    key: env.PUSHER_KEY,
+    secret: env.PUSHER_SECRET,
+    cluster: env.PUSHER_CLUSTER,
+    channel: 'dailyalign-channel',
+    event: 'app_update',
+    data: { timestamp: Date.now() },
+  });
 
-    await pusher.trigger('dailyalign-channel', 'app_update', { timestamp: Date.now() });
-
-    return new Response(
-      JSON.stringify({ success: true, message: 'App update broadcast sent!' }),
-      { status: 200, headers: CORS_HEADERS }
-    );
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+  if (!sent) {
+    return new Response(JSON.stringify({ error: 'Failed to broadcast app update via Pusher' }), {
       status: 500,
       headers: CORS_HEADERS,
     });
   }
+
+  return new Response(
+    JSON.stringify({ success: true, message: 'App update broadcast sent!' }),
+    { status: 200, headers: CORS_HEADERS }
+  );
 }

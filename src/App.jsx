@@ -193,27 +193,9 @@ function App() {
           if (data && data.row) {
             mergeHistoryRows([data.row]);
             
-            const d = data.row.log_date ? new Date(data.row.log_date) : null;
-            if (d && !isNaN(d)) {
-              const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-              if (key === getEffectiveDate()) {
-                const current = getTodayLog();
-                if (current) {
-                  // Check if identical to prevent echo bounces
-                  // Postgres returns NUMERIC as string ("1.0"), so use loose equality and Number() parsing
-                  const keys = Object.keys(data.row);
-                  const isSame = keys.every(k => {
-                    if (data.row[k] == current[k]) return true;
-                    if (!isNaN(data.row[k]) && !isNaN(current[k]) && Number(data.row[k]) === Number(current[k])) return true;
-                    return false;
-                  });
-                  if (isSame) {
-                    console.log('[Pusher] Event data is identical to local cache. Skipping update.');
-                    return;
-                  }
-                }
-                setTodayLog({ ...data.row, log_date: key });
-              }
+            const key = data.row.log_date ? String(data.row.log_date).slice(0, 10) : '';
+            if (key && key === getEffectiveDate()) {
+              setTodayLog({ ...data.row, log_date: key });
             }
             
             setSyncKey(k => k + 1);
