@@ -255,7 +255,6 @@ function App() {
         });
 
         pusher.connection.bind('connected', () => {
-          console.log('[Pusher] Frontend successfully connected to Pusher!');
           window.pusherSocketId = pusher.connection.socket_id;
         });
         pusher.connection.bind('error', (err) => {
@@ -265,7 +264,6 @@ function App() {
         channel = pusher.subscribe('dailyalign-channel');
         
         channel.bind('daily_log_updated', (data) => {
-          console.log('[Pusher] Received daily_log_updated:', data);
           if (data && data.row) {
             mergeHistoryRows([data.row]);
             
@@ -279,7 +277,6 @@ function App() {
         });
 
         channel.bind('grocery_updated', (data) => {
-          console.log('[Pusher] Received grocery_updated:', data);
           if (data && data.week_start && data.checked_items) {
             // Tell NutritionPrep to update via a custom event
             window.dispatchEvent(new CustomEvent('grocery_sync', { detail: data }));
