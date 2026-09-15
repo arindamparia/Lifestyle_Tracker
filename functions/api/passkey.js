@@ -101,7 +101,7 @@ async function getHmacKey(secret) {
 
 async function createToken(secret) {
   const payload = bytesToB64u(new TextEncoder().encode(
-    JSON.stringify({ ts: Date.now(), exp: Date.now() + 30 * 60 * 1000 })
+    JSON.stringify({ ts: Date.now(), exp: Date.now() + 90 * 24 * 60 * 60 * 1000 })
   ));
   const key = await getHmacKey(secret);
   const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload)));
