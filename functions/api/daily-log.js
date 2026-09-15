@@ -3,10 +3,13 @@ import { triggerPusherEvent } from './_pusher.js';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-socket-id',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-socket-id, X-Socket-ID, Cache-Control, Pragma, Expires, *',
   'Access-Control-Allow-Methods': 'OPTIONS, GET, POST',
+  'Access-Control-Max-Age': '86400',
   'Content-Type': 'application/json',
-  'Cache-Control': 'no-store',
+  'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+  'Pragma': 'no-cache',
+  'Expires': '0',
 };
 
 const SCHEMA_INIT_SQL = `
