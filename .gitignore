@@ -2,6 +2,7 @@
 .netlify
 node_modules
 .env
+.dev.vars
 
 # Vite build outputs
 dist
@@ -14,3 +15,8 @@ worker-configuration.d.ts
 *.sqlite-journal
 *.sqlite-shm
 *.sqlite-wal
+
+# Mobile app (temporary gitignore)
+mobile/
+.agents/
+

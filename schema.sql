@@ -67,6 +67,12 @@ CREATE TABLE IF NOT EXISTS passkeys (
 
 CREATE INDEX IF NOT EXISTS idx_passkeys_cred ON passkeys(credential_id);
 
+CREATE TABLE IF NOT EXISTS user_settings (
+  key         TEXT PRIMARY KEY,
+  value       TEXT NOT NULL,
+  updated_at  TEXT DEFAULT (CURRENT_TIMESTAMP)
+);
+
 CREATE TABLE IF NOT EXISTS passkey_challenges (
   challenge   TEXT PRIMARY KEY,
   type        TEXT NOT NULL,

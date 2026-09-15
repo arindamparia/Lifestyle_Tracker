@@ -56,6 +56,11 @@ CREATE TABLE IF NOT EXISTS weekly_grocery (
   checked_items  TEXT NOT NULL DEFAULT '[]',
   updated_at     TEXT DEFAULT (CURRENT_TIMESTAMP)
 );
+CREATE TABLE IF NOT EXISTS user_settings (
+  key         TEXT PRIMARY KEY,
+  value       TEXT NOT NULL,
+  updated_at  TEXT DEFAULT (CURRENT_TIMESTAMP)
+);
 `;
 
 function verifyToken(token, rawSecret) {
@@ -160,6 +165,14 @@ export async function onRequest(context) {
     try {
       const searchParams = url.searchParams;
 
+      // ?settings=true — return map of user settings (e.g. coordinates, city)
+      if (searchParams.get('settings') === 'true') {
+        const { results } = await db.prepare("SELECT key, value FROM user_settings").all();
+        const settingsMap = {};
+        (results || []).forEach(r => { settingsMap[r.key] = r.value; });
+        return new Response(JSON.stringify(settingsMap), { status: 200, headers: CORS_HEADERS });
+      }
+
       // ?grocery=YYYY-MM-DD — return checked items array for that week
       const grocery = searchParams.get('grocery');
       if (grocery) {
@@ -249,8 +262,58 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ ok: true }), { status: 200, headers: CORS_HEADERS });
       }
 
+      // ── User settings upsert (e.g. coordinates, city, permissions) ────────
+      if (d.settings && typeof d.settings === 'object') {
+        for (const [key, val] of Object.entries(d.settings)) {
+          await db.prepare(`
+            INSERT INTO user_settings (key, value, updated_at)
+            VALUES (?, ?, datetime('now'))
+            ON CONFLICT(key) DO UPDATE SET
+              value = excluded.value,
+              updated_at = datetime('now')
+          `).bind(key, String(val)).run();
+        }
+        return new Response(JSON.stringify({ ok: true }), { status: 200, headers: CORS_HEADERS });
+      }
+
       // ── Daily log upsert ──────────────────────────────────────────────────
-      const logDate = d.log_date || new Date().toISOString().split('T')[0];
+      const logDate = d.log_date || d.date || new Date().toISOString().split('T')[0];
+
+      // Fetch existing row so partial updates (e.g., water or a single habit) never overwrite other fields
+      const existing = await db.prepare("SELECT * FROM daily_recomposition_log WHERE log_date = ?").bind(logDate).first();
+
+      const merged = {
+        water_liters: d.water_liters != null ? Number(d.water_liters) : (existing?.water_liters ?? 0),
+        shilajit_taken: d.shilajit_taken != null ? (d.shilajit_taken ? 1 : 0) : (existing?.shilajit_taken ?? 0),
+        creatine_taken: d.creatine_taken != null ? (d.creatine_taken ? 1 : 0) : (existing?.creatine_taken ?? 0),
+        isabgul_taken: d.isabgul_taken != null ? (d.isabgul_taken ? 1 : 0) : (existing?.isabgul_taken ?? 0),
+        acv_taken: d.acv_taken != null ? (d.acv_taken ? 1 : 0) : (existing?.acv_taken ?? 0),
+        multivitamin_taken: d.multivitamin_taken != null ? (d.multivitamin_taken ? 1 : 0) : (existing?.multivitamin_taken ?? 0),
+        omega3_taken: d.omega3_taken != null ? (d.omega3_taken ? 1 : 0) : (existing?.omega3_taken ?? 0),
+        whey_protein_taken: d.whey_protein_taken != null ? (d.whey_protein_taken ? 1 : 0) : (existing?.whey_protein_taken ?? 0),
+        breakfast_logged: d.breakfast_logged != null ? (d.breakfast_logged ? 1 : 0) : (existing?.breakfast_logged ?? 0),
+        lunch_logged: d.lunch_logged != null ? (d.lunch_logged ? 1 : 0) : (existing?.lunch_logged ?? 0),
+        afternoon_snack_logged: d.afternoon_snack_logged != null ? (d.afternoon_snack_logged ? 1 : 0) : (existing?.afternoon_snack_logged ?? 0),
+        dinner_logged: d.dinner_logged != null ? (d.dinner_logged ? 1 : 0) : (existing?.dinner_logged ?? 0),
+        scheduled_workout_completed: d.scheduled_workout_completed != null ? (d.scheduled_workout_completed ? 1 : 0) : (existing?.scheduled_workout_completed ?? 0),
+        post_dinner_walk_completed: d.post_dinner_walk_completed != null ? (d.post_dinner_walk_completed ? 1 : 0) : (existing?.post_dinner_walk_completed ?? 0),
+        kegels_completed: d.kegels_completed != null ? (d.kegels_completed ? 1 : 0) : (existing?.kegels_completed ?? 0),
+        glute_bridges_completed: d.glute_bridges_completed != null ? (d.glute_bridges_completed ? 1 : 0) : (existing?.glute_bridges_completed ?? 0),
+        morning_meditation_completed: d.morning_meditation_completed != null ? (d.morning_meditation_completed ? 1 : 0) : (existing?.morning_meditation_completed ?? 0),
+        night_meditation_completed: d.night_meditation_completed != null ? (d.night_meditation_completed ? 1 : 0) : (existing?.night_meditation_completed ?? 0),
+        doorway_stretches_done: d.doorway_stretches_done != null ? (d.doorway_stretches_done ? 1 : 0) : (existing?.doorway_stretches_done ?? 0),
+        rule_50_10_followed: d.rule_50_10_followed != null ? (d.rule_50_10_followed ? 1 : 0) : (existing?.rule_50_10_followed ?? 0),
+        hydration_cutoff_followed: d.hydration_cutoff_followed != null ? (d.hydration_cutoff_followed ? 1 : 0) : (existing?.hydration_cutoff_followed ?? 0),
+        screen_curfew_followed: d.screen_curfew_followed != null ? (d.screen_curfew_followed ? 1 : 0) : (existing?.screen_curfew_followed ?? 0),
+        sleep_logged: d.sleep_logged != null ? (d.sleep_logged ? 1 : 0) : (existing?.sleep_logged ?? 0),
+        book_name: d.book_name !== undefined ? (d.book_name ? d.book_name.trim() : null) : (existing?.book_name ?? null),
+        book_finished: d.book_finished != null ? (d.book_finished ? 1 : 0) : (existing?.book_finished ?? 0),
+        ashwagandha_taken: d.ashwagandha_taken != null ? (d.ashwagandha_taken ? 1 : 0) : (existing?.ashwagandha_taken ?? 0),
+        weight_kg: d.weight_kg !== undefined ? (d.weight_kg != null ? Number(d.weight_kg) : null) : (existing?.weight_kg ?? null),
+        bathing_completed: d.bathing_completed != null ? (d.bathing_completed ? 1 : 0) : (existing?.bathing_completed ?? 0),
+        skincare_am_completed: d.skincare_am_completed != null ? (d.skincare_am_completed ? 1 : 0) : (existing?.skincare_am_completed ?? 0),
+        skincare_pm_completed: d.skincare_pm_completed != null ? (d.skincare_pm_completed ? 1 : 0) : (existing?.skincare_pm_completed ?? 0),
+      };
 
       const upsertStmt = db.prepare(`
         INSERT INTO daily_recomposition_log (
@@ -303,36 +366,36 @@ export async function onRequest(context) {
         RETURNING *;
       `).bind(
         logDate,
-        d.water_liters != null ? Number(d.water_liters) : 0,
-        d.shilajit_taken ? 1 : 0,
-        d.creatine_taken ? 1 : 0,
-        d.isabgul_taken ? 1 : 0,
-        d.acv_taken ? 1 : 0,
-        d.multivitamin_taken ? 1 : 0,
-        d.omega3_taken ? 1 : 0,
-        d.whey_protein_taken ? 1 : 0,
-        d.breakfast_logged ? 1 : 0,
-        d.lunch_logged ? 1 : 0,
-        d.afternoon_snack_logged ? 1 : 0,
-        d.dinner_logged ? 1 : 0,
-        d.scheduled_workout_completed ? 1 : 0,
-        d.post_dinner_walk_completed ? 1 : 0,
-        d.kegels_completed ? 1 : 0,
-        d.glute_bridges_completed ? 1 : 0,
-        d.morning_meditation_completed ? 1 : 0,
-        d.night_meditation_completed ? 1 : 0,
-        d.doorway_stretches_done ? 1 : 0,
-        d.rule_50_10_followed ? 1 : 0,
-        d.hydration_cutoff_followed ? 1 : 0,
-        d.screen_curfew_followed ? 1 : 0,
-        d.sleep_logged ? 1 : 0,
-        d.book_name ? d.book_name.trim() : null,
-        d.book_finished ? 1 : 0,
-        d.ashwagandha_taken ? 1 : 0,
-        d.weight_kg != null ? Number(d.weight_kg) : null,
-        d.bathing_completed ? 1 : 0,
-        d.skincare_am_completed ? 1 : 0,
-        d.skincare_pm_completed ? 1 : 0
+        merged.water_liters,
+        merged.shilajit_taken,
+        merged.creatine_taken,
+        merged.isabgul_taken,
+        merged.acv_taken,
+        merged.multivitamin_taken,
+        merged.omega3_taken,
+        merged.whey_protein_taken,
+        merged.breakfast_logged,
+        merged.lunch_logged,
+        merged.afternoon_snack_logged,
+        merged.dinner_logged,
+        merged.scheduled_workout_completed,
+        merged.post_dinner_walk_completed,
+        merged.kegels_completed,
+        merged.glute_bridges_completed,
+        merged.morning_meditation_completed,
+        merged.night_meditation_completed,
+        merged.doorway_stretches_done,
+        merged.rule_50_10_followed,
+        merged.hydration_cutoff_followed,
+        merged.screen_curfew_followed,
+        merged.sleep_logged,
+        merged.book_name,
+        merged.book_finished,
+        merged.ashwagandha_taken,
+        merged.weight_kg,
+        merged.bathing_completed,
+        merged.skincare_am_completed,
+        merged.skincare_pm_completed
       );
 
       let savedRow = await upsertStmt.first();
